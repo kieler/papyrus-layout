@@ -15,14 +15,6 @@
   </properties>
   
   
-  <!-- Activate the papyrus build profile by default. -->
-  <settings>
-    <activeProfiles>
-      <activeProfile>papyrus</activeProfile>
-    </activeProfiles>
-  </settings>
-  
-  
   <!-- Define one profile for each output target we have. -->
   <profiles>
     <!-- The Papyrus update site. -->
@@ -42,7 +34,7 @@
         <repository>
           <id>p2.pragmatics_release</id>
           <layout>p2</layout>
-          <url>http://rtsys.informatik.uni-kiel.de/~kieler/updatesite/pragmatics/</url>
+          <url>http://rtsys.informatik.uni-kiel.de/~kieler/updatesite/</url>
         </repository>
         <repository>
             <id>p2.papyrus</id>
