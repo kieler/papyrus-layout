@@ -65,7 +65,7 @@ import de.cau.cs.kieler.core.math.KVector;
 import de.cau.cs.kieler.core.properties.IProperty;
 import de.cau.cs.kieler.core.properties.Property;
 import de.cau.cs.kieler.core.util.Maybe;
-import de.cau.cs.kieler.kiml.LayoutContext;
+import de.cau.cs.kieler.kiml.config.LayoutContext;
 import de.cau.cs.kieler.kiml.config.VolatileLayoutConfig;
 import de.cau.cs.kieler.kiml.gmf.GmfDiagramLayoutManager;
 import de.cau.cs.kieler.kiml.gmf.GmfLayoutConfig;
@@ -78,7 +78,7 @@ import de.cau.cs.kieler.kiml.klayoutdata.impl.KEdgeLayoutImpl;
 import de.cau.cs.kieler.kiml.klayoutdata.impl.KShapeLayoutImpl;
 import de.cau.cs.kieler.kiml.options.EdgeLabelPlacement;
 import de.cau.cs.kieler.kiml.options.LayoutOptions;
-import de.cau.cs.kieler.kiml.ui.diagram.LayoutMapping;
+import de.cau.cs.kieler.kiml.service.LayoutMapping;
 import de.cau.cs.kieler.kiml.util.KimlUtil;
 
 /**

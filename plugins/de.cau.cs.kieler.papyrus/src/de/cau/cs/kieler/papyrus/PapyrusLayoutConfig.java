@@ -15,8 +15,8 @@ package de.cau.cs.kieler.papyrus;
 
 import java.util.Set;
 
-import de.cau.cs.kieler.kiml.LayoutContext;
 import de.cau.cs.kieler.kiml.LayoutOptionData;
+import de.cau.cs.kieler.kiml.config.LayoutContext;
 import de.cau.cs.kieler.kiml.gmf.GmfLayoutConfig;
 
 /**
@@ -28,17 +28,23 @@ import de.cau.cs.kieler.kiml.gmf.GmfLayoutConfig;
  * @kieler.rating proposed yellow grh
  */
 public class PapyrusLayoutConfig extends GmfLayoutConfig {
+    
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void enrich(final LayoutContext context) {
         super.enrich(context);
-        if (context.getProperty(LayoutContext.DIAGRAM_PART) != null) {
-            if (context.getProperty(LayoutContext.DIAGRAM_PART).getClass().getSimpleName()
+        Object diagramPart = context.getProperty(LayoutContext.DIAGRAM_PART);
+        if (diagramPart != null && diagramPart.getClass().getSimpleName()
                     .equals("PackageEditPart")) {
-                // Disable LayoutOptions for the PackageEditPart
-                Set<LayoutOptionData.Target> optionTargets = context
-                        .getProperty(LayoutContext.OPT_TARGETS);
+            // Disable LayoutOptions for the PackageEditPart
+            Set<LayoutOptionData.Target> optionTargets = context
+                    .getProperty(LayoutContext.OPT_TARGETS);
+            if (optionTargets != null) {
                 optionTargets.clear();
             }
         }
     }
+    
 }
