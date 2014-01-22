@@ -65,7 +65,6 @@ import de.cau.cs.kieler.core.math.KVector;
 import de.cau.cs.kieler.core.properties.IProperty;
 import de.cau.cs.kieler.core.properties.Property;
 import de.cau.cs.kieler.core.util.Maybe;
-import de.cau.cs.kieler.kiml.config.LayoutContext;
 import de.cau.cs.kieler.kiml.config.VolatileLayoutConfig;
 import de.cau.cs.kieler.kiml.gmf.GmfDiagramLayoutManager;
 import de.cau.cs.kieler.kiml.gmf.GmfLayoutConfig;
@@ -110,10 +109,6 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
     /** the command stack that executes the command. */
     public static final IProperty<CommandStack> COMMAND_STACK = new Property<CommandStack>(
             "gmf.applyLayoutCommandStack");
-
-    /** the volatile layout config for static properties such as minimal node sizes. */
-    public static final IProperty<VolatileLayoutConfig> STATIC_CONFIG = 
-            new Property<VolatileLayoutConfig>("gmf.staticLayoutConfig");
 
     /** the map of references and edges. */
     private Map<EReference, KEdge> reference2EdgeMap;
@@ -219,9 +214,11 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
         if (diagramEditor != null) {
             mapping.setProperty(DIAGRAM_EDITOR, diagramEditor);
         }
-
-        // create a layout configuration
-        mapping.getLayoutConfigs().add(mapping.getProperty(STATIC_CONFIG));
+        
+        // create a layout configurator from the properties that were set while building
+        mapping.getLayoutConfigs().add(VolatileLayoutConfig.fromProperties(mapping.getLayoutGraph(),
+                GmfLayoutConfig.PRIORITY - 1));
+        // add the layout configurator that reads the styles attached to the notation model
         mapping.getLayoutConfigs().add(layoutConfig);
 
         return mapping;
@@ -238,7 +235,6 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
             final IGraphicalEditPart layoutRootPart) {
         LayoutMapping<IGraphicalEditPart> mapping = new LayoutMapping<IGraphicalEditPart>(this);
         mapping.setProperty(CONNECTIONS, new LinkedList<ConnectionEditPart>());
-        mapping.setProperty(STATIC_CONFIG, new VolatileLayoutConfig());
 
         // set the parent element
         mapping.setParentElement(layoutRootPart);
@@ -286,13 +282,11 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
     private void copyAnnotations(final LayoutMapping<IGraphicalEditPart> mapping,
             final KNode topNode) {
         KShapeLayout nodelayout = topNode.getData(KShapeLayout.class);
-        VolatileLayoutConfig staticConfig = mapping.getProperty(STATIC_CONFIG);
 
         // Copy the executions
         List<SequenceExecution> executions = nodelayout.getProperty(PapyrusProperties.EXECUTIONS);
         if (executions != null) {
-            staticConfig.setValue(PapyrusProperties.EXECUTIONS, topNode, LayoutContext.GRAPH_ELEM,
-                    executions);
+            nodelayout.setProperty(PapyrusProperties.EXECUTIONS, executions);
         } else {
             for (KNode node : topNode.getChildren()) {
                 copyAnnotations(mapping, node);
@@ -307,14 +301,12 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
             for (Object att : attachedTo) {
                 attTo.add(graphMap.inverse().get(att));
             }
-            staticConfig.setValue(PapyrusProperties.ATTACHED_TO, topNode, LayoutContext.GRAPH_ELEM,
-                    attTo);
+            nodelayout.setProperty(PapyrusProperties.ATTACHED_TO, attTo);
         }
 
         String attachedElement = nodelayout.getProperty(PapyrusProperties.ATTACHED_ELEMENT);
         if (attachedElement != null) {
-            staticConfig.setValue(PapyrusProperties.ATTACHED_ELEMENT, topNode,
-                    LayoutContext.GRAPH_ELEM, attachedElement);
+            nodelayout.setProperty(PapyrusProperties.ATTACHED_ELEMENT, attachedElement);
         }
     }
 
@@ -406,21 +398,19 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
 
         IFigure nodeFigure = nodeEditPart.getFigure();
         KNode childLayoutNode = KimlUtil.createInitializedNode();
+        KShapeLayout nodeLayout = childLayoutNode.getData(KShapeLayout.class);
 
         String nodeType = "";
         // Add node type information to the KNode
-        VolatileLayoutConfig staticConfig = mapping.getProperty(STATIC_CONFIG);
         if (nodeEditPart.getModel() instanceof ShapeImpl) {
             ShapeImpl impl = (ShapeImpl) nodeEditPart.getModel();
             nodeType = impl.getType();
-            staticConfig.setValue(PapyrusProperties.NODE_TYPE, childLayoutNode,
-                    LayoutContext.GRAPH_ELEM, nodeType);
+            nodeLayout.setProperty(PapyrusProperties.NODE_TYPE, nodeType);
         }
 
         // set location and size
         Rectangle childBounds = getAbsoluteBounds(nodeFigure);
         Rectangle containerBounds = getAbsoluteBounds(nodeFigure.getParent());
-        KShapeLayout nodeLayout = childLayoutNode.getData(KShapeLayout.class);
 
         nodeLayout.setXpos(childBounds.x - containerBounds.x);
         nodeLayout.setYpos(childBounds.y - containerBounds.y);
@@ -432,10 +422,8 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
         // determine minimal size of the node
         try {
             Dimension minSize = nodeFigure.getMinimumSize();
-            staticConfig.setValue(LayoutOptions.MIN_WIDTH, childLayoutNode,
-                    LayoutContext.GRAPH_ELEM, (float) minSize.width);
-            staticConfig.setValue(LayoutOptions.MIN_HEIGHT, childLayoutNode,
-                    LayoutContext.GRAPH_ELEM, (float) minSize.height);
+            nodeLayout.setProperty(LayoutOptions.MIN_WIDTH, (float) minSize.width);
+            nodeLayout.setProperty(LayoutOptions.MIN_HEIGHT, (float) minSize.height);
         } catch (SWTException exception) {
             // ignore exception and leave the default minimal size
         }
@@ -556,12 +544,10 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
         area.getSize().x = bounds.width;
         area.getSize().y = bounds.height;
 
-        List<SequenceArea> areas = parentKNode.getData(KShapeLayout.class).getProperty(
-                PapyrusProperties.AREAS);
+        KShapeLayout parentLayout = parentKNode.getData(KShapeLayout.class);
+        List<SequenceArea> areas = parentLayout.getProperty(PapyrusProperties.AREAS);
         areas.add(area);
-        
-        VolatileLayoutConfig staticConfig = mapping.getProperty(STATIC_CONFIG);
-        staticConfig.setValue(PapyrusProperties.AREAS, parentKNode, LayoutContext.GRAPH_ELEM, areas);
+        parentLayout.setProperty(PapyrusProperties.AREAS, areas);
         
         // Get coordinates of the interaction operands if existing
         for (Object child : nodeEditPart.getChildren()) {
@@ -831,11 +817,8 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
                 Dimension size = labelFigure.getPreferredSize();
                 labelLayout.setSize(size.width, size.height);
                 if (font != null && !font.isDisposed()) {
-                    VolatileLayoutConfig staticConfig = mapping.getProperty(STATIC_CONFIG);
-                    staticConfig.setValue(LayoutOptions.FONT_NAME, label, LayoutContext.GRAPH_ELEM,
-                            font.getFontData()[0].getName());
-                    staticConfig.setValue(LayoutOptions.FONT_SIZE, label, LayoutContext.GRAPH_ELEM,
-                            font.getFontData()[0].getHeight());
+                    labelLayout.setProperty(LayoutOptions.FONT_NAME, font.getFontData()[0].getName());
+                    labelLayout.setProperty(LayoutOptions.FONT_SIZE, font.getFontData()[0].getHeight());
                 }
             } catch (SWTException exception) {
                 // ignore exception and leave the label size to (0, 0)
@@ -896,9 +879,8 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
 
             if (connection.getModel() instanceof EdgeImpl) {
                 EdgeImpl impl = (EdgeImpl) connection.getModel();
-                VolatileLayoutConfig staticConfig = mapping.getProperty(STATIC_CONFIG);
-                staticConfig.setValue(PapyrusProperties.MESSAGE_TYPE, edge,
-                        LayoutContext.GRAPH_ELEM, impl.getType());
+                edge.getData(KEdgeLayout.class).setProperty(PapyrusProperties.MESSAGE_TYPE,
+                        impl.getType());
             }
 
             BiMap<KGraphElement, IGraphicalEditPart> graphMap = mapping.getGraphMap();
@@ -1064,7 +1046,6 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
     private void processSequenceEdgeLabels(final LayoutMapping<IGraphicalEditPart> mapping,
             final ConnectionEditPart connection, final KEdge edge,
             final EdgeLabelPlacement placement, final KVector offset) {
-        VolatileLayoutConfig staticConfig = mapping.getProperty(STATIC_CONFIG);
         /*
          * ars: source and target is exchanged when defining it in the gmfgen file. So if Emma sets
          * a label to be placed as target on a connection, then the label will show up next to the
@@ -1110,16 +1091,16 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
                     if (placement == EdgeLabelPlacement.UNDEFINED) {
                         switch (labelEditPart.getKeyPoint()) {
                         case ConnectionLocator.SOURCE:
-                            staticConfig.setValue(LayoutOptions.EDGE_LABEL_PLACEMENT, label,
-                                    LayoutContext.GRAPH_ELEM, EdgeLabelPlacement.HEAD);
+                            labelLayout.setProperty(LayoutOptions.EDGE_LABEL_PLACEMENT,
+                                    EdgeLabelPlacement.HEAD);
                             break;
                         case ConnectionLocator.MIDDLE:
-                            staticConfig.setValue(LayoutOptions.EDGE_LABEL_PLACEMENT, label,
-                                    LayoutContext.GRAPH_ELEM, EdgeLabelPlacement.CENTER);
+                            labelLayout.setProperty(LayoutOptions.EDGE_LABEL_PLACEMENT,
+                                    EdgeLabelPlacement.CENTER);
                             break;
                         case ConnectionLocator.TARGET:
-                            staticConfig.setValue(LayoutOptions.EDGE_LABEL_PLACEMENT, label,
-                                    LayoutContext.GRAPH_ELEM, EdgeLabelPlacement.TAIL);
+                            labelLayout.setProperty(LayoutOptions.EDGE_LABEL_PLACEMENT,
+                                    EdgeLabelPlacement.TAIL);
                             break;
                         }
                     } else {
@@ -1127,10 +1108,10 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
                     }
                     Font font = labelFigure.getFont();
                     if (font != null && !font.isDisposed()) {
-                        staticConfig.setValue(LayoutOptions.FONT_NAME, label,
-                                LayoutContext.GRAPH_ELEM, font.getFontData()[0].getName());
-                        staticConfig.setValue(LayoutOptions.FONT_SIZE, label,
-                                LayoutContext.GRAPH_ELEM, font.getFontData()[0].getHeight());
+                        labelLayout.setProperty(LayoutOptions.FONT_NAME,
+                                font.getFontData()[0].getName());
+                        labelLayout.setProperty(LayoutOptions.FONT_SIZE,
+                                font.getFontData()[0].getHeight());
                     }
                     labelLayout.setXpos(labelBounds.x - (float) offset.x);
                     labelLayout.setYpos(labelBounds.y - (float) offset.y);
