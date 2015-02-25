@@ -134,20 +134,20 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
                 || object instanceof IGraphicalEditPart;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public Object getAdapter(final Object object, final Class adapterType) {
-        if (adapterType.isAssignableFrom(GmfLayoutConfig.class)) {
-            return layoutConfig;
-        }
-        if (object instanceof IMultiDiagramEditor) {
-            return super.getAdapter(((IMultiDiagramEditor) object).getActiveEditor(), adapterType);
-        }
-        return super.getAdapter(object, adapterType);
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    @Override
+//    @SuppressWarnings({ "rawtypes", "unchecked" })
+//    public Object getAdapter(final Object object, final Class adapterType) {
+//        if (adapterType.isAssignableFrom(GmfLayoutConfig.class)) {
+//            return layoutConfig;
+//        }
+//        if (object instanceof IMultiDiagramEditor) {
+//            return super.getAdapter(((IMultiDiagramEditor) object).getActiveEditor(), adapterType);
+//        }
+//        return super.getAdapter(object, adapterType);
+//    }
 
     /**
      * {@inheritDoc}
@@ -233,7 +233,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
      */
     protected LayoutMapping<IGraphicalEditPart> buildSequenceLayoutGraph(
             final IGraphicalEditPart layoutRootPart) {
-        LayoutMapping<IGraphicalEditPart> mapping = new LayoutMapping<IGraphicalEditPart>(this);
+        LayoutMapping<IGraphicalEditPart> mapping = new LayoutMapping<IGraphicalEditPart>();
         mapping.setProperty(CONNECTIONS, new LinkedList<ConnectionEditPart>());
 
         // set the parent element

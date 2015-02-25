@@ -23,7 +23,7 @@ import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
 import de.cau.cs.kieler.klay.layered.graph.LGraph;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.graph.Layer;
-import de.cau.cs.kieler.klay.layered.properties.Properties;
+import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
 import de.cau.cs.kieler.papyrus.PapyrusProperties;
 import de.cau.cs.kieler.papyrus.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.ILifelineSorter;
@@ -364,7 +364,7 @@ public class EqualDistributionLifelineSorter implements ILifelineSorter {
             EDLSNode candidate = null;
             int bestDegree = Integer.MAX_VALUE;
             for (LNode node : nodes) {
-                SMessage message = (SMessage) node.getProperty(Properties.ORIGIN);
+                SMessage message = (SMessage) node.getProperty(InternalProperties.ORIGIN);
                 SLifeline sourceLifeline = message.getSource();
                 EDLSNode cand = correspondences.get(sourceLifeline);
                 if (cand.getWeightedDegree() < bestDegree) {
@@ -377,7 +377,7 @@ public class EqualDistributionLifelineSorter implements ILifelineSorter {
         } else {
             // If there is just one message in the first layer, return the node corresponding to its
             // source lifeline
-            SMessage message = (SMessage) nodes.get(0).getProperty(Properties.ORIGIN);
+            SMessage message = (SMessage) nodes.get(0).getProperty(InternalProperties.ORIGIN);
             SLifeline sourceLifeline = message.getSource();
             EDLSNode candidate = correspondences.get(sourceLifeline);
             if (candidate == null) {

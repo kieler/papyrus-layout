@@ -26,10 +26,11 @@ import de.cau.cs.kieler.kiml.klayoutdata.KEdgeLayout;
 import de.cau.cs.kieler.kiml.klayoutdata.KPoint;
 import de.cau.cs.kieler.kiml.klayoutdata.KShapeLayout;
 import de.cau.cs.kieler.klay.layered.graph.LEdge;
+import de.cau.cs.kieler.klay.layered.graph.LGraph;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.graph.LPort;
-import de.cau.cs.kieler.klay.layered.graph.LGraph;
 import de.cau.cs.kieler.klay.layered.p2layers.NetworkSimplexLayerer;
+import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
 import de.cau.cs.kieler.klay.layered.properties.Properties;
 import de.cau.cs.kieler.papyrus.PapyrusProperties;
 import de.cau.cs.kieler.papyrus.SequenceArea;
@@ -521,7 +522,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
             // Iterate the nodes of the layer
             for (LNode node : layeredGraph.getLayers().get(i).getNodes()) {
                 // Get the corresponding message
-                SMessage message = (SMessage) node.getProperty(Properties.ORIGIN);
+                SMessage message = (SMessage) node.getProperty(InternalProperties.ORIGIN);
 
                 // Skip dummyNodes
                 if (message == null) {
@@ -555,7 +556,8 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
                     // Check overlappings with any other node in the layer
                     for (LNode otherNode : layeredGraph.getLayers().get(i).getNodes()) {
                         // Get the corresponding message
-                        SMessage otherMessage = (SMessage) otherNode.getProperty(Properties.ORIGIN);
+                        SMessage otherMessage =
+                                (SMessage) otherNode.getProperty(InternalProperties.ORIGIN);
                         try {
                             int otherSourcePos = otherMessage.getSource().getHorizontalSlot();
                             int otherTargetPos = otherMessage.getTarget().getHorizontalSlot();
@@ -893,7 +895,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
         double maxXPos = 0;
         for (Object lifelineObj : area.getLifelines()) {
             SLifeline lifeline = (SLifeline) lifelineObj;
-            KNode node = (KNode) lifeline.getProperty(Properties.ORIGIN);
+            KNode node = (KNode) lifeline.getProperty(InternalProperties.ORIGIN);
             KShapeLayout layout = node.getData(KShapeLayout.class);
             double lifelineCenter = layout.getXpos() + layout.getWidth() / 2;
             if (lifelineCenter < minXPos) {
@@ -910,7 +912,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
         if (area.getNextMessage() != null) {
             Object messageObj = area.getNextMessage();
             SMessage message = (SMessage) messageObj;
-            KEdge edge = (KEdge) message.getProperty(Properties.ORIGIN);
+            KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
             KEdgeLayout layout = edge.getData(KEdgeLayout.class);
             double messageYPos;
             if (layout.getSourcePoint().getY() < layout.getTargetPoint().getY()) {
@@ -966,7 +968,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
                 continue;
             }
 
-            KNode node = (KNode) lifeline.getProperty(Properties.ORIGIN);
+            KNode node = (KNode) lifeline.getProperty(InternalProperties.ORIGIN);
             KShapeLayout nodeLayout = node.getData(KShapeLayout.class);
 
             if (nodeLayout.getProperty(PapyrusProperties.NODE_TYPE).equals(
@@ -1052,7 +1054,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
 
         // Handle outgoing messages
         for (SMessage message : lifeline.getOutgoingMessages()) {
-            KEdge edge = (KEdge) message.getProperty(Properties.ORIGIN);
+            KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
             KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
             KPoint sourcePoint = edgeLayout.getSourcePoint();
             sourcePoint.setY((float) (message.getSourceYPos() * factor));
@@ -1110,7 +1112,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
 
         // Handle incoming messages
         for (SMessage message : lifeline.getIncomingMessages()) {
-            KEdge edge = (KEdge) message.getProperty(Properties.ORIGIN);
+            KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
             KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
             KPoint targetPoint = edgeLayout.getTargetPoint();
             targetPoint.setX((float) (lifeline.getPosition().x + lifeline.getSize().x / 2));
@@ -1287,7 +1289,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
         arrangeExecutions(executions, lifeline.getSize().x);
 
         // Get the layout data of the execution
-        KNode node = (KNode) lifeline.getProperty(Properties.ORIGIN);
+        KNode node = (KNode) lifeline.getProperty(InternalProperties.ORIGIN);
         KShapeLayout nodeLayout = node.getData(KShapeLayout.class);
 
         // Walk through the lifeline's executions
@@ -1353,7 +1355,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
                             toLeft = true;
                         }
 
-                        KEdge edge = (KEdge) mess.getProperty(Properties.ORIGIN);
+                        KEdge edge = (KEdge) mess.getProperty(InternalProperties.ORIGIN);
                         KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
                         double newXPos = lifeline.getPosition().x + execution.getPosition().x;
                         if (mess.getSource() == mess.getTarget()) {
@@ -1466,7 +1468,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
      */
     private void placeComments(final SGraph graph) {
         for (SComment comment : graph.getComments()) {
-            Object origin = comment.getProperty(Properties.ORIGIN);
+            Object origin = comment.getProperty(InternalProperties.ORIGIN);
             KShapeLayout commentLayout = ((KNode) origin).getData(KShapeLayout.class);
             commentLayout.setPos((float) comment.getPosition().x, (float) comment.getPosition().y);
             if (comment.getMessage() != null) {
@@ -1487,7 +1489,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
                     // Connections to messages are drawn vertically
                     edgeSourceXPos = comment.getPosition().x + comment.getSize().x / 2;
                     edgeTargetXPos = edgeSourceXPos;
-                    KEdge edge = (KEdge) comment.getMessage().getProperty(Properties.ORIGIN);
+                    KEdge edge = (KEdge) comment.getMessage().getProperty(InternalProperties.ORIGIN);
                     KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
                     KPoint targetPoint = edgeLayout.getTargetPoint();
                     KPoint sourcePoint = edgeLayout.getSourcePoint();

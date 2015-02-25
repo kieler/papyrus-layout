@@ -17,10 +17,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
+import de.cau.cs.kieler.klay.layered.graph.LGraph;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.graph.Layer;
-import de.cau.cs.kieler.klay.layered.graph.LGraph;
-import de.cau.cs.kieler.klay.layered.properties.Properties;
+import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
 import de.cau.cs.kieler.papyrus.sequence.ILifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
@@ -115,7 +115,7 @@ public class LayerbasedLifelineSorter implements ILifelineSorter {
         for (Layer layer : lgraph.getLayers()) {
             int layerIndex = layer.getIndex();
             for (LNode node : layer.getNodes()) {
-                SMessage message = (SMessage) node.getProperty(Properties.ORIGIN);
+                SMessage message = (SMessage) node.getProperty(InternalProperties.ORIGIN);
                 if (message != null) {
                     message.setMessageLayer(layerIndex);
                 }
@@ -136,21 +136,21 @@ public class LayerbasedLifelineSorter implements ILifelineSorter {
         List<LNode> candidates = new LinkedList<LNode>();
         for (Layer layer : lgraph.getLayers()) {
             for (LNode node : layer.getNodes()) {
-                SMessage message = (SMessage) node.getProperty(Properties.ORIGIN);
+                SMessage message = (SMessage) node.getProperty(InternalProperties.ORIGIN);
                 if (message != null && lifelines.contains(message.getSource())) {
                     candidates.add(node);
                 }
             }
             if (candidates.size() == 1) {
                 // If there is only one candidate, return it
-                return (SMessage) candidates.get(0).getProperty(Properties.ORIGIN);
+                return (SMessage) candidates.get(0).getProperty(InternalProperties.ORIGIN);
             } else if (!candidates.isEmpty()) {
                 // If there are more candidates, check, which ones source has the best in/out
                 // relation
-                SMessage bestOne = (SMessage) candidates.get(0).getProperty(Properties.ORIGIN);
+                SMessage bestOne = (SMessage) candidates.get(0).getProperty(InternalProperties.ORIGIN);
                 int bestRelation = Integer.MIN_VALUE;
                 for (LNode node : candidates) {
-                    SMessage candidate = (SMessage) node.getProperty(Properties.ORIGIN);
+                    SMessage candidate = (SMessage) node.getProperty(InternalProperties.ORIGIN);
                     int relation = candidate.getSource().getNumberOfOutgoingMessages()
                             - candidate.getSource().getNumberOfIncomingMessages();
                     if (relation > bestRelation) {

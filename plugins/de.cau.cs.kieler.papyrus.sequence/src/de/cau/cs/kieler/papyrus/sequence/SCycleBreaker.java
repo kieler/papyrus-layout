@@ -22,9 +22,9 @@ import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
 import de.cau.cs.kieler.core.kgraph.KEdge;
 import de.cau.cs.kieler.kiml.klayoutdata.KEdgeLayout;
 import de.cau.cs.kieler.klay.layered.graph.LEdge;
-import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.graph.LGraph;
-import de.cau.cs.kieler.klay.layered.properties.Properties;
+import de.cau.cs.kieler.klay.layered.graph.LNode;
+import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 
@@ -94,7 +94,7 @@ public class SCycleBreaker {
         LNode newNode = new LNode(lgraph);
         lgraph.getLayerlessNodes().add(newNode);
 
-        SMessage message = (SMessage) node.getProperty(Properties.ORIGIN);
+        SMessage message = (SMessage) node.getProperty(InternalProperties.ORIGIN);
         SLifeline sourceLL = message.getSource();
         SLifeline targetLL = message.getTarget();
         Iterator<LEdge> oEdges = node.getConnectedEdges().iterator();
@@ -113,7 +113,7 @@ public class SCycleBreaker {
         }
         node.setProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE, sourceLL);
         newNode.setProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE, targetLL);
-        newNode.setProperty(Properties.ORIGIN, message);
+        newNode.setProperty(InternalProperties.ORIGIN, message);
     }
 
     /**
@@ -155,8 +155,8 @@ public class SCycleBreaker {
         int foundIndex = chain.indexOf(foundNode);
         for (int i = foundIndex; i < chain.size(); i++) {
             LNode node = chain.get(i);
-            SMessage message = (SMessage) node.getProperty(Properties.ORIGIN);
-            KEdge edge = (KEdge) message.getProperty(Properties.ORIGIN);
+            SMessage message = (SMessage) node.getProperty(InternalProperties.ORIGIN);
+            KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
             KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
             // Compare only sourcePositions since messages can only lead downwards or horizontal
             float sourceYPos = edgeLayout.getSourcePoint().getY();

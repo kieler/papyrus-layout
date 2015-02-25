@@ -27,19 +27,19 @@ import de.cau.cs.kieler.kiml.klayoutdata.KEdgeLayout;
 import de.cau.cs.kieler.kiml.klayoutdata.KPoint;
 import de.cau.cs.kieler.kiml.klayoutdata.KShapeLayout;
 import de.cau.cs.kieler.klay.layered.graph.LEdge;
+import de.cau.cs.kieler.klay.layered.graph.LGraph;
 import de.cau.cs.kieler.klay.layered.graph.LLabel;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.graph.LPort;
-import de.cau.cs.kieler.klay.layered.graph.LGraph;
-import de.cau.cs.kieler.klay.layered.properties.Properties;
+import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
+import de.cau.cs.kieler.papyrus.PapyrusProperties;
+import de.cau.cs.kieler.papyrus.SequenceArea;
+import de.cau.cs.kieler.papyrus.SequenceExecution;
 import de.cau.cs.kieler.papyrus.sequence.graph.SComment;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraphElement;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
-import de.cau.cs.kieler.papyrus.PapyrusProperties;
-import de.cau.cs.kieler.papyrus.SequenceArea;
-import de.cau.cs.kieler.papyrus.SequenceExecution;
 
 /**
  * Importer class that converts the KGraph into a SGraph and builds the LayeredGraph out of the
@@ -142,7 +142,7 @@ public class SGraphImporter {
             for (SMessage message : lifeline.getOutgoingMessages()) {
                 LNode node = new LNode(lgraph);
                 node.getLabels().add(new LLabel(lgraph, "Node" + i++));
-                node.setProperty(Properties.ORIGIN, message);
+                node.setProperty(InternalProperties.ORIGIN, message);
                 message.setProperty(SequenceDiagramProperties.LAYERED_NODE, node);
                 lgraph.getLayerlessNodes().add(node);
             }
@@ -151,7 +151,7 @@ public class SGraphImporter {
                 if (message.getSource().getName().equals("DummyLifeline")) {
                     LNode node = new LNode(lgraph);
                     node.getLabels().add(new LLabel(lgraph, "Node" + i++));
-                    node.setProperty(Properties.ORIGIN, message);
+                    node.setProperty(InternalProperties.ORIGIN, message);
                     message.setProperty(SequenceDiagramProperties.LAYERED_NODE, node);
                     lgraph.getLayerlessNodes().add(node);
                 }
@@ -209,7 +209,7 @@ public class SGraphImporter {
 
         // Create comment object
         SComment comment = new SComment();
-        comment.setProperty(Properties.ORIGIN, node);
+        comment.setProperty(InternalProperties.ORIGIN, node);
         comment.setProperty(PapyrusProperties.NODE_TYPE, nodeType);
         String attachedElement = commentLayout.getProperty(PapyrusProperties.ATTACHED_ELEMENT);
         comment.setProperty(PapyrusProperties.ATTACHED_ELEMENT, attachedElement);
@@ -259,7 +259,7 @@ public class SGraphImporter {
             SMessage nextMessage = null;
             smallestDistance = Double.MAX_VALUE;
             for (SMessage message : nextLifeline.getMessages()) {
-                KEdge edge = (KEdge) message.getProperty(Properties.ORIGIN);
+                KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
                 KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
                 double distance;
                 if (message.getSource() == nextLifeline) {
@@ -307,7 +307,7 @@ public class SGraphImporter {
         for (Object lifelineObj : area.getLifelines()) {
             SLifeline lifeline = (SLifeline) lifelineObj;
             for (SMessage message : lifeline.getIncomingMessages()) {
-                Object originObj = message.getProperty(Properties.ORIGIN);
+                Object originObj = message.getProperty(InternalProperties.ORIGIN);
                 if (originObj instanceof KEdge) {
                     KEdge edge = (KEdge) originObj;
                     KEdgeLayout layout = edge.getData(KEdgeLayout.class);
@@ -319,7 +319,7 @@ public class SGraphImporter {
                 }
             }
             for (SMessage message : lifeline.getOutgoingMessages()) {
-                Object originObj = message.getProperty(Properties.ORIGIN);
+                Object originObj = message.getProperty(InternalProperties.ORIGIN);
                 if (originObj instanceof KEdge) {
                     KEdge edge = (KEdge) originObj;
                     KEdgeLayout layout = edge.getData(KEdgeLayout.class);
@@ -367,7 +367,7 @@ public class SGraphImporter {
 
             // Create message object
             SMessage message = new SMessage(sourceLL, targetLL);
-            message.setProperty(Properties.ORIGIN, edge);
+            message.setProperty(InternalProperties.ORIGIN, edge);
             message.setComments(new LinkedList<SComment>());
 
             KEdgeLayout layout = edge.getData(KEdgeLayout.class);
@@ -484,7 +484,7 @@ public class SGraphImporter {
 
                 // Create message object
                 SMessage message = new SMessage(sourceLL, targetLL);
-                message.setProperty(Properties.ORIGIN, edge);
+                message.setProperty(InternalProperties.ORIGIN, edge);
                 message.setComments(new LinkedList<SComment>());
                 message.setTargetYPos(layout.getTargetPoint().getY());
 
@@ -561,7 +561,7 @@ public class SGraphImporter {
             if (node.getLabels().size() > 0) {
                 lifeline.setName(node.getLabels().get(0).getText());
             }
-            lifeline.setProperty(Properties.ORIGIN, node);
+            lifeline.setProperty(InternalProperties.ORIGIN, node);
             nodeMap.put(node, lifeline);
             sgraph.addLifeline(lifeline);
 

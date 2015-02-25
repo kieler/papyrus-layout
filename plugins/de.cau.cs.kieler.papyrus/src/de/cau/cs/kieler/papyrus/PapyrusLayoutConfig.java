@@ -29,22 +29,22 @@ import de.cau.cs.kieler.kiml.gmf.GmfLayoutConfig;
  */
 public class PapyrusLayoutConfig extends GmfLayoutConfig {
     
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void enrich(final LayoutContext context) {
-        super.enrich(context);
-        Object diagramPart = context.getProperty(LayoutContext.DIAGRAM_PART);
-        if (diagramPart != null && diagramPart.getClass().getSimpleName()
-                    .equals("PackageEditPart")) {
-            // Disable LayoutOptions for the PackageEditPart
-            Set<LayoutOptionData.Target> optionTargets = context
-                    .getProperty(LayoutContext.OPT_TARGETS);
-            if (optionTargets != null) {
-                optionTargets.clear();
-            }
-        }
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    @Override
+//    public void enrich(final LayoutContext context) {
+//        super.enrich(context);
+//        Object diagramPart = context.getProperty(LayoutContext.DIAGRAM_PART);
+//        if (diagramPart != null && diagramPart.getClass().getSimpleName()
+//                    .equals("PackageEditPart")) {
+//            // Disable LayoutOptions for the PackageEditPart
+//            Set<LayoutOptionData.Target> optionTargets = context
+//                    .getProperty(LayoutContext.OPT_TARGETS);
+//            if (optionTargets != null) {
+//                optionTargets.clear();
+//            }
+//        }
+//    }
     
 }
