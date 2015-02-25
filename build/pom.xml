@@ -7,47 +7,74 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  
+
   <!-- Define a few properties used throughout all build profiles. -->
   <properties>
-    <tycho-version>0.18.1</tycho-version>
+    <tycho-version>0.21.0</tycho-version>
     <targetJdk>1.5</targetJdk>
+
+    <!-- chsch: copied from https://eclipse.googlesource.com/recommenders/org.eclipse.recommenders/+/3dae4575d3370da2da25a1cbce3dfcff198f0611/features/pom.xml -->
+    <!-- Non-breakable space, as normal spaces are trimmed. -->
+    <sourceFeatureLabelSuffix>&#xA0;(Sources)</sourceFeatureLabelSuffix>
+
+    <!-- guarantee that we use utf8 for compilation, this is especially required
+         due to xtend's template symbols («) when running maven on windows. -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.build.resourceEncoding>UTF-8</project.build.resourceEncoding>
+    <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+
+    <!-- definitions of our repositories -->
+    <kieler.targetplatform>
+      http://rtsys.informatik.uni-kiel.de/~kieler/repository/luna441/
+    </kieler.targetplatform>
+    <kieler.pragmatics.release>
+      http://rtsys.informatik.uni-kiel.de/~kieler/updatesite/
+    </kieler.pragmatics.release>
+    <papyrus.release>
+      http://download.eclipse.org/modeling/mdt/papyrus/updates/releases/luna
+    </papyrus.release>
   </properties>
-  
-  
-  <!-- Define one profile for each output target we have. -->
+
+
+  <!-- Define one profile for each output target we have.
+       Formerly, we had the <repository> definitions repeated below in each profile
+       globally defined, i.e. profile independent. This, however, prevents the
+       Stuttgart/India guys from relying on our build infrastructure as it is
+       (they don't want and cannot rely on our target platform repos) and would
+       require customization, which may lead to merge conflicts due updates in our
+       config and further hassles... -->
   <profiles>
     <!-- The Papyrus update site. -->
     <profile>
       <id>papyrus</id>
-      
+
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
-      
+
       <repositories>
+        <!-- eclipse base installation -->
         <repository>
           <id>p2.targetPlatform</id>
           <layout>p2</layout>
-          <url>http://rtsys.informatik.uni-kiel.de/~kieler/repository/juno422/</url>
+          <url>${kieler.targetplatform}</url>
         </repository>
+
+        <!-- pragmatics release -->
         <repository>
-          <id>p2.pragmatics_release</id>
+          <id>p2.pragmatics</id>
           <layout>p2</layout>
-          <url>http://rtsys.informatik.uni-kiel.de/~kieler/updatesite/</url>
+          <url>${kieler.pragmatics.release}</url>
         </repository>
+
+        <!-- papyrus release -->
         <repository>
-            <id>p2.papyrus</id>
-            <layout>p2</layout>
-            <url>http://download.eclipse.org/modeling/mdt/papyrus/updates/releases/maintenance/juno</url>
-        </repository>
-        <repository>
-          <id>p2.eclipse.kepler</id>
+          <id>p2.papyrus</id>
           <layout>p2</layout>
-          <url>http://download.eclipse.org/releases/juno</url>
+          <url>${papyrus.release}</url>
         </repository>
       </repositories>
-      
+
       <modules>
         <module>../plugins/de.cau.cs.kieler.papyrus</module>
         <module>../plugins/de.cau.cs.kieler.papyrus.sequence</module>
@@ -102,7 +129,7 @@
           </execution>
         </executions>
       </plugin>
-      
+
       <!-- Enable java assertions during junit test runs. -->
       <!-- The "enableAssertions" property is only available in the maven-surefire plugin. -->
       <plugin>
@@ -234,10 +261,10 @@
         </configuration>
       </plugin>
     </plugins>
-    
+
     <pluginManagement>
       <plugins>
-      
+
         <!-- maven xtend plugin to tell maven how to compile xtend code -->
         <plugin>
           <groupId>org.eclipse.xtend</groupId>
@@ -247,7 +274,7 @@
             <outputDirectory>${basedir}/xtend-gen</outputDirectory>
           </configuration>
         </plugin>
-        
+
         <!-- add src-gen and xtend-gen to source-directories -->
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -271,7 +298,7 @@
             </execution>
           </executions>
         </plugin>
-        
+
         <!-- generated code needs cleanup too -->
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
