@@ -30,9 +30,6 @@
     <kieler.pragmatics.release>
       http://rtsys.informatik.uni-kiel.de/~kieler/updatesite/
     </kieler.pragmatics.release>
-    <papyrus.release>
-      http://download.eclipse.org/modeling/mdt/papyrus/updates/releases/luna
-    </papyrus.release>
   </properties>
 
 
@@ -65,13 +62,6 @@
           <id>p2.pragmatics</id>
           <layout>p2</layout>
           <url>${kieler.pragmatics.release}</url>
-        </repository>
-
-        <!-- papyrus release -->
-        <repository>
-          <id>p2.papyrus</id>
-          <layout>p2</layout>
-          <url>${papyrus.release}</url>
         </repository>
       </repositories>
 
