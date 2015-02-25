@@ -24,12 +24,12 @@
     <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
 
     <!-- definitions of our repositories -->
-    <kieler.pragmatics.release>
-      http://rtsys.informatik.uni-kiel.de/~kieler/updatesite/
-    </kieler.pragmatics.release>
     <eclipse.release>
       http://download.eclipse.org/releases/luna
     </eclipse.release>
+    <kieler.pragmatics.release>
+      http://rtsys.informatik.uni-kiel.de/~kieler/updatesite/
+    </kieler.pragmatics.release>
     <papyrus.release>
       http://download.eclipse.org/modeling/mdt/papyrus/updates/releases/luna
     </papyrus.release>
@@ -55,9 +55,9 @@
       <repositories>
         <!-- eclipse base installation -->
         <repository>
-          <id>p2.targetPlatform</id>
+          <id>p2.eclipse</id>
           <layout>p2</layout>
-          <url>${kieler.targetplatform}</url>
+          <url>${eclipse.release}</url>
         </repository>
 
         <!-- pragmatics release -->
