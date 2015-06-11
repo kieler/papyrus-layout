@@ -53,6 +53,10 @@ import de.cau.cs.kieler.papyrus.sequence.sorter.LifelineSortingStrategy;
  * 
  */
 public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
+    
+    /** The layout provider's ID. */
+    public static final String ID = "de.cau.cs.kieler.papyrus.sequence.layout";
+    
     /** Constant that is needed to calculate some offsets. */
     private static final int TWENTY = 20;
     /** Constant that is needed to calculate some offsets. */
