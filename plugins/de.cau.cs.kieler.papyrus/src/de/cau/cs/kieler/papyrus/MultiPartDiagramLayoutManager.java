@@ -122,9 +122,6 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
 
     /** the map of references and edges. */
     private Map<EReference, KEdge> reference2EdgeMap;
-
-    /** the cached layout configuration for GMF. */
-    private GmfLayoutConfig layoutConfig = new PapyrusLayoutConfig();
     
     static {
         PAPYRUS_NODE_TYPES.put("2001", NodeType.SURROUNDING_INTERACTION);
@@ -253,8 +250,6 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
         // create a layout configurator from the properties that were set while building
         mapping.getLayoutConfigs().add(VolatileLayoutConfig.fromProperties(mapping.getLayoutGraph(),
                 GmfLayoutConfig.PRIORITY - 1));
-        // add the layout configurator that reads the styles attached to the notation model
-        mapping.getLayoutConfigs().add(layoutConfig);
 
         return mapping;
     }
