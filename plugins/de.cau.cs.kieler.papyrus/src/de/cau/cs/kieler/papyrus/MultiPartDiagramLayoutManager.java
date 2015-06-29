@@ -85,6 +85,7 @@ import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution.SequenceExecutionType;
 
 /**
  * Layout manager wrapper for the Papyrus multi diagram editor.
@@ -189,6 +190,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
     @Override
     public LayoutMapping<IGraphicalEditPart> buildLayoutGraph(final IWorkbenchPart workbenchPart,
             final Object diagramPart) {
+        
         if (workbenchPart instanceof IMultiDiagramEditor) {
             IWorkbenchPart part = ((IMultiDiagramEditor) workbenchPart).getActiveEditor();
             if (part.getClass().getSimpleName().equals("UmlSequenceDiagramForMultiEditor")) {
@@ -685,15 +687,15 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
 
             executionNode.getData(KShapeLayout.class).setProperty(SequenceDiagramProperties.NODE_TYPE,
                     nodeType);
-            execution.setType("Execution");
+            execution.setType(SequenceExecutionType.EXECUTION);
         } else if (nodeType == NodeType.DURATION_CONSTRAINT) {
             executionNode.getData(KShapeLayout.class).setProperty(SequenceDiagramProperties.NODE_TYPE,
                     nodeType);
-            execution.setType("Duration");
+            execution.setType(SequenceExecutionType.DURATION);
         } else if (nodeType == NodeType.TIME_CONSTRAINT) {
             executionNode.getData(KShapeLayout.class).setProperty(SequenceDiagramProperties.NODE_TYPE,
                     nodeType);
-            execution.setType("TimeConstraint");
+            execution.setType(SequenceExecutionType.TIME_CONSTRAINT);
         }
 
         // Walk through the connected messages
@@ -718,7 +720,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
 
         // Add messages to duration if their send/receive event is in the area of the
         // duration
-        if (nodeType.equals("3021") || nodeType.equals("3019")) {
+        if (nodeType == NodeType.DURATION_CONSTRAINT || nodeType == NodeType.TIME_CONSTRAINT) {
             // get position of messages and compare to duration
             int from = executionBounds.y();
             int to = executionBounds.y() + executionBounds.height();
