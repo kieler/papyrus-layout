@@ -36,6 +36,10 @@ public final class SequenceDiagramProperties {
         // Hide the constructor
     }
 
+    /** The type of a node. */
+    public static final IProperty<NodeType> NODE_TYPE = new Property<NodeType>(
+            "de.cau.cs.kieler.papyrus.sequence.nodeType", NodeType.LIFELINE);
+
     /** The type of a message. */
     public static final IProperty<MessageType> MESSAGE_TYPE = new Property<MessageType>(
             "de.cau.cs.kieler.papyrus.sequence.messageType", MessageType.ASYNCHRONOUS);

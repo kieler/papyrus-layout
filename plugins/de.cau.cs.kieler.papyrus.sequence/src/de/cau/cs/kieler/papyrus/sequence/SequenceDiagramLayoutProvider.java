@@ -40,6 +40,7 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SGraphElement;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
+import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 import de.cau.cs.kieler.papyrus.sequence.sorter.EqualDistributionLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.sorter.InteractiveLifelineSorter;
@@ -488,10 +489,12 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
                     // Handle conflicts (reset yPos if necessary)
                     SComment upper = comment;
                     SComment lower = hash.get(message);
-                    String nodeType = comment.getProperty(PapyrusProperties.NODE_TYPE);
+                    NodeType nodeType = comment.getProperty(SequenceDiagramProperties.NODE_TYPE);
                     
                     // If comment is Observation, place it nearer to the message
-                    if (nodeType.equals("3024") || nodeType.equals("3020")) {
+                    if (nodeType == NodeType.DURATION_OBSERVATION
+                            || nodeType == NodeType.TIME_OBSERVATION) {
+                        
                         upper = lower;
                         lower = comment;
                     }
@@ -976,8 +979,9 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
             KNode node = (KNode) lifeline.getProperty(InternalProperties.ORIGIN);
             KShapeLayout nodeLayout = node.getData(KShapeLayout.class);
 
-            if (nodeLayout.getProperty(PapyrusProperties.NODE_TYPE).equals(
-                    "PapyrusUMLSequenceDiagram")) {
+            if (nodeLayout.getProperty(SequenceDiagramProperties.NODE_TYPE)
+                    == NodeType.SURROUNDING_INTERACTION) {
+                
                 // This is the surrounding node
                 break;
             }

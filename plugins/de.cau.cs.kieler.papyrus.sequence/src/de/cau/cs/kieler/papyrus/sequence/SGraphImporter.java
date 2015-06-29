@@ -41,6 +41,7 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SGraphElement;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
+import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
 /**
@@ -82,9 +83,9 @@ public class SGraphImporter {
 
         // Walk through lifelines (create their messages) and comments
         for (KNode node : topNode.getChildren()) {
-            String nodeType = node.getData(KShapeLayout.class).getProperty(
-                    PapyrusProperties.NODE_TYPE);
-            if (nodeType.equals("3001")) {
+            NodeType nodeType = node.getData(KShapeLayout.class).getProperty(
+                    SequenceDiagramProperties.NODE_TYPE);
+            if (nodeType == NodeType.LIFELINE) {
                 // Node is a lifeline
 
                 // Create SMessages for each of the outgoing edges
@@ -92,12 +93,13 @@ public class SGraphImporter {
 
                 // Handle found messages (incoming messages)
                 createIncomingMessages(sgraph, nodeMap, edgeMap, node);
-
-            } else if (nodeType.equals("3009") || nodeType.equals("3008")
-                    || nodeType.equals("3024") || nodeType.equals("3020")) {
+            } else if (nodeType == NodeType.COMMENT
+                    || nodeType == NodeType.CONSTRAINT
+                    || nodeType == NodeType.DURATION_OBSERVATION
+                    || nodeType == NodeType.TIME_OBSERVATION) {
+                
                 // Node is comment, constraint or time observation/constraint 
-
-                createComment(sgraph, nodeMap, edgeMap, node);
+                createCommentLikeNode(sgraph, nodeMap, edgeMap, node);
             }
         }
 
@@ -201,18 +203,18 @@ public class SGraphImporter {
      * @param node
      *            the node to create a comment object from
      */
-    private void createComment(final SGraph sgraph, final HashMap<KNode, SLifeline> nodeMap,
+    private void createCommentLikeNode(final SGraph sgraph, final HashMap<KNode, SLifeline> nodeMap,
             final HashMap<KEdge, SMessage> edgeMap, final KNode node) {
 
         KShapeLayout commentLayout = node.getData(KShapeLayout.class);
 
         // Get the node's type
-        String nodeType = commentLayout.getProperty(PapyrusProperties.NODE_TYPE);
+        NodeType nodeType = commentLayout.getProperty(SequenceDiagramProperties.NODE_TYPE);
 
         // Create comment object
         SComment comment = new SComment();
         comment.setProperty(InternalProperties.ORIGIN, node);
-        comment.setProperty(PapyrusProperties.NODE_TYPE, nodeType);
+        comment.setProperty(SequenceDiagramProperties.NODE_TYPE, nodeType);
         String attachedElement = commentLayout.getProperty(PapyrusProperties.ATTACHED_ELEMENT);
         comment.setProperty(PapyrusProperties.ATTACHED_ELEMENT, attachedElement);
         // Attach connected edge to comment
@@ -414,22 +416,19 @@ public class SGraphImporter {
             }
 
             // Append the message type of the edge to the message
-            String messageType = layout.getProperty(PapyrusProperties.MESSAGE_TYPE);
-            if (messageType.equals("4004")) {
-                message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, MessageType.ASYNCHRONOUS);
-            } else if (messageType.equals("4006")) {
-                message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, MessageType.CREATE);
-            } else if (messageType.equals("4007")) {
-                message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, MessageType.DELETE);
-            } else if (messageType.equals("4003")) {
-                message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, MessageType.SYNCHRONOUS);
-            } else if (messageType.equals("4008")) {
-                message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, MessageType.LOST);
+            MessageType messageType = layout.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+            if (messageType == MessageType.ASYNCHRONOUS
+                    || messageType == MessageType.CREATE
+                    || messageType == MessageType.DELETE
+                    || messageType == MessageType.SYNCHRONOUS
+                    || messageType == MessageType.LOST) {
+                
+                message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, messageType);
             }
 
             // Outgoing messages to the surrounding interaction are drawn to the right and therefore
             // their target lifeline should have highest position
-            if (targetLL.getName().equals("DummyLifeline") && !messageType.equals("4008")) {
+            if (targetLL.getName().equals("DummyLifeline") && messageType != MessageType.LOST) {
                 targetLL.setHorizontalSlot(sgraph.getLifelines().size() + 1);
             }
 
@@ -498,26 +497,20 @@ public class SGraphImporter {
                 edgeMap.put(edge, message);
 
                 // Append the message type of the edge to the message
-                String messageType = layout.getProperty(PapyrusProperties.MESSAGE_TYPE);
-                if (messageType.equals("4009")) {
+                MessageType messageType = layout.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+                if (messageType == MessageType.FOUND) {
                     message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, MessageType.FOUND);
                 } else {
                     // Since incoming messages come from the left side of the surrounding
                     // interaction, give its dummy lifeline position -1
                     sourceLL.setHorizontalSlot(-1);
 
-                    if (messageType.equals("4004")) {
-                        message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE,
-                                MessageType.ASYNCHRONOUS);
-                    } else if (messageType.equals("4006")) {
-                        message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE,
-                                MessageType.CREATE);
-                    } else if (messageType.equals("4007")) {
-                        message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE,
-                                MessageType.DELETE);
-                    } else if (messageType.equals("4003")) {
-                        message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE,
-                                MessageType.SYNCHRONOUS);
+                    if (messageType == MessageType.ASYNCHRONOUS
+                            || messageType == MessageType.CREATE
+                            || messageType == MessageType.DELETE
+                            || messageType == MessageType.SYNCHRONOUS) {
+                        
+                        message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, messageType);
                     }
                 }
 
@@ -555,9 +548,9 @@ public class SGraphImporter {
      */
     private void createLifeline(final SGraph sgraph, final HashMap<KNode, SLifeline> nodeMap,
             final KNode node) {
+        
         KShapeLayout layout = node.getData(KShapeLayout.class);
-        String nodeType = layout.getProperty(PapyrusProperties.NODE_TYPE);
-        if (nodeType.equals("3001")) {
+        if (layout.getProperty(SequenceDiagramProperties.NODE_TYPE) == NodeType.LIFELINE) {
             // Node is lifeline
             SLifeline lifeline = new SLifeline();
             if (node.getLabels().size() > 0) {
