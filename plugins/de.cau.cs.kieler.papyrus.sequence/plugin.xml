@@ -82,7 +82,7 @@
       <layoutOption
             advanced="false"
             appliesTo="parents"
-            class="de.cau.cs.kieler.papyrus.sequence.LabelAlignment"
+            class="de.cau.cs.kieler.papyrus.sequence.properties.LabelAlignment"
             default="FIRST_CENTER"
             description="The strategy that is used to find the right horizontal position for message labels."
             id="de.cau.cs.kieler.papyrus.sequence.labelAlignment"

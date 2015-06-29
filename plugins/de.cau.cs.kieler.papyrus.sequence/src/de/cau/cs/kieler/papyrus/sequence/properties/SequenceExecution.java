@@ -28,8 +28,23 @@ import de.cau.cs.kieler.core.math.KVector;
  * 
  */
 public class SequenceExecution {
+    
+    /**
+     * The type of sequence execution.
+     * 
+     * @author dja
+     */
+    public static enum SequenceExecutionType {
+        /** It's an execution. */
+        EXECUTION,
+        /** It's a duration.*/
+        DURATION,
+        /** It's a time constraint. */
+        TIME_CONSTRAINT;
+    }
+    
     /** The type of the execution. */
-    private String type = "";
+    private SequenceExecutionType type = null;
     /** The list of connected messages. */
     private List<Object> messages;
     /** The size of the execution. */
@@ -71,7 +86,7 @@ public class SequenceExecution {
      * 
      * @return the type
      */
-    public String getType() {
+    public SequenceExecutionType getType() {
         return type;
     }
 
@@ -81,7 +96,7 @@ public class SequenceExecution {
      * @param type
      *            the new type
      */
-    public void setType(final String type) {
+    public void setType(final SequenceExecutionType type) {
         this.type = type;
     }
 
