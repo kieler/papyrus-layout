@@ -11,7 +11,7 @@
  * This code is provided under the terms of the Eclipse Public License (EPL).
  * See the file epl-v10.html for the license text.
  */
-package de.cau.cs.kieler.papyrus.sequence;
+package de.cau.cs.kieler.papyrus.sequence.properties;
 
 import de.cau.cs.kieler.core.kgraph.KEdge;
 import de.cau.cs.kieler.core.kgraph.KNode;
@@ -19,6 +19,7 @@ import de.cau.cs.kieler.core.properties.IProperty;
 import de.cau.cs.kieler.core.properties.Property;
 import de.cau.cs.kieler.kiml.options.LayoutOptions;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
+import de.cau.cs.kieler.papyrus.sequence.LabelAlignment;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.sorter.LifelineSortingStrategy;
 

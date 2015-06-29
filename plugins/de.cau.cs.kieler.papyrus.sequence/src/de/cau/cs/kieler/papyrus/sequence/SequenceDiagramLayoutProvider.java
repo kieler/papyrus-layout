@@ -39,6 +39,8 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraphElement;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
+import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 import de.cau.cs.kieler.papyrus.sequence.sorter.EqualDistributionLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.sorter.InteractiveLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.sorter.LayerbasedLifelineSorter;

@@ -27,6 +27,7 @@ import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
 /**
  * Heuristic implementation of cycle breaking.

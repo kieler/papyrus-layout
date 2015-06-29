@@ -27,11 +27,11 @@ import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
 import de.cau.cs.kieler.papyrus.PapyrusProperties;
 import de.cau.cs.kieler.papyrus.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.ILifelineSorter;
-import de.cau.cs.kieler.papyrus.sequence.MessageType;
-import de.cau.cs.kieler.papyrus.sequence.SequenceDiagramProperties;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
+import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
 /**
  * Lifeline sorting algorithm that is inspired by the heuristic solution to the linear arrangement

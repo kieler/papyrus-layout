@@ -40,6 +40,8 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraphElement;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
+import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
 /**
  * Importer class that converts the KGraph into a SGraph and builds the LayeredGraph out of the
