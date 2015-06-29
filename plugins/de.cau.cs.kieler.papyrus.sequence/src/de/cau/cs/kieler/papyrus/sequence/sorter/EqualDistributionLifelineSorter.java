@@ -24,13 +24,12 @@ import de.cau.cs.kieler.klay.layered.graph.LGraph;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.graph.Layer;
 import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
-import de.cau.cs.kieler.papyrus.PapyrusProperties;
-import de.cau.cs.kieler.papyrus.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.ILifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
 /**
@@ -249,7 +248,7 @@ public class EqualDistributionLifelineSorter implements ILifelineSorter {
         // Prepare this by filling a map of (message <-> number of its areas) pairs.
         HashMap<SMessage, Integer> areaMessages = new HashMap<SMessage, Integer>();
         if (considerAreas) {
-            List<SequenceArea> areas = graph.getProperty(PapyrusProperties.AREAS);
+            List<SequenceArea> areas = graph.getProperty(SequenceDiagramProperties.AREAS);
             if (areas != null) {
                 for (SequenceArea area : areas) {
                     for (Object messageObject : area.getMessages()) {

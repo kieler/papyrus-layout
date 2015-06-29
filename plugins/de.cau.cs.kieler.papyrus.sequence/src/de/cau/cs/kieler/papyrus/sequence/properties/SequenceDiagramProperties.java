@@ -13,6 +13,8 @@
  */
 package de.cau.cs.kieler.papyrus.sequence.properties;
 
+import java.util.List;
+
 import de.cau.cs.kieler.core.kgraph.KEdge;
 import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.core.properties.IProperty;
@@ -35,6 +37,9 @@ public final class SequenceDiagramProperties {
     private SequenceDiagramProperties() {
         // Hide the constructor
     }
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties Describing the Graph Structure
 
     /** The type of a node. */
     public static final IProperty<NodeType> NODE_TYPE = new Property<NodeType>(
@@ -44,9 +49,40 @@ public final class SequenceDiagramProperties {
     public static final IProperty<MessageType> MESSAGE_TYPE = new Property<MessageType>(
             "de.cau.cs.kieler.papyrus.sequence.messageType", MessageType.ASYNCHRONOUS);
 
+    /** The list of areas (interactions, combined fragments, etc.). */
+    public static final IProperty<List<SequenceArea>> AREAS = new Property<List<SequenceArea>>(
+            "de.cau.cs.kieler.papyrus.sequence.area");
+
+    /** The list of execution specifications of a lifeline. */
+    public static final IProperty<List<SequenceExecution>> EXECUTIONS = 
+            new Property<List<SequenceExecution>>(
+                    "de.cau.cs.kieler.papyrus.sequence.executionSpecifications");
+
+    /** Property of a comment that indicates to what kind of element it is attached. */
+    public static final IProperty<String> ATTACHED_ELEMENT = new Property<String>(
+            "de.cau.cs.kieler.papyrus.sequence.attachedElement");
+
+    /** The list of objects, a comment is attached to. */
+    public static final IProperty<List<Object>> ATTACHED_TO = new Property<List<Object>>(
+            "de.cau.cs.kieler.papyrus.sequence.attachedTo");
+
+    /** The destruction event of a lifeline. */
+    public static final IProperty<KNode> DESTRUCTION = new Property<KNode>(
+            "de.cau.cs.kieler.papyrus.sequence.destruction");
+    
+    
+
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Layout Properties
+
     /** Spacing to the border of the drawing. */
     public static final Property<Float> BORDER_SPACING = new Property<Float>(
             LayoutOptions.BORDER_SPACING, 12.0f, 0.0f);
+
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Other Properties
 
     /** The lifeline to which an element of the SGraph belongs. */
     public static final IProperty<SLifeline> BELONGS_TO_LIFELINE = new Property<SLifeline>(
@@ -100,10 +136,9 @@ public final class SequenceDiagramProperties {
      * The lifeline sorting strategy that should be used in the algorithm. This property may be set
      * by the user.
      */
-    public static final Property<LifelineSortingStrategy> LIFELINE_SORTING 
-                = new Property<LifelineSortingStrategy>(
-                        "de.cau.cs.kieler.papyrus.sequence.lifelineSorting",
-                        LifelineSortingStrategy.INTERACTIVE);
+    public static final Property<LifelineSortingStrategy> LIFELINE_SORTING =
+            new Property<LifelineSortingStrategy>("de.cau.cs.kieler.papyrus.sequence.lifelineSorting",
+                    LifelineSortingStrategy.INTERACTIVE);
 
     /**
      * If messages in areas should be grouped together. This property may be set by the user if the

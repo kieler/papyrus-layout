@@ -82,7 +82,9 @@ import de.cau.cs.kieler.kiml.service.LayoutMapping;
 import de.cau.cs.kieler.kiml.util.KimlUtil;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
 
 /**
  * Layout manager wrapper for the Papyrus multi diagram editor.
@@ -314,9 +316,10 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
         KShapeLayout nodelayout = topNode.getData(KShapeLayout.class);
 
         // Copy the executions
-        List<SequenceExecution> executions = nodelayout.getProperty(PapyrusProperties.EXECUTIONS);
+        List<SequenceExecution> executions = nodelayout.getProperty(
+                SequenceDiagramProperties.EXECUTIONS);
         if (executions != null) {
-            nodelayout.setProperty(PapyrusProperties.EXECUTIONS, executions);
+            nodelayout.setProperty(SequenceDiagramProperties.EXECUTIONS, executions);
         } else {
             for (KNode node : topNode.getChildren()) {
                 copyAnnotations(mapping, node);
@@ -324,19 +327,19 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
         }
 
         // Copy the information to which element a comment is attached to
-        List<Object> attachedTo = nodelayout.getProperty(PapyrusProperties.ATTACHED_TO);
+        List<Object> attachedTo = nodelayout.getProperty(SequenceDiagramProperties.ATTACHED_TO);
         if (attachedTo != null) {
             List<Object> attTo = new LinkedList<Object>();
             BiMap<KGraphElement, IGraphicalEditPart> graphMap = mapping.getGraphMap();
             for (Object att : attachedTo) {
                 attTo.add(graphMap.inverse().get(att));
             }
-            nodelayout.setProperty(PapyrusProperties.ATTACHED_TO, attTo);
+            nodelayout.setProperty(SequenceDiagramProperties.ATTACHED_TO, attTo);
         }
 
-        String attachedElement = nodelayout.getProperty(PapyrusProperties.ATTACHED_ELEMENT);
+        String attachedElement = nodelayout.getProperty(SequenceDiagramProperties.ATTACHED_ELEMENT);
         if (attachedElement != null) {
-            nodelayout.setProperty(PapyrusProperties.ATTACHED_ELEMENT, attachedElement);
+            nodelayout.setProperty(SequenceDiagramProperties.ATTACHED_ELEMENT, attachedElement);
         }
     }
 
@@ -358,7 +361,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
             final IGraphicalEditPart currentEditPart) {
         Maybe<KInsets> kinsets = new Maybe<KInsets>();
 
-        parentLayoutNode.getData(KShapeLayout.class).setProperty(PapyrusProperties.AREAS,
+        parentLayoutNode.getData(KShapeLayout.class).setProperty(SequenceDiagramProperties.AREAS,
                 new LinkedList<SequenceArea>());
 
         // iterate through the children of the element
@@ -538,7 +541,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
                 } else if (subNodeType == NodeType.DESTRUCTION_EVENT) {
                     // Subnode is destruction event
                     layoutNode.getData(KShapeLayout.class).setProperty(
-                            PapyrusProperties.DESTRUCTION, subNode);
+                            SequenceDiagramProperties.DESTRUCTION, subNode);
                 }
 
                 // the modification flag must initially be false
@@ -546,7 +549,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
             }
         }
         if (executions.size() > 0) {
-            layoutNode.getData(KShapeLayout.class).setProperty(PapyrusProperties.EXECUTIONS,
+            layoutNode.getData(KShapeLayout.class).setProperty(SequenceDiagramProperties.EXECUTIONS,
                     executions);
         }
     }
@@ -578,9 +581,9 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
         area.getSize().y = bounds.height;
 
         KShapeLayout parentLayout = parentKNode.getData(KShapeLayout.class);
-        List<SequenceArea> areas = parentLayout.getProperty(PapyrusProperties.AREAS);
+        List<SequenceArea> areas = parentLayout.getProperty(SequenceDiagramProperties.AREAS);
         areas.add(area);
-        parentLayout.setProperty(PapyrusProperties.AREAS, areas);
+        parentLayout.setProperty(SequenceDiagramProperties.AREAS, areas);
         
         // Get coordinates of the interaction operands if existing
         for (Object child : nodeEditPart.getChildren()) {
@@ -627,7 +630,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
             if (connObj instanceof ConnectionEditPart) {
                 ConnectionEditPart connedit = (ConnectionEditPart) connObj;
                 mapping.getProperty(CONNECTIONS).add(connedit);
-                nodeLayout.setProperty(PapyrusProperties.ATTACHED_ELEMENT, connedit.getTarget()
+                nodeLayout.setProperty(SequenceDiagramProperties.ATTACHED_ELEMENT, connedit.getTarget()
                         .getClass().getSimpleName());
                 // If target is lifeline, attach to the nearest message
                 if (connedit.getTarget() instanceof ShapeNodeEditPart) {
@@ -647,7 +650,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
         // If the object is connected to any other object, attach property with connected
         // objects
         if (attachedTo.size() > 0) {
-            nodeLayout.setProperty(PapyrusProperties.ATTACHED_TO, attachedTo);
+            nodeLayout.setProperty(SequenceDiagramProperties.ATTACHED_TO, attachedTo);
         }
     }
 
@@ -1004,7 +1007,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
                 }
 
                 List<SequenceExecution> sourceprops = sourceNode.getData(KShapeLayout.class)
-                        .getProperty(PapyrusProperties.EXECUTIONS);
+                        .getProperty(SequenceDiagramProperties.EXECUTIONS);
                 if (sourceprops != null) {
                     // replace ConnectionEditPart by its KEdge in execution
                     for (SequenceExecution sourceprop : sourceprops) {
@@ -1015,7 +1018,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
                 }
 
                 List<SequenceExecution> targetprops = targetNode.getData(KShapeLayout.class)
-                        .getProperty(PapyrusProperties.EXECUTIONS);
+                        .getProperty(SequenceDiagramProperties.EXECUTIONS);
                 if (targetprops != null) {
                     for (SequenceExecution targetprop : targetprops) {
                         // replace ConnectionEditPart by its KEdge in execution

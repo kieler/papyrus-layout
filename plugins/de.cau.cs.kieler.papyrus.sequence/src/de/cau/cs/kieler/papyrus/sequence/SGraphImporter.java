@@ -32,9 +32,6 @@ import de.cau.cs.kieler.klay.layered.graph.LLabel;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.graph.LPort;
 import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
-import de.cau.cs.kieler.papyrus.PapyrusProperties;
-import de.cau.cs.kieler.papyrus.SequenceArea;
-import de.cau.cs.kieler.papyrus.SequenceExecution;
 import de.cau.cs.kieler.papyrus.sequence.graph.SComment;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraphElement;
@@ -42,7 +39,9 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
 
 /**
  * Importer class that converts the KGraph into a SGraph and builds the LayeredGraph out of the
@@ -74,7 +73,7 @@ public class SGraphImporter {
         HashMap<KEdge, SMessage> edgeMap = Maps.newHashMap();
         // Get the list of areas
         List<SequenceArea> areas = topNode.getData(KShapeLayout.class).getProperty(
-                PapyrusProperties.AREAS);
+                SequenceDiagramProperties.AREAS);
 
         // Create lifeline objects
         for (KNode node : topNode.getChildren()) {
@@ -117,7 +116,7 @@ public class SGraphImporter {
         sgraph.getSize().y = 0;
 
         // Copy the areas property to the SGraph
-        sgraph.setProperty(PapyrusProperties.AREAS, areas);
+        sgraph.setProperty(SequenceDiagramProperties.AREAS, areas);
 
         progressMonitor.done();
 
@@ -215,8 +214,8 @@ public class SGraphImporter {
         SComment comment = new SComment();
         comment.setProperty(InternalProperties.ORIGIN, node);
         comment.setProperty(SequenceDiagramProperties.NODE_TYPE, nodeType);
-        String attachedElement = commentLayout.getProperty(PapyrusProperties.ATTACHED_ELEMENT);
-        comment.setProperty(PapyrusProperties.ATTACHED_ELEMENT, attachedElement);
+        String attachedElement = commentLayout.getProperty(SequenceDiagramProperties.ATTACHED_ELEMENT);
+        comment.setProperty(SequenceDiagramProperties.ATTACHED_ELEMENT, attachedElement);
         // Attach connected edge to comment
         if (!node.getOutgoingEdges().isEmpty()) {
             comment.setProperty(SequenceDiagramProperties.COMMENT_CONNECTION, node
@@ -224,7 +223,7 @@ public class SGraphImporter {
         }
 
         // Copy all the entries of the list of attached elements to the comment object
-        List<Object> attachedTo = commentLayout.getProperty(PapyrusProperties.ATTACHED_TO);
+        List<Object> attachedTo = commentLayout.getProperty(SequenceDiagramProperties.ATTACHED_TO);
         if (attachedTo != null) {
             List<SGraphElement> attTo = comment.getAttachedTo();
             for (Object att : attachedTo) {
@@ -398,17 +397,19 @@ public class SGraphImporter {
             // Replace KEdge by its SMessage if it appears in one of the lifeline's executions. It
             // is better to do it this way than running through the list of executions since that
             // would lead to concurrent modification exceptions.
-            if (sourceLL.getProperty(PapyrusProperties.EXECUTIONS) != null) {
-                for (SequenceExecution execution : sourceLL
-                        .getProperty(PapyrusProperties.EXECUTIONS)) {
+            if (sourceLL.getProperty(SequenceDiagramProperties.EXECUTIONS) != null) {
+                for (SequenceExecution execution : sourceLL.getProperty(
+                        SequenceDiagramProperties.EXECUTIONS)) {
+                    
                     if (execution.getMessages().remove(edge)) {
                         execution.addMessage(message);
                     }
                 }
             }
-            if (targetLL.getProperty(PapyrusProperties.EXECUTIONS) != null) {
-                for (SequenceExecution execution : targetLL
-                        .getProperty(PapyrusProperties.EXECUTIONS)) {
+            if (targetLL.getProperty(SequenceDiagramProperties.EXECUTIONS) != null) {
+                for (SequenceExecution execution : targetLL.getProperty(
+                        SequenceDiagramProperties.EXECUTIONS)) {
+                    
                     if (execution.getMessages().remove(edge)) {
                         execution.addMessage(message);
                     }
@@ -516,17 +517,20 @@ public class SGraphImporter {
 
                 // replace KEdge by its SMessage if it appears in one of the lifeline's
                 // executions
-                if (sourceLL.getProperty(PapyrusProperties.EXECUTIONS) != null) {
-                    for (SequenceExecution execution : sourceLL
-                            .getProperty(PapyrusProperties.EXECUTIONS)) {
+                if (sourceLL.getProperty(SequenceDiagramProperties.EXECUTIONS) != null) {
+                    for (SequenceExecution execution : sourceLL.getProperty(
+                            SequenceDiagramProperties.EXECUTIONS)) {
+                        
                         if (execution.getMessages().remove(edge)) {
                             execution.addMessage(message);
                         }
                     }
                 }
-                if (targetLL.getProperty(PapyrusProperties.EXECUTIONS) != null) {
-                    for (SequenceExecution execution : targetLL
-                            .getProperty(PapyrusProperties.EXECUTIONS)) {
+                
+                if (targetLL.getProperty(SequenceDiagramProperties.EXECUTIONS) != null) {
+                    for (SequenceExecution execution : targetLL.getProperty(
+                            SequenceDiagramProperties.EXECUTIONS)) {
+                        
                         if (execution.getMessages().remove(edge)) {
                             execution.addMessage(message);
                         }
@@ -567,13 +571,14 @@ public class SGraphImporter {
             lifeline.getSize().y = layout.getHeight();
 
             // Copy executions to lifeline
-            List<SequenceExecution> executions = layout.getProperty(PapyrusProperties.EXECUTIONS);
-            lifeline.setProperty(PapyrusProperties.EXECUTIONS, executions);
+            List<SequenceExecution> executions = layout.getProperty(
+                    SequenceDiagramProperties.EXECUTIONS);
+            lifeline.setProperty(SequenceDiagramProperties.EXECUTIONS, executions);
 
             lifeline.setComments(new LinkedList<SComment>());
 
             // Copy destruction to lifeline
-            KNode destruction = layout.getProperty(PapyrusProperties.DESTRUCTION);
+            KNode destruction = layout.getProperty(SequenceDiagramProperties.DESTRUCTION);
             if (destruction != null) {
                 lifeline.setProperty(SequenceDiagramProperties.DESTRUCTION_EVENT, destruction);
             }

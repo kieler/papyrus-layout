@@ -31,9 +31,6 @@ import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.graph.LPort;
 import de.cau.cs.kieler.klay.layered.p2layers.NetworkSimplexLayerer;
 import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
-import de.cau.cs.kieler.papyrus.PapyrusProperties;
-import de.cau.cs.kieler.papyrus.SequenceArea;
-import de.cau.cs.kieler.papyrus.SequenceExecution;
 import de.cau.cs.kieler.papyrus.sequence.graph.SComment;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraphElement;
@@ -41,7 +38,9 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
 import de.cau.cs.kieler.papyrus.sequence.sorter.EqualDistributionLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.sorter.InteractiveLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.sorter.LayerbasedLifelineSorter;
@@ -186,7 +185,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
     private void allocateCFSpace(final SGraph sgraph, final LGraph lgraph) {
         // Add dummy nodes before the first messages of combined fragments to have enough space
         // above the topmost message of the area
-        List<SequenceArea> areas = sgraph.getProperty(PapyrusProperties.AREAS);
+        List<SequenceArea> areas = sgraph.getProperty(SequenceDiagramProperties.AREAS);
         if (areas != null) {
             for (SequenceArea area : areas) {
                 if (area.getSubAreas().size() > 0) {
@@ -200,6 +199,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
                             uppermostMessage = message;
                         }
                     }
+                    
                     if (uppermostMessage != null) {
                         LNode node = uppermostMessage
                                 .getProperty(SequenceDiagramProperties.LAYERED_NODE);
@@ -253,7 +253,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
      *            the layered graph
      */
     private void allocateEmptyAreaSpace(final SGraph graph, final LGraph lgraph) {
-        List<SequenceArea> areas = graph.getProperty(PapyrusProperties.AREAS);
+        List<SequenceArea> areas = graph.getProperty(SequenceDiagramProperties.AREAS);
         if (areas != null) {
             for (SequenceArea area : areas) {
                 if (area.getMessages().size() == 0) {
@@ -398,7 +398,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
         arrangeUnconnectedComments(graph);
 
         // Handle areas (interactions / combined fragments / interaction operands)
-        List<SequenceArea> areas = graph.getProperty(PapyrusProperties.AREAS);
+        List<SequenceArea> areas = graph.getProperty(SequenceDiagramProperties.AREAS);
         // Check containments (hierarchy) of areas
         checkAreaContainment(areas);
         // Calculate the areas positions
@@ -965,6 +965,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
      */
     private void applyLayout(final SGraph graph, final List<SLifeline> lifelineOrder,
             final KNode parentNode) {
+        
         // The height of the diagram (the surrounding interaction)
         double diagramHeight = graph.getSize().y + messageSpacing + lifelineHeader + lifelineYPos;
         
@@ -987,7 +988,8 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
             }
 
             // Handle messages of the lifeline and their labels
-            List<SequenceExecution> executions = lifeline.getProperty(PapyrusProperties.EXECUTIONS);
+            List<SequenceExecution> executions = lifeline.getProperty(
+                    SequenceDiagramProperties.EXECUTIONS);
             applyMessageCoordinates(diagramHeight, graph, lifelineOrder, lifeline, executions);
 
             // Apply execution coordinates and adjust positions of messages attached to these
@@ -1289,7 +1291,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
      *            the lifeline, whose executions are placed
      */
     private void applyExecutionCoordinates(final SLifeline lifeline) {
-        List<SequenceExecution> executions = lifeline.getProperty(PapyrusProperties.EXECUTIONS);
+        List<SequenceExecution> executions = lifeline.getProperty(SequenceDiagramProperties.EXECUTIONS);
         if (executions == null) {
             return;
         }
@@ -1302,7 +1304,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
         KShapeLayout nodeLayout = node.getData(KShapeLayout.class);
 
         // Walk through the lifeline's executions
-        nodeLayout.setProperty(PapyrusProperties.EXECUTIONS, executions);
+        nodeLayout.setProperty(SequenceDiagramProperties.EXECUTIONS, executions);
         for (SequenceExecution execution : executions) {
             Object executionObj = execution.getOrigin();
 
@@ -1485,7 +1487,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
 
                 // Set coordinates for the connection of the comment
                 double edgeSourceXPos, edgeSourceYPos, edgeTargetXPos, edgeTargetYPos;
-                String attachedElement = comment.getProperty(PapyrusProperties.ATTACHED_ELEMENT);
+                String attachedElement = comment.getProperty(SequenceDiagramProperties.ATTACHED_ELEMENT);
                 if (attachedElement.toLowerCase().startsWith("lifeline")
                         || attachedElement.toLowerCase().contains("execution")) {
                     // Connections to lifelines or executions are drawn horizontally
