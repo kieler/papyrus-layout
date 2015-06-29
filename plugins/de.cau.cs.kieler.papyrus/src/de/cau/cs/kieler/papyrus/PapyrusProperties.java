@@ -30,13 +30,6 @@ public final class PapyrusProperties {
     private PapyrusProperties() {
         // Hide constructor
     }
-    /** The type of a message. */
-    public static final IProperty<String> MESSAGE_TYPE = new Property<String>(
-            "de.cau.cs.kieler.papyrus.messageType", "");
-
-    /** The type of a node. */
-    public static final IProperty<String> NODE_TYPE = new Property<String>(
-            "de.cau.cs.kieler.papyrus.nodeType", "");
 
     /** The list of execution specifications of a lifeline. */
     public static final IProperty<List<SequenceExecution>> EXECUTIONS = 

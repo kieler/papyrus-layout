@@ -54,6 +54,7 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.ui.IWorkbenchPart;
 
 import com.google.common.collect.BiMap;
+import com.google.common.collect.Maps;
 
 import de.cau.cs.kieler.core.kgraph.KEdge;
 import de.cau.cs.kieler.core.kgraph.KGraphElement;
@@ -79,6 +80,9 @@ import de.cau.cs.kieler.kiml.options.EdgeLabelPlacement;
 import de.cau.cs.kieler.kiml.options.LayoutOptions;
 import de.cau.cs.kieler.kiml.service.LayoutMapping;
 import de.cau.cs.kieler.kiml.util.KimlUtil;
+import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
+import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
 /**
  * Layout manager wrapper for the Papyrus multi diagram editor.
@@ -109,12 +113,43 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
     /** the command stack that executes the command. */
     public static final IProperty<CommandStack> COMMAND_STACK = new Property<CommandStack>(
             "gmf.applyLayoutCommandStack");
+    
+    /** Maps Papyrus node types that are basically Strings to proper node type enumeration values. */
+    private static final Map<String, NodeType> PAPYRUS_NODE_TYPES = Maps.newHashMap();
+    
+    /** Maps Papyrus node types that are basically Strings to proper message type enumeration values. */
+    private static final Map<String, MessageType> PAPYRUS_MESSAGE_TYPES = Maps.newHashMap();
 
     /** the map of references and edges. */
     private Map<EReference, KEdge> reference2EdgeMap;
 
     /** the cached layout configuration for GMF. */
     private GmfLayoutConfig layoutConfig = new PapyrusLayoutConfig();
+    
+    static {
+        PAPYRUS_NODE_TYPES.put("2001", NodeType.SURROUNDING_INTERACTION);
+        PAPYRUS_NODE_TYPES.put("3001", NodeType.LIFELINE);
+        PAPYRUS_NODE_TYPES.put("3002", NodeType.INTERACTION_USE);
+        PAPYRUS_NODE_TYPES.put("3004", NodeType.COMBINED_FRAGMENT);
+        PAPYRUS_NODE_TYPES.put("3005", NodeType.INTERACTION_OPERAND);
+        PAPYRUS_NODE_TYPES.put("3006", NodeType.ACTION_EXEC_SPECIFICATION);
+        PAPYRUS_NODE_TYPES.put("3003", NodeType.BEHAVIOUR_EXEC_SPECIFICATION);
+        PAPYRUS_NODE_TYPES.put("3009", NodeType.COMMENT);
+        PAPYRUS_NODE_TYPES.put("3008", NodeType.CONSTRAINT);
+        PAPYRUS_NODE_TYPES.put("3022", NodeType.DESTRUCTION_EVENT);
+        PAPYRUS_NODE_TYPES.put("3019", NodeType.TIME_CONSTRAINT);
+        PAPYRUS_NODE_TYPES.put("3020", NodeType.TIME_OBSERVATION);
+        PAPYRUS_NODE_TYPES.put("3021", NodeType.DURATION_CONSTRAINT);
+        PAPYRUS_NODE_TYPES.put("3024", NodeType.DURATION_OBSERVATION);
+        
+        PAPYRUS_MESSAGE_TYPES.put("4003", MessageType.SYNCHRONOUS);
+        PAPYRUS_MESSAGE_TYPES.put("4004", MessageType.ASYNCHRONOUS);
+        PAPYRUS_MESSAGE_TYPES.put("4005", MessageType.REPLY);
+        PAPYRUS_MESSAGE_TYPES.put("4006", MessageType.CREATE);
+        PAPYRUS_MESSAGE_TYPES.put("4007", MessageType.DELETE);
+        PAPYRUS_MESSAGE_TYPES.put("4008", MessageType.LOST);
+        PAPYRUS_MESSAGE_TYPES.put("4009", MessageType.FOUND);
+    }
 
     /**
      * {@inheritDoc}
@@ -400,12 +435,12 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
         KNode childLayoutNode = KimlUtil.createInitializedNode();
         KShapeLayout nodeLayout = childLayoutNode.getData(KShapeLayout.class);
 
-        String nodeType = "";
         // Add node type information to the KNode
+        NodeType nodeType = null;
         if (nodeEditPart.getModel() instanceof ShapeImpl) {
             ShapeImpl impl = (ShapeImpl) nodeEditPart.getModel();
-            nodeType = impl.getType();
-            nodeLayout.setProperty(PapyrusProperties.NODE_TYPE, nodeType);
+            nodeType = PAPYRUS_NODE_TYPES.get(impl.getType());
+            nodeLayout.setProperty(SequenceDiagramProperties.NODE_TYPE, nodeType);
         }
 
         // set location and size
@@ -443,18 +478,18 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
         mapping.getGraphMap().put(childLayoutNode, nodeEditPart);
 
         // process the child as new current edit part
-        if (nodeType.equals("2001")) {
-            // Node is the surrounding interaction
-            buildSequenceLayoutGraphRecursively(mapping, nodeEditPart, childLayoutNode,
-                    nodeEditPart);
-        } else if (nodeType.equals("3001")) {
-            // Node is lifeline
+        if (nodeType == NodeType.SURROUNDING_INTERACTION) {
+            buildSequenceLayoutGraphRecursively(mapping, nodeEditPart, childLayoutNode, nodeEditPart);
+        } else if (nodeType == NodeType.LIFELINE) {
             handleLifeline(mapping, nodeEditPart, childLayoutNode);
-        } else if (nodeType.equals("3002") || nodeType.equals("3004")) {
+        } else if (nodeType == NodeType.INTERACTION_USE || nodeType == NodeType.COMBINED_FRAGMENT) {
             // Handle areas such as interactionUse, combinedFragment and interactionOperand
             handleAreas(mapping, nodeEditPart, parentKNode, childLayoutNode);
-        } else if (nodeType.equals("3009") || nodeType.equals("3008") || nodeType.equals("3024")
-                || nodeType.equals("3020")) {
+        } else if (nodeType == NodeType.COMMENT
+                || nodeType == NodeType.CONSTRAINT
+                || nodeType == NodeType.DURATION_OBSERVATION
+                || nodeType == NodeType.TIME_OBSERVATION) {
+            
             handleComments(mapping, nodeEditPart, nodeLayout);
         }
         // store all the connections to process them later
@@ -479,10 +514,10 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
         for (Object child : nodeEditPart.getChildren()) {
             if (child instanceof ShapeNodeEditPart) {
                 ShapeNodeEditPart childEditPart = (ShapeNodeEditPart) child;
-                String subNodeType = "";
+                NodeType subNodeType = null;
                 if (childEditPart.getModel() instanceof ShapeImpl) {
                     ShapeImpl shape = (ShapeImpl) childEditPart.getModel();
-                    subNodeType = shape.getType();
+                    subNodeType = PAPYRUS_NODE_TYPES.get(shape.getType());
                 }
                 IFigure subNodeFigure = childEditPart.getFigure();
                 KNode subNode = KimlUtil.createInitializedNode();
@@ -497,12 +532,15 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
                 subNodeLayout.setYpos(subNodeBounds.y - subNodeContainerBounds.y);
                 subNodeLayout.setSize(subNodeBounds.width, subNodeBounds.height);
 
-                if (subNodeType.equals("3003") || subNodeType.equals("3006")
-                        || subNodeType.equals("3019") || subNodeType.equals("3021")) {
+                if (subNodeType == NodeType.BEHAVIOUR_EXEC_SPECIFICATION
+                        || subNodeType == NodeType.ACTION_EXEC_SPECIFICATION
+                        || subNodeType == NodeType.TIME_CONSTRAINT
+                        || subNodeType == NodeType.DURATION_CONSTRAINT) {
+                    
                     // Create Execution Object (which handles all these types) and initialize it
                     createExecution(mapping, nodeEditPart, executions, childEditPart, subNodeType,
                             subNode);
-                } else if (subNodeType.equals("3022")) {
+                } else if (subNodeType == NodeType.DESTRUCTION_EVENT) {
                     // Subnode is destruction event
                     layoutNode.getData(KShapeLayout.class).setProperty(
                             PapyrusProperties.DESTRUCTION, subNode);
@@ -636,7 +674,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
      */
     private void createExecution(final LayoutMapping<IGraphicalEditPart> mapping,
             final ShapeNodeEditPart lifelineEditPart, final List<SequenceExecution> executions,
-            final ShapeNodeEditPart childEditPart, final String nodeType, final KNode executionNode) {
+            final ShapeNodeEditPart childEditPart, final NodeType nodeType, final KNode executionNode) {
 
         KShapeLayout executionLayout = executionNode.getData(KShapeLayout.class);
         IFigure executionFigure = childEditPart.getFigure();
@@ -644,15 +682,19 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
 
         SequenceExecution execution = new SequenceExecution();
 
-        if (nodeType.equals("3003") || nodeType.equals("3006")) {
-            executionNode.getData(KShapeLayout.class).setProperty(PapyrusProperties.NODE_TYPE,
-                    "Execution");
+        if (nodeType == NodeType.BEHAVIOUR_EXEC_SPECIFICATION
+                || nodeType == NodeType.ACTION_EXEC_SPECIFICATION) {
+
+            executionNode.getData(KShapeLayout.class).setProperty(SequenceDiagramProperties.NODE_TYPE,
+                    nodeType);
             execution.setType("Execution");
-        } else if (nodeType.equals("3021")) {
-            executionNode.getData(KShapeLayout.class).setProperty(PapyrusProperties.NODE_TYPE,
-                    "Duration");
+        } else if (nodeType == NodeType.DURATION_CONSTRAINT) {
+            executionNode.getData(KShapeLayout.class).setProperty(SequenceDiagramProperties.NODE_TYPE,
+                    nodeType);
             execution.setType("Duration");
-        } else if (nodeType.equals("3019")) {
+        } else if (nodeType == NodeType.TIME_CONSTRAINT) {
+            executionNode.getData(KShapeLayout.class).setProperty(SequenceDiagramProperties.NODE_TYPE,
+                    nodeType);
             execution.setType("TimeConstraint");
         }
 
@@ -879,8 +921,8 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
 
             if (connection.getModel() instanceof EdgeImpl) {
                 EdgeImpl impl = (EdgeImpl) connection.getModel();
-                edge.getData(KEdgeLayout.class).setProperty(PapyrusProperties.MESSAGE_TYPE,
-                        impl.getType());
+                edge.getData(KEdgeLayout.class).setProperty(SequenceDiagramProperties.MESSAGE_TYPE,
+                        PAPYRUS_MESSAGE_TYPES.get(impl.getType()));
             }
 
             BiMap<KGraphElement, IGraphicalEditPart> graphMap = mapping.getGraphMap();
@@ -893,10 +935,13 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
             KPort sourcePort = null;
             if (sourceElem instanceof KNode) {
                 sourceNode = (KNode) sourceElem;
-                String nodeType = sourceNode.getData(KShapeLayout.class).getProperty(
-                        PapyrusProperties.NODE_TYPE);
-                if (nodeType != null
-                        && (nodeType.equals("Execution") || nodeType.equals("Duration"))) {
+                NodeType nodeType = sourceNode.getData(KShapeLayout.class).getProperty(
+                        SequenceDiagramProperties.NODE_TYPE);
+                
+                if (nodeType == NodeType.BEHAVIOUR_EXEC_SPECIFICATION
+                        || nodeType == NodeType.ACTION_EXEC_SPECIFICATION
+                        || nodeType == NodeType.DURATION_CONSTRAINT) {
+                    
                     sourceNode = (KNode) graphMap.inverse().get(sourceObj.getParent());
                 }
             } else if (sourceElem instanceof KPort) {
@@ -914,10 +959,13 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
             KPort targetPort = null;
             if (targetElem instanceof KNode) {
                 targetNode = (KNode) targetElem;
-                String nodeType = targetNode.getData(KShapeLayout.class).getProperty(
-                        PapyrusProperties.NODE_TYPE);
-                if (nodeType != null
-                        && (nodeType.equals("Execution") || nodeType.equals("Duration"))) {
+                NodeType nodeType = sourceNode.getData(KShapeLayout.class).getProperty(
+                        SequenceDiagramProperties.NODE_TYPE);
+                
+                if (nodeType == NodeType.BEHAVIOUR_EXEC_SPECIFICATION
+                        || nodeType == NodeType.ACTION_EXEC_SPECIFICATION
+                        || nodeType == NodeType.DURATION_CONSTRAINT) {
+                    
                     targetNode = (KNode) graphMap.inverse().get(targetObj.getParent());
                 }
             } else if (targetElem instanceof KPort) {
