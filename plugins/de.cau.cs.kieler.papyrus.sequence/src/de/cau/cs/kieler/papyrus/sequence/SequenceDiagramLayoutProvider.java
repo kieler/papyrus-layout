@@ -375,7 +375,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
         // Set position for lifelines/nodes
         for (SLifeline lifeline : lifelineOrder) {
             // Dummy lifelines don't need any layout
-            if (lifeline.getName().equals("DummyLifeline")) {
+            if (lifeline.isDummy()) {
                 continue;
             }
 
@@ -974,7 +974,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
         // Set position for lifelines/nodes
         for (SLifeline lifeline : lifelineOrder) {
             // Dummy lifelines don't need any layout
-            if (lifeline.getName().equals("DummyLifeline")) {
+            if (lifeline.isDummy()) {
                 continue;
             }
 
@@ -1099,7 +1099,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
             }
 
             // Handle messages that lead to something else than a lifeline
-            if (message.getTarget().getName().equals("DummyLifeline")) {
+            if (message.getTarget().isDummy()) {
                 KPoint targetPoint = edgeLayout.getTargetPoint();
                 double reverseFactor = lifeline.getSize().y / (diagramHeight + FOURTY);
                 targetPoint.setY((float) (TWENTY + message.getTargetYPos() * reverseFactor));
@@ -1166,7 +1166,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
             }
 
             // Handle messages that come from something else than a lifeline
-            if (message.getSource().getName().equals("DummyLifeline")) {
+            if (message.getSource().isDummy()) {
                 KPoint sourcePoint = edgeLayout.getSourcePoint();
                 double reverseFactor = lifeline.getSize().y / (diagramHeight + FOURTY);
                 sourcePoint.setY((float) (TWENTY + message.getSourceYPos() * reverseFactor));

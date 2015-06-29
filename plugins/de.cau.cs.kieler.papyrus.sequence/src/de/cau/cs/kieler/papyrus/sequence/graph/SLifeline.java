@@ -39,7 +39,9 @@ public final class SLifeline extends SGraphElement implements Comparable<SLifeli
     /** The owning graph. */
     private SGraph graph;
     /** The name of the lifeline. */
-    private String name = "Lifeline";
+    private String name = "L";
+    /** Whether this is a dummy lifeline or not. */
+    private boolean dummy = false;
     /**
      * Lifelines are ordered one after another at the top of the diagram. This is the position of
      * the lifeline in this line.
@@ -75,6 +77,24 @@ public final class SLifeline extends SGraphElement implements Comparable<SLifeli
      */
     public void setGraph(final SGraph graph) {
         this.graph = graph;
+    }
+    
+    /**
+     * Checks whether this lifeline is a dummy lifeline.
+     * 
+     * @return {@code true} if this is a dummy lifeline.
+     */
+    public boolean isDummy() {
+        return this.dummy;
+    }
+    
+    /**
+     * Determines whether this shall be a dummy lifeline or not.
+     * 
+     * @param dummy {@code true} if this lifeline should be a dummy lifeline.
+     */
+    public void setDummy(final boolean dummy) {
+        this.dummy = dummy;
     }
 
     /**

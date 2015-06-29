@@ -151,7 +151,7 @@ public class SGraphImporter {
             }
             // Handle found messages (they have no source lifeline)
             for (SMessage message : lifeline.getIncomingMessages()) {
-                if (message.getSource().getName().equals("DummyLifeline")) {
+                if (message.getSource().isDummy()) {
                     LNode node = new LNode(lgraph);
                     node.getLabels().add(new LLabel("Node" + i++));
                     node.setProperty(InternalProperties.ORIGIN, message);
@@ -365,7 +365,7 @@ public class SGraphImporter {
             // create dummy lifeline
             if (targetLL == null) {
                 SLifeline dummy = new SLifeline();
-                dummy.setName("DummyLifeline");
+                dummy.setDummy(true);
                 dummy.setGraph(sgraph);
                 targetLL = dummy;
             }
@@ -431,7 +431,7 @@ public class SGraphImporter {
 
             // Outgoing messages to the surrounding interaction are drawn to the right and therefore
             // their target lifeline should have highest position
-            if (targetLL.getName().equals("DummyLifeline") && messageType != MessageType.LOST) {
+            if (targetLL.isDummy() && messageType != MessageType.LOST) {
                 targetLL.setHorizontalSlot(sgraph.getLifelines().size() + 1);
             }
 
@@ -484,7 +484,7 @@ public class SGraphImporter {
                 // TODO consider connections to comments and constraints!
                 // Create dummy lifeline as source since the message has no source lifeline
                 SLifeline dummy = new SLifeline();
-                dummy.setName("DummyLifeline");
+                dummy.setDummy(true);
                 dummy.setGraph(sgraph);
                 sourceLL = dummy;
                 SLifeline targetLL = nodeMap.get(edge.getTarget());
