@@ -214,8 +214,10 @@ public class SGraphImporter {
         SComment comment = new SComment();
         comment.setProperty(InternalProperties.ORIGIN, node);
         comment.setProperty(SequenceDiagramProperties.NODE_TYPE, nodeType);
-        String attachedElement = commentLayout.getProperty(SequenceDiagramProperties.ATTACHED_ELEMENT);
-        comment.setProperty(SequenceDiagramProperties.ATTACHED_ELEMENT, attachedElement);
+        String attachedElement = commentLayout.getProperty(
+                SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE);
+        comment.setProperty(SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE, attachedElement);
+        
         // Attach connected edge to comment
         if (!node.getOutgoingEdges().isEmpty()) {
             comment.setProperty(SequenceDiagramProperties.COMMENT_CONNECTION, node
@@ -242,9 +244,8 @@ public class SGraphImporter {
         comment.getSize().y = commentLayout.getHeight();
 
         // Handle time observations
-        if (nodeType.equals("3020")) {
-            comment.getSize().x = sgraph
-                    .getProperty(SequenceDiagramProperties.TIME_OBSERVATION_WIDTH);
+        if (nodeType == NodeType.TIME_OBSERVATION) {
+            comment.getSize().x = sgraph.getProperty(SequenceDiagramProperties.TIME_OBSERVATION_WIDTH);
 
             // Find lifeline that is next to the time observation
             SLifeline nextLifeline = null;
@@ -355,6 +356,7 @@ public class SGraphImporter {
      */
     private void createMessages(final SGraph sgraph, final HashMap<KNode, SLifeline> nodeMap,
             final HashMap<KEdge, SMessage> edgeMap, final List<SequenceArea> areas, final KNode node) {
+        
         for (KEdge edge : node.getOutgoingEdges()) {
             SLifeline sourceLL = nodeMap.get(edge.getSource());
             SLifeline targetLL = nodeMap.get(edge.getTarget());
@@ -438,12 +440,15 @@ public class SGraphImporter {
                 for (SequenceArea area : areas) {
                     if (isInArea(layout.getSourcePoint(), area)
                             && isInArea(layout.getTargetPoint(), area)) {
+                        
                         area.getMessages().add(message);
                         area.addLifeline(message.getSource());
                         area.addLifeline(message.getTarget());
+                        
                         for (SequenceArea subArea : area.getSubAreas()) {
                             if (isInArea(layout.getSourcePoint(), subArea)
                                     && isInArea(layout.getTargetPoint(), subArea)) {
+                                
                                 subArea.getMessages().add(message);
                                 subArea.addLifeline(message.getSource());
                                 subArea.addLifeline(message.getTarget());

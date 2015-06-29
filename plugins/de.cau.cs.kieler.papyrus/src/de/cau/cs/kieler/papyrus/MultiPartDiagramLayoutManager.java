@@ -339,9 +339,9 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
             nodelayout.setProperty(SequenceDiagramProperties.ATTACHED_TO, attTo);
         }
 
-        String attachedElement = nodelayout.getProperty(SequenceDiagramProperties.ATTACHED_ELEMENT);
+        String attachedElement = nodelayout.getProperty(SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE);
         if (attachedElement != null) {
-            nodelayout.setProperty(SequenceDiagramProperties.ATTACHED_ELEMENT, attachedElement);
+            nodelayout.setProperty(SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE, attachedElement);
         }
     }
 
@@ -632,8 +632,9 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
             if (connObj instanceof ConnectionEditPart) {
                 ConnectionEditPart connedit = (ConnectionEditPart) connObj;
                 mapping.getProperty(CONNECTIONS).add(connedit);
-                nodeLayout.setProperty(SequenceDiagramProperties.ATTACHED_ELEMENT, connedit.getTarget()
-                        .getClass().getSimpleName());
+                nodeLayout.setProperty(SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE,
+                        connedit.getTarget().getClass().getSimpleName());
+                
                 // If target is lifeline, attach to the nearest message
                 if (connedit.getTarget() instanceof ShapeNodeEditPart) {
                     float yPos = connedit.getConnectionFigure().getPoints().getLastPoint().y();

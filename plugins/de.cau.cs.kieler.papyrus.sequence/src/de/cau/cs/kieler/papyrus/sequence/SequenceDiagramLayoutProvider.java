@@ -42,6 +42,7 @@ import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution.SequenceExecutionType;
 import de.cau.cs.kieler.papyrus.sequence.sorter.EqualDistributionLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.sorter.ILifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.sorter.InteractiveLifelineSorter;
@@ -373,7 +374,6 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
 
         // Set position for lifelines/nodes
         for (SLifeline lifeline : lifelineOrder) {
-
             // Dummy lifelines don't need any layout
             if (lifeline.getName().equals("DummyLifeline")) {
                 continue;
@@ -973,7 +973,6 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
         
         // Set position for lifelines/nodes
         for (SLifeline lifeline : lifelineOrder) {
-
             // Dummy lifelines don't need any layout
             if (lifeline.getName().equals("DummyLifeline")) {
                 continue;
@@ -1311,8 +1310,9 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
             Object executionObj = execution.getOrigin();
 
             if (executionObj instanceof KNode) {
-                if (execution.getType().equals("Duration")
-                        || execution.getType().equals("TimeConstraint")) {
+                if (execution.getType() == SequenceExecutionType.DURATION
+                        || execution.getType() == SequenceExecutionType.TIME_CONSTRAINT) {
+                    
                     execution.getPosition().y += TWENTY;
                 }
 
@@ -1439,10 +1439,11 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
         if (executions.size() > 1) {
             // reset xPos if execution is attached to another execution
             for (SequenceExecution execution : executions) {
-                if (execution.getType().equals("Duration")
-                        || execution.getType().equals("TimeConstraint")) {
+                if (execution.getType() == SequenceExecutionType.DURATION
+                        || execution.getType() == SequenceExecutionType.TIME_CONSTRAINT) {
                     continue;
                 }
+                
                 int pos = 0;
                 for (SequenceExecution otherExecution : executions) {
                     if (execution != otherExecution) {
@@ -1465,8 +1466,10 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
             if (execution.getSize().y < minHeight) {
                 execution.getSize().y = minHeight;
             }
-            if (execution.getType().equals("Duration")
-                    || execution.getType().equals("TimeConstraint")) {
+            
+            if (execution.getType() == SequenceExecutionType.DURATION
+                    || execution.getType() == SequenceExecutionType.TIME_CONSTRAINT) {
+                
                 continue;
             }
             execution.getSize().x = executionWidth;
@@ -1489,7 +1492,8 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
 
                 // Set coordinates for the connection of the comment
                 double edgeSourceXPos, edgeSourceYPos, edgeTargetXPos, edgeTargetYPos;
-                String attachedElement = comment.getProperty(SequenceDiagramProperties.ATTACHED_ELEMENT);
+                String attachedElement = comment.getProperty(
+                        SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE);
                 if (attachedElement.toLowerCase().startsWith("lifeline")
                         || attachedElement.toLowerCase().contains("execution")) {
                     // Connections to lifelines or executions are drawn horizontally

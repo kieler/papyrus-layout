@@ -58,7 +58,7 @@ public final class SequenceDiagramProperties {
                     "de.cau.cs.kieler.papyrus.sequence.executionSpecifications");
 
     /** Property of a comment that indicates to what kind of element it is attached. */
-    public static final IProperty<String> ATTACHED_ELEMENT = new Property<String>(
+    public static final IProperty<String> ATTACHED_ELEMENT_TYPE = new Property<String>(
             "de.cau.cs.kieler.papyrus.sequence.attachedElement");
 
     /** The list of objects, a comment is attached to. */
