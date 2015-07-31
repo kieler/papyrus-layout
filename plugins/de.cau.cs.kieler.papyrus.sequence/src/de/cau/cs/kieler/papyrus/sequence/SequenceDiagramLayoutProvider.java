@@ -31,7 +31,6 @@ import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.graph.LPort;
 import de.cau.cs.kieler.klay.layered.p2layers.NetworkSimplexLayerer;
 import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
-import de.cau.cs.kieler.klay.layered.properties.Properties;
 import de.cau.cs.kieler.papyrus.PapyrusProperties;
 import de.cau.cs.kieler.papyrus.SequenceArea;
 import de.cau.cs.kieler.papyrus.SequenceExecution;
@@ -92,17 +91,20 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
 
         // Get layout properties
         KShapeLayout sourceShapeLayout = parentNode.getData(KShapeLayout.class);
-        borderSpacing = sourceShapeLayout.getProperty(Properties.BORDER_SPACING);
+        borderSpacing =
+                sourceShapeLayout.getProperty(SequenceDiagramProperties.BORDER_SPACING).doubleValue();
         lifelineHeader = sourceShapeLayout.getProperty(SequenceDiagramProperties.LIFELINE_HEADER);
         lifelineYPos = sourceShapeLayout.getProperty(SequenceDiagramProperties.LIFELINE_Y_POS);
         areaHeader = sourceShapeLayout.getProperty(SequenceDiagramProperties.AREA_HEADER);
         containmentOffset = sourceShapeLayout
                 .getProperty(SequenceDiagramProperties.CONTAINMENT_OFFSET);
-        lifelineSpacing = sourceShapeLayout.getProperty(SequenceDiagramProperties.LIFELINE_SPACING);
-        messageSpacing = sourceShapeLayout.getProperty(SequenceDiagramProperties.MESSAGE_SPACING);
+        lifelineSpacing =
+                sourceShapeLayout.getProperty(SequenceDiagramProperties.LIFELINE_SPACING).doubleValue();
+        messageSpacing =
+                sourceShapeLayout.getProperty(SequenceDiagramProperties.MESSAGE_SPACING).doubleValue();
         labelAlignment = sourceShapeLayout.getProperty(SequenceDiagramProperties.LABEL_ALIGNMENT);
-        LifelineSortingStrategy strategy = sourceShapeLayout
-                .getProperty(SequenceDiagramProperties.LIFELINE_SORTING);
+        LifelineSortingStrategy strategy =
+                sourceShapeLayout.getProperty(SequenceDiagramProperties.LIFELINE_SORTING);
 
         // Lifeline ordering algorithm.
         ILifelineSorter lifelineSorter;
@@ -301,14 +303,14 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
      */
     private void createDummyNode(final LGraph lgraph, final LNode node, final boolean beforeNode) {
         LNode dummy = new LNode(lgraph);
-        LPort dummyIn = new LPort(lgraph);
-        LPort dummyOut = new LPort(lgraph);
+        LPort dummyIn = new LPort();
+        LPort dummyOut = new LPort();
         dummyIn.setNode(dummy);
         dummyOut.setNode(dummy);
-        LPort newPort = new LPort(lgraph);
+        LPort newPort = new LPort();
         newPort.setNode(node);
 
-        LEdge dummyEdge = new LEdge(lgraph);
+        LEdge dummyEdge = new LEdge();
 
         // To avoid concurrent modification, two lists are needed
         if (beforeNode) {

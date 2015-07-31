@@ -17,6 +17,7 @@ import de.cau.cs.kieler.core.kgraph.KEdge;
 import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.core.properties.IProperty;
 import de.cau.cs.kieler.core.properties.Property;
+import de.cau.cs.kieler.kiml.options.LayoutOptions;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.sorter.LifelineSortingStrategy;
@@ -101,4 +102,10 @@ public final class SequenceDiagramProperties {
      */
     public static final IProperty<Boolean> GROUP_AREAS = new Property<Boolean>(
             "de.cau.cs.kieler.papyrus.sequence.groupAreas", false);
+
+    /**
+     * Spacing to the border of the drawing. This is redeclared here to provide another default.
+     */
+    public static final Property<Float> BORDER_SPACING = new Property<Float>(
+            LayoutOptions.BORDER_SPACING, 12.0f, 0.0f);
 }

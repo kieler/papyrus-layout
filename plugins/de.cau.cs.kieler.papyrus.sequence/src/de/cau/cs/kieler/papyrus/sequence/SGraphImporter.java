@@ -141,7 +141,7 @@ public class SGraphImporter {
         for (SLifeline lifeline : sgraph.getLifelines()) {
             for (SMessage message : lifeline.getOutgoingMessages()) {
                 LNode node = new LNode(lgraph);
-                node.getLabels().add(new LLabel(lgraph, "Node" + i++));
+                node.getLabels().add(new LLabel("Node" + i++));
                 node.setProperty(InternalProperties.ORIGIN, message);
                 message.setProperty(SequenceDiagramProperties.LAYERED_NODE, node);
                 lgraph.getLayerlessNodes().add(node);
@@ -150,7 +150,7 @@ public class SGraphImporter {
             for (SMessage message : lifeline.getIncomingMessages()) {
                 if (message.getSource().getName().equals("DummyLifeline")) {
                     LNode node = new LNode(lgraph);
-                    node.getLabels().add(new LLabel(lgraph, "Node" + i++));
+                    node.getLabels().add(new LLabel("Node" + i++));
                     node.setProperty(InternalProperties.ORIGIN, message);
                     message.setProperty(SequenceDiagramProperties.LAYERED_NODE, node);
                     lgraph.getLayerlessNodes().add(node);
@@ -170,11 +170,11 @@ public class SGraphImporter {
                 LNode targetNode = messages.get(j).getProperty(
                         SequenceDiagramProperties.LAYERED_NODE);
                 if (sourceNode != targetNode) {
-                    LPort sourcePort = new LPort(lgraph);
+                    LPort sourcePort = new LPort();
                     sourcePort.setNode(sourceNode);
-                    LPort targetPort = new LPort(lgraph);
+                    LPort targetPort = new LPort();
                     targetPort.setNode(targetNode);
-                    LEdge edge = new LEdge(lgraph);
+                    LEdge edge = new LEdge();
                     edge.setSource(sourcePort);
                     edge.setTarget(targetPort);
                     edge.setProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE, lifeline);
@@ -240,8 +240,8 @@ public class SGraphImporter {
 
         // Handle time observations
         if (nodeType.equals("3020")) {
-            comment.getSize().x = sgraph
-                    .getProperty(SequenceDiagramProperties.TIME_OBSERVATION_WIDTH);
+            comment.getSize().x =
+                    sgraph.getProperty(SequenceDiagramProperties.TIME_OBSERVATION_WIDTH).doubleValue();
 
             // Find lifeline that is next to the time observation
             SLifeline nextLifeline = null;
