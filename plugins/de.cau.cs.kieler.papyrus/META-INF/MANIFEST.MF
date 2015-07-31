@@ -17,7 +17,7 @@ Require-Bundle: org.eclipse.core.runtime,
  de.cau.cs.kieler.kiml.gmf,
  de.cau.cs.kieler.papyrus.sequence
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-Vendor: Christian-Albrechts-Universität zu Kiel
 Export-Package: de.cau.cs.kieler.papyrus
 Import-Package: org.eclipse.papyrus.infra.gmfdiag.common.editpart
