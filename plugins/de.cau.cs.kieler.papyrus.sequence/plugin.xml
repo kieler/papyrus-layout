@@ -55,7 +55,7 @@
             advanced="false"
             appliesTo="parents"
             default="50"
-            description="The horizontal spacing between two neighbored lifelines"
+            description="The horizontal spacing between two neighbored lifelines."
             id="de.cau.cs.kieler.papyrus.sequence.lifelineSpacing"
             name="Lifeline spacing"
             type="float">
@@ -64,9 +64,18 @@
             advanced="false"
             appliesTo="parents"
             default="40"
-            description="The vertical spacing between two message layers"
+            description="The vertical spacing between two message layers."
             id="de.cau.cs.kieler.papyrus.sequence.messageSpacing"
             name="Message spacing"
+            type="float">
+      </layoutOption>
+      <layoutOption
+            advanced="true"
+            appliesTo="parents"
+            default="30"
+            description="Height of lifeline headers."
+            id="de.cau.cs.kieler.papyrus.sequence.lifelineHeader"
+            name="Lifeline header spacing"
             type="float">
       </layoutOption>
       <layoutOption
@@ -74,7 +83,7 @@
             appliesTo="parents"
             class="de.cau.cs.kieler.papyrus.sequence.sorter.LifelineSortingStrategy"
             default="INTERACTIVE"
-            description="The sorting strategy that is used to order the lifelines horizontally"
+            description="The sorting strategy that is used to order the lifelines horizontally."
             id="de.cau.cs.kieler.papyrus.sequence.lifelineSorting"
             name="Lifeline sorting"
             type="enum">

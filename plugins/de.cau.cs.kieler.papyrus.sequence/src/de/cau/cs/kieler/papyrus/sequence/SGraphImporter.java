@@ -245,7 +245,8 @@ public class SGraphImporter {
 
         // Handle time observations
         if (nodeType == NodeType.TIME_OBSERVATION) {
-            comment.getSize().x = sgraph.getProperty(SequenceDiagramProperties.TIME_OBSERVATION_WIDTH);
+            comment.getSize().x =
+                    sgraph.getProperty(SequenceDiagramProperties.TIME_OBSERVATION_WIDTH).doubleValue();
 
             // Find lifeline that is next to the time observation
             SLifeline nextLifeline = null;

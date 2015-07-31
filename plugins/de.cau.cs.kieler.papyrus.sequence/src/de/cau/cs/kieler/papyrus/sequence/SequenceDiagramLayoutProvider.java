@@ -100,17 +100,20 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
 
         // Get layout properties
         KShapeLayout sourceShapeLayout = parentNode.getData(KShapeLayout.class);
-        borderSpacing = sourceShapeLayout.getProperty(SequenceDiagramProperties.BORDER_SPACING);
+        borderSpacing =
+                sourceShapeLayout.getProperty(SequenceDiagramProperties.BORDER_SPACING).doubleValue();
         lifelineHeader = sourceShapeLayout.getProperty(SequenceDiagramProperties.LIFELINE_HEADER);
         lifelineYPos = sourceShapeLayout.getProperty(SequenceDiagramProperties.LIFELINE_Y_POS);
         areaHeader = sourceShapeLayout.getProperty(SequenceDiagramProperties.AREA_HEADER);
         containmentOffset = sourceShapeLayout
                 .getProperty(SequenceDiagramProperties.CONTAINMENT_OFFSET);
-        lifelineSpacing = sourceShapeLayout.getProperty(SequenceDiagramProperties.LIFELINE_SPACING);
-        messageSpacing = sourceShapeLayout.getProperty(SequenceDiagramProperties.MESSAGE_SPACING);
+        lifelineSpacing =
+                sourceShapeLayout.getProperty(SequenceDiagramProperties.LIFELINE_SPACING).doubleValue();
+        messageSpacing =
+                sourceShapeLayout.getProperty(SequenceDiagramProperties.MESSAGE_SPACING).doubleValue();
         labelAlignment = sourceShapeLayout.getProperty(SequenceDiagramProperties.LABEL_ALIGNMENT);
-        LifelineSortingStrategy strategy = sourceShapeLayout
-                .getProperty(SequenceDiagramProperties.LIFELINE_SORTING);
+        LifelineSortingStrategy strategy =
+                sourceShapeLayout.getProperty(SequenceDiagramProperties.LIFELINE_SORTING);
 
         // Lifeline ordering algorithm.
         ILifelineSorter lifelineSorter;
