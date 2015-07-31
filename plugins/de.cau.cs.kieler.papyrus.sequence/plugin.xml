@@ -26,6 +26,10 @@
                option="de.cau.cs.kieler.papyrus.sequence.lifelineSpacing">
          </knownOption>
          <knownOption
+               default="10"
+               option="de.cau.cs.kieler.papyrus.sequence.lifelineYPos">
+         </knownOption>
+         <knownOption
                default="50"
                option="de.cau.cs.kieler.papyrus.sequence.messageSpacing">
          </knownOption>
@@ -77,6 +81,15 @@
             id="de.cau.cs.kieler.papyrus.sequence.lifelineHeader"
             name="Lifeline header spacing"
             type="float">
+      </layoutOption>
+      <layoutOption
+            advanced="true"
+            appliesTo="parents"
+            default="10"
+            description="Vertical position of lifeline headers."
+            id="de.cau.cs.kieler.papyrus.sequence.lifelineYPos"
+            name="Vertical lifeline position"
+            type="int">
       </layoutOption>
       <layoutOption
             advanced="false"
