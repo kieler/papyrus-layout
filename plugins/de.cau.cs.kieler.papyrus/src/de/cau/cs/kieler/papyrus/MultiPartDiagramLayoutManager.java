@@ -681,7 +681,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
         IFigure executionFigure = childEditPart.getFigure();
         Rectangle executionBounds = getAbsoluteBounds(executionFigure);
 
-        SequenceExecution execution = new SequenceExecution();
+        SequenceExecution execution = new SequenceExecution(executionNode);
 
         if (nodeType == NodeType.BEHAVIOUR_EXEC_SPECIFICATION
                 || nodeType == NodeType.ACTION_EXEC_SPECIFICATION) {
@@ -715,7 +715,6 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
                 execution.addMessage(connectionEditPart);
             }
         }
-        execution.setOrigin(executionNode);
         executions.add(execution);
         executionLayout.setProperty(PapyrusProperties.EXECUTION, execution);
 

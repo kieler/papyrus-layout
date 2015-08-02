@@ -13,52 +13,56 @@
  */
 package de.cau.cs.kieler.papyrus.sequence.properties;
 
-import java.util.LinkedList;
 import java.util.List;
 
+import com.google.common.collect.Lists;
+
+import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.core.math.KVector;
 
 /**
- * Data structure for area-like elements in sequence diagrams.
+ * Data structure for area-like elements in sequence diagrams. This class is not part of the core data
+ * structure of this layout algorithm since it actually has to be attached to the graph in the
+ * {@link SequenceDiagramProperties#AREAS} property. Thus, while also being used by the algorithm, this
+ * class has to be visible to the outside.
+ * 
+ * TODO: Add a generic type to replace Object in the code?
  * 
  * @author grh
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
- * 
  */
 public class SequenceArea {
     /** The originating object of the execution. */
-    private Object origin;
+    private KNode origin;
     /** The list of messages contained in the area. */
-    private List<Object> messages;
+    private List<Object> messages = Lists.newArrayList();
     /** The list of affected lifelines. */
-    private List<Object> lifelines;
+    private List<Object> lifelines = Lists.newArrayList();
     /** The list of subareas (in case of a combined fragment). */
-    private List<SequenceArea> subAreas;
+    private List<SequenceArea> subAreas = Lists.newArrayList();
     /** The list of areas that are contained in this area. */
-    private List<SequenceArea> containedAreas;
+    private List<SequenceArea> containedAreas = Lists.newArrayList();
     /** The message, that is nearest to the area if the area is empty. */
     private Object nextMessage;
     /** The size of the area. */
-    private KVector size;
+    private KVector size = new KVector();
     /** The position of the area. */
-    private KVector position;
-
+    private KVector position = new KVector();
+    
+    
     /**
      * Constructor that initializes the area.
+     * 
+     * TODO: Explain what origin does, exactly.
      * 
      * @param origin
      *            the origin this object is created for
      */
-    public SequenceArea(final Object origin) {
+    public SequenceArea(final KNode origin) {
         this.origin = origin;
-        messages = new LinkedList<Object>();
-        lifelines = new LinkedList<Object>();
-        subAreas = new LinkedList<SequenceArea>();
-        containedAreas = new LinkedList<SequenceArea>();
-        size = new KVector();
-        position = new KVector();
     }
+    
 
     /**
      * Get the size of the area.

@@ -21,8 +21,8 @@ package de.cau.cs.kieler.papyrus.sequence.properties;
  * @kieler.rating proposed yellow grh
  */
 public enum LabelAlignment {
-    /** Aligns the label central between the source lifeline and its next neighbor. */
-    FIRST_CENTER,
+    /** Centers the label between the source lifeline and its next neighbour lifeline. */
+    SOURCE_CENTER,
     /** Aligns the label directly at the source lifeline. */
     SOURCE,
     /** Aligns the label in the center of its message. */

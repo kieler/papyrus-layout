@@ -13,19 +13,24 @@
  */
 package de.cau.cs.kieler.papyrus.sequence.properties;
 
-import java.util.LinkedList;
 import java.util.List;
+
+import com.google.common.collect.Lists;
 
 import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.core.math.KVector;
 
 /**
- * Data structure for execution specification elements in sequence diagrams.
+ * Data structure for execution specification elements in sequence diagrams. This class is not part
+ * of the core data structure of this layout algorithm since it actually has to be attached to the
+ * graph in the {@link SequenceDiagramProperties#EXECUTIONS} property. Thus, while also being used
+ * by the algorithm, this class has to be visible to the outside.
+ * 
+ * TODO: Add a generic type to replace Object in the code?
  * 
  * @author grh
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
- * 
  */
 public class SequenceExecution {
     
@@ -43,26 +48,32 @@ public class SequenceExecution {
         TIME_CONSTRAINT;
     }
     
+    
+    /** The originating KNode of the execution. */
+    private KNode origin;
     /** The type of the execution. */
     private SequenceExecutionType type = null;
     /** The list of connected messages. */
-    private List<Object> messages;
+    private List<Object> messages = Lists.newArrayList();
     /** The size of the execution. */
-    private KVector size;
+    private KVector size = new KVector(0, -1);
     /** The position of the execution. */
-    private KVector position;
-    /** The originating KNode of the execution. */
-    private KNode origin;
-
+    private KVector position = new KVector(0, 0);
+    
+    
     /**
-     * Constructor that initializes the execution object.
+     * Constructor that initializes the execution.
+     * 
+     * TODO: Explain what origin does, exactly.
+     * 
+     * @param origin
+     *            the origin this object is created for
      */
-    public SequenceExecution() {
-        messages = new LinkedList<Object>();
-        size = new KVector(0, -1);
-        position = new KVector(0, 0);
+    public SequenceExecution(final KNode origin) {
+        this.origin = origin;
     }
 
+    
     /**
      * Get the size of the execution.
      * 
@@ -127,17 +138,6 @@ public class SequenceExecution {
     public KNode getOrigin() {
         return origin;
     }
-
-    /**
-     * Set the origin KNode of the execution.
-     * 
-     * @param origin
-     *            the new origin
-     */
-    public void setOrigin(final KNode origin) {
-        this.origin = origin;
-    }
-
 
     /**
      * {@inheritDoc}

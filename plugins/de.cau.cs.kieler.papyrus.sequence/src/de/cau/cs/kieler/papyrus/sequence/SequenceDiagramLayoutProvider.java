@@ -1216,7 +1216,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
             if (message.getTarget().getHorizontalSlot() > lifeline.getHorizontalSlot()) {
                 // Message leads rightwards
                 switch (labelAlignment) {
-                case FIRST_CENTER:
+                case SOURCE_CENTER:
                     // If the lifeline is the last lifeline (lost message), fall through to SOURCE
                     // placement to avoid ArrayIndexOutOfBoundsException
                     if (lifelineIndex + 1 < lifelineOrder.size()) {
@@ -1247,7 +1247,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
             } else if (message.getTarget().getHorizontalSlot() < lifeline.getHorizontalSlot()) {
                 // Message leads leftwards
                 switch (labelAlignment) {
-                case FIRST_CENTER:
+                case SOURCE_CENTER:
                     // If the lifeline is the first lifeline (found message), fall through to SOURCE
                     // placement to avoid ArrayIndexOutOfBoundsException
                     if (lifelineIndex > 0) {

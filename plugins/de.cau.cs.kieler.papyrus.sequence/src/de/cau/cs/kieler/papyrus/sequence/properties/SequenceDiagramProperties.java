@@ -129,7 +129,7 @@ public final class SequenceDiagramProperties {
 
     /** The alignment of message labels. This property may be set by the user. */
     public static final IProperty<LabelAlignment> LABEL_ALIGNMENT = new Property<LabelAlignment>(
-            "de.cau.cs.kieler.papyrus.sequence.labelAlignment", LabelAlignment.FIRST_CENTER);
+            "de.cau.cs.kieler.papyrus.sequence.labelAlignment", LabelAlignment.SOURCE_CENTER);
 
     /**
      * The lifeline sorting strategy that should be used in the algorithm. This property may be set
