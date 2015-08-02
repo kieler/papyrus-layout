@@ -46,7 +46,7 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution.SequenceEx
 import de.cau.cs.kieler.papyrus.sequence.sorter.EqualDistributionLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.sorter.ILifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.sorter.InteractiveLifelineSorter;
-import de.cau.cs.kieler.papyrus.sequence.sorter.LayerbasedLifelineSorter;
+import de.cau.cs.kieler.papyrus.sequence.sorter.LayerBasedLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.sorter.LifelineSortingStrategy;
 
 /**
@@ -118,7 +118,7 @@ public class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
         // Lifeline ordering algorithm.
         ILifelineSorter lifelineSorter;
         if (strategy == LifelineSortingStrategy.LAYER_BASED) {
-            lifelineSorter = new LayerbasedLifelineSorter();
+            lifelineSorter = new LayerBasedLifelineSorter();
         } else if (strategy == LifelineSortingStrategy.SHORT_MESSAGES) {
             // The short messages lifeline sorter has an additional layout option
             boolean groupAreas = false;

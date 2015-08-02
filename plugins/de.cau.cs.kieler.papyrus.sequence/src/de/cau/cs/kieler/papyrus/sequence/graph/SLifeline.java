@@ -23,8 +23,8 @@ import com.google.common.collect.Lists;
 import de.cau.cs.kieler.core.math.KVector;
 
 /**
- * Lifeline representation for SGraphs. Lifelines are compared to each other in the compareTo method
- * by their xPos. This is used in the interactive lifeline sorter.
+ * Lifeline representation for SGraphs. Lifelines can be compared to other lifelines on the basis of
+ * their x coordinate. This is used in the interactive lifeline sorter.
  * 
  * @author grh
  * @kieler.design 2012-11-20 cds, msp

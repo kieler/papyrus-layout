@@ -27,7 +27,6 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
  * @author grh
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
- * 
  */
 public class InteractiveLifelineSorter implements ILifelineSorter {
 
@@ -37,10 +36,14 @@ public class InteractiveLifelineSorter implements ILifelineSorter {
      */
     public List<SLifeline> sortLifelines(final SGraph graph, final LGraph lgraph, 
             final IKielerProgressMonitor progressMonitor) {
+        
         progressMonitor.begin("Interactive lifeline sorting", 1);
         
+        // Sort the lifelines by their x coordinates
         List<SLifeline> lifelines = (List<SLifeline>) graph.getLifelines();
         java.util.Collections.sort(lifelines);
+        
+        // Apply lifeline slots
         for (int i = 0; i < lifelines.size(); i++) {
             lifelines.get(i).setHorizontalSlot(i);
         }

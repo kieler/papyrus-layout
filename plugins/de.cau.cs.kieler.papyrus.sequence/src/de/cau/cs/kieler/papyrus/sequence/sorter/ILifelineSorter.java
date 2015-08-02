@@ -26,9 +26,9 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
  * @author grh
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
- * 
  */
 public interface ILifelineSorter {
+    
     /**
      * Sort the lifelines in the given SGraph. Some implementations may need the calculated layered
      * graph for their computation too.
@@ -39,4 +39,5 @@ public interface ILifelineSorter {
      * @return a list of the lifelines in the calculated order
      */
     List<SLifeline> sortLifelines(SGraph graph, LGraph lgraph, IKielerProgressMonitor progressMonitor);
+    
 }

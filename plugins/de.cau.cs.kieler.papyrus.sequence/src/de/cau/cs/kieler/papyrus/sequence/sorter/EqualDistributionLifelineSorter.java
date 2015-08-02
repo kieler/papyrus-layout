@@ -33,8 +33,8 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
 /**
  * Lifeline sorting algorithm that is inspired by the heuristic solution to the linear arrangement
- * problem as proposed by McAllister in
- * "A new heuristic algorithm for the Linear Arrangement problem".
+ * problem as proposed by McAllister in <em>A new heuristic algorithm for the Linear Arrangement
+ * problem</em>.
  * 
  * @author grh
  * @kieler.design proposed grh
@@ -133,13 +133,12 @@ public class EqualDistributionLifelineSorter implements ILifelineSorter {
      * messages in an area are given higher weight.
      */
     private boolean considerAreas = false;
-
     /** List of nodes that are already placed by the algorithm. */
     private List<EDLSNode> placedNodes;
-
     /** The map of lifeline <-> node correspondences. */
     private HashBiMap<SLifeline, EDLSNode> correspondences;
 
+    
     /**
      * Constructor with parameter for the area grouping option.
      * 
@@ -150,6 +149,7 @@ public class EqualDistributionLifelineSorter implements ILifelineSorter {
     public EqualDistributionLifelineSorter(final boolean groupAreas) {
         this.considerAreas = groupAreas;
     }
+    
 
     /**
      * {@inheritDoc}

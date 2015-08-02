@@ -16,6 +16,8 @@ package de.cau.cs.kieler.papyrus.sequence.sorter;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.google.common.collect.Lists;
+
 import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
 import de.cau.cs.kieler.klay.layered.graph.LGraph;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
@@ -34,9 +36,9 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
  * @kieler.rating proposed yellow grh
  * 
  */
-public class LayerbasedLifelineSorter implements ILifelineSorter {
+public class LayerBasedLifelineSorter implements ILifelineSorter {
     private int position;
-    private List<SLifeline> lifelines = new LinkedList<SLifeline>();
+    private List<SLifeline> lifelines = Lists.newArrayList();
     private List<SLifeline> sortedLifelines;
 
     /**
@@ -44,6 +46,7 @@ public class LayerbasedLifelineSorter implements ILifelineSorter {
      */
     public List<SLifeline> sortLifelines(final SGraph graph, final LGraph lgraph,
             final IKielerProgressMonitor progressMonitor) {
+        
         progressMonitor.begin("Layer based lifeline sorting", 1);
 
         lifelines.addAll(graph.getLifelines());
