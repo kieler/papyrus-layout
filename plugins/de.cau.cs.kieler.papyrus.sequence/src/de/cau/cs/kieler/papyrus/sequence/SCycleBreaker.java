@@ -13,10 +13,12 @@
  */
 package de.cau.cs.kieler.papyrus.sequence;
 
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
 import de.cau.cs.kieler.core.kgraph.KEdge;
@@ -35,13 +37,20 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
  * @author grh
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
- * 
  */
 public class SCycleBreaker {
+    /** A node with this ID was not visited yet. */
+    private static final int NOT_VISITED = 0;
+    /** A node with this ID was already visited, but not as part of the current path. */
+    private static final int VISITED_OTHER_PATH = 1;
+    /** A node with this ID was already visited on the current path. */
+    private static final int VISITED_CURRENT_PATH = 2;
+    
     /** The list of nodes that have to be split. */
-    private HashSet<LNode> split;
+    private Set<LNode> split;
     /** The list of nodes that were already visited in the current iteration. */
     private List<LNode> chain;
+    
 
     /**
      * Break the cycles in the given layered graph. Cycles are broken by splitting one of the
@@ -57,20 +66,17 @@ public class SCycleBreaker {
         progressMonitor.begin("Cycle Breaking", 1);
 
         // The set of edges to be split after the cycle detecting phase
-        split = new HashSet<LNode>();
-        chain = new LinkedList<LNode>();
+        split = Sets.newHashSet();
+        chain = Lists.newArrayListWithCapacity(lgraph.getLayerlessNodes().size());
 
         // Use node IDs to indicate if a node was already visited
-        // 0 = node was not visited at all
-        // 1 = node was visited before, but not in current path
-        // 2 = node was visited in current path
         for (LNode node : lgraph.getLayerlessNodes()) {
-            node.id = 0;
+            node.id = NOT_VISITED;
         }
 
         // Start a dfs only when the node was not visited by any other earlier dfs
         for (LNode node : lgraph.getLayerlessNodes()) {
-            if (node.id == 0) {
+            if (node.id == NOT_VISITED) {
                 dfs(node);
             }
         }
@@ -124,7 +130,7 @@ public class SCycleBreaker {
      *            the node to start with
      */
     private void dfs(final LNode node) {
-        if (node.id == 2) {
+        if (node.id == VISITED_CURRENT_PATH) {
             // This node was already visited in current path
             // Find uppermost LNode in current chain and add it to split
             addUppermostNode(node);
@@ -132,14 +138,14 @@ public class SCycleBreaker {
             // This node has not been visited in current path
             chain.add(node);
             // Mark as visited
-            node.id = 2;
+            node.id = VISITED_CURRENT_PATH;
 
             // Process successors
             for (LEdge edge : node.getOutgoingEdges()) {
                 dfs(edge.getTarget().getNode());
             }
             // Mark as visited in previous path
-            node.id = 1;
+            node.id = VISITED_OTHER_PATH;
             chain.remove(chain.size() - 1);
         }
     }
