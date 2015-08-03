@@ -15,11 +15,13 @@ package de.cau.cs.kieler.papyrus.sequence;
 
 import java.util.List;
 
+import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.kiml.klayoutdata.KLayoutData;
 import de.cau.cs.kieler.klay.layered.graph.LGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.LifelineSortingStrategy;
+import de.cau.cs.kieler.papyrus.sequence.p6export.ExportStrategy;
 import de.cau.cs.kieler.papyrus.sequence.properties.LabelAlignment;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
@@ -33,6 +35,8 @@ public final class LayoutContext {
     // CHECKSTYLEOFF VisibilityModifier
     
     // Layout Graphs
+    /** The original KGraph the layout algorithm was called with. */
+    public KNode kgraph;
     /** The {@link SGraph} to be laid out. */
     public SGraph sgraph;
     /** The {@link LGraph} created from the SGraph. */
@@ -63,6 +67,8 @@ public final class LayoutContext {
     public LifelineSortingStrategy sortingStrategy;
     /** Whether to include areas in the lifeline sorting process. Used by some sorters. */
     public boolean groupAreasWhenSorting;
+    /** The export algorithm to use. */
+    public ExportStrategy exportStrategy;
     /** The label alignment strategy. */
     public LabelAlignment labelAlignment;
     
@@ -100,6 +106,7 @@ public final class LayoutContext {
         context.labelAlignment = layoutData.getProperty(SequenceDiagramProperties.LABEL_ALIGNMENT);
         context.sortingStrategy = layoutData.getProperty(SequenceDiagramProperties.LIFELINE_SORTING);
         context.groupAreasWhenSorting = layoutData.getProperty(SequenceDiagramProperties.GROUP_AREAS);
+        context.exportStrategy = layoutData.getProperty(SequenceDiagramProperties.COORDINATE_SYSTEM);
         
         return context;
     }

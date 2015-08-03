@@ -15,6 +15,16 @@ Bundle-Vendor: Christian-Albrechts-Universität zu Kiel
 Import-Package: de.cau.cs.kieler.core.kgraph,
  de.cau.cs.kieler.klay.layered.graph,
  de.cau.cs.kieler.klay.layered.p2layers
-Export-Package: de.cau.cs.kieler.papyrus.sequence,
- de.cau.cs.kieler.papyrus.sequence.p4sorting,
- de.cau.cs.kieler.papyrus.sequence.properties
+Export-Package: de.cau.cs.kieler.papyrus.sequence;
+  uses:="de.cau.cs.kieler.klay.layered.graph,
+   de.cau.cs.kieler.kiml,
+   de.cau.cs.kieler.papyrus.sequence.p6export,
+   de.cau.cs.kieler.papyrus.sequence.graph,
+   de.cau.cs.kieler.core.kgraph,
+   de.cau.cs.kieler.papyrus.sequence.properties,
+   de.cau.cs.kieler.kiml.klayoutdata,
+   de.cau.cs.kieler.papyrus.sequence.p4sorting,
+   de.cau.cs.kieler.core.alg",
+ de.cau.cs.kieler.papyrus.sequence.p4sorting;uses:="de.cau.cs.kieler.papyrus.sequence,de.cau.cs.kieler.core.alg",
+ de.cau.cs.kieler.papyrus.sequence.p6export,
+ de.cau.cs.kieler.papyrus.sequence.properties;uses:="de.cau.cs.kieler.core.math,de.cau.cs.kieler.core.properties,de.cau.cs.kieler.core.kgraph"

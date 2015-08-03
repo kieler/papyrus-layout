@@ -34,15 +34,15 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
 /**
- * Lifeline sorting algorithm that is inspired by the heuristic solution to the linear arrangement
- * problem as proposed by McAllister in <em>A new heuristic algorithm for the Linear Arrangement
- * problem</em>.
+ * Lifeline sorting algorithm that tries to minimize the length of message. The algorithm is
+ * inspired by the heuristic solution to the linear arrangement problem as proposed by McAllister in
+ * <em>A new heuristic algorithm for the Linear Arrangement problem</em>.
  * 
  * @author grh
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
  */
-public final class EqualDistributionLifelineSorter implements ISequenceLayoutProcessor {
+public final class ShortMessageLifelineSorter implements ISequenceLayoutProcessor {
 
     /** Option that indicates, if the starting node is searched by layering attributes. */
     private boolean layerBased = true;
@@ -337,7 +337,7 @@ public final class EqualDistributionLifelineSorter implements ISequenceLayoutPro
 
         /** Constructor. */
         public EDLSNode() {
-            edges = new HashMap<EqualDistributionLifelineSorter.EDLSNode, Integer>();
+            edges = new HashMap<ShortMessageLifelineSorter.EDLSNode, Integer>();
         }
 
         /**

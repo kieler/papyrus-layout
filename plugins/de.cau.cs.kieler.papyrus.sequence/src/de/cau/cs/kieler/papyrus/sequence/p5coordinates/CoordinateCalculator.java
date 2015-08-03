@@ -25,6 +25,7 @@ import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
 import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
 import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
+import de.cau.cs.kieler.papyrus.sequence.SequenceLayoutConstants;
 import de.cau.cs.kieler.papyrus.sequence.graph.SComment;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraphElement;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
@@ -40,14 +41,6 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
  * @author cds
  */
 public class CoordinateCalculator implements ISequenceLayoutProcessor {
-
-    /** Constant that is needed to calculate some offsets. */
-    private static final int TWENTY = 20;
-    /** Constant that is needed to calculate some offsets. */
-    private static final int FOURTY = 40;
-    /** The horizontal margin for message labels. */
-    private static final int LABELMARGIN = 10;
-    
 
     /**
      * {@inheritDoc}
@@ -359,25 +352,31 @@ public class CoordinateCalculator implements ISequenceLayoutProcessor {
         // Check, if there are labels longer than the available space
         for (SMessage message : lifeline.getIncomingMessages()) {
             if (message.getLabelWidth() > spacing + lifeline.getSize().x) {
-                spacing = LABELMARGIN + message.getLabelWidth() - lifeline.getSize().x;
+                spacing = SequenceLayoutConstants.LABELMARGIN + message.getLabelWidth()
+                        - lifeline.getSize().x;
             }
         }
         for (SMessage message : lifeline.getOutgoingMessages()) {
             if (message.getLabelWidth() > spacing + lifeline.getSize().x) {
-                spacing = LABELMARGIN + message.getLabelWidth() - lifeline.getSize().x;
+                spacing = SequenceLayoutConstants.LABELMARGIN + message.getLabelWidth()
+                        - lifeline.getSize().x;
             }
             // Labels of create messages should not overlap the target's header
             if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.CREATE) {
-                if (message.getLabelWidth() + LABELMARGIN > spacing + lifeline.getSize().x / 2) {
-                    spacing = LABELMARGIN + message.getLabelWidth()
+                if (message.getLabelWidth() + SequenceLayoutConstants.LABELMARGIN
+                        > spacing + lifeline.getSize().x / 2) {
+                    
+                    spacing = SequenceLayoutConstants.LABELMARGIN + message.getLabelWidth()
                             - message.getTarget().getSize().x / 2;
                 }
             } 
             // Selfloops need a little more space
             if (message.getSource() == message.getTarget()) {
-                if (message.getLabelWidth() + LABELMARGIN + context.messageSpacing / 2 
-                        > spacing + lifeline.getSize().x / 2) {
-                    spacing = LABELMARGIN + message.getLabelWidth() - lifeline.getSize().x / 2;
+                if (message.getLabelWidth() + SequenceLayoutConstants.LABELMARGIN
+                        + context.messageSpacing / 2 > spacing + lifeline.getSize().x / 2) {
+                    
+                    spacing = SequenceLayoutConstants.LABELMARGIN + message.getLabelWidth()
+                            - lifeline.getSize().x / 2;
                 }
             }
         }
@@ -502,10 +501,10 @@ public class CoordinateCalculator implements ISequenceLayoutProcessor {
                 // If so, an offset has to be calculated in order not to have overlapping borders
                 int containmentSpacing = containmentDepth * context.containmentOffset;
 
-                areaLayout.setXpos((float) (area.getPosition().x - TWENTY - context.lifelineSpacing / 2 
-                        - containmentSpacing));
-                areaLayout.setWidth((float) (area.getSize().x + FOURTY + context.lifelineSpacing 
-                        + 2 * containmentSpacing));
+                areaLayout.setXpos((float) (area.getPosition().x - SequenceLayoutConstants.TWENTY
+                        - context.lifelineSpacing / 2 - containmentSpacing));
+                areaLayout.setWidth((float) (area.getSize().x + SequenceLayoutConstants.FOURTY
+                        + context.lifelineSpacing + 2 * containmentSpacing));
 
                 areaLayout.setYpos((float) (area.getPosition().y + context.lifelineHeader
                         - context.messageSpacing / 2 - containmentSpacing));
@@ -527,8 +526,8 @@ public class CoordinateCalculator implements ISequenceLayoutProcessor {
                         KShapeLayout subAreaLayout = subAreaNode.getData(KShapeLayout.class);
 
                         subAreaLayout.setXpos(0);
-                        subAreaLayout.setWidth(
-                                (float) (area.getSize().x + FOURTY + context.lifelineSpacing - 2));
+                        subAreaLayout.setWidth((float) (area.getSize().x
+                                + SequenceLayoutConstants.FOURTY + context.lifelineSpacing - 2));
                         
                         if (subArea.getMessages().size() > 0) {
                             // Calculate and set y-position by the area's messages

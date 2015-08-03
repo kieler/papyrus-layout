@@ -35,8 +35,11 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
 /**
  * Heuristic implementation of cycle breaking. Breaks the cycles in the layered graph of the layout
- * context. Cycles are broken by splitting one of the affected nodes (which represent messages).
- * With that, this message is not drawn horizontally anymore.
+ * context. The cycle breakers of the KLay Layered algorithm break cycles by reversing edges. That's not
+ * what we want here. Instead, we break cycles by splitting one of the two end points of an edge that
+ * would otherwise be reversed. While a node usually represents both the start and end point of a
+ * message, split nodes only represent one of the end points each. With that, the corresponding message
+ * is not drawn horizontally anymore.
  * 
  * @author grh
  * @kieler.design proposed grh

@@ -80,6 +80,7 @@ import de.cau.cs.kieler.kiml.options.EdgeLabelPlacement;
 import de.cau.cs.kieler.kiml.options.LayoutOptions;
 import de.cau.cs.kieler.kiml.service.LayoutMapping;
 import de.cau.cs.kieler.kiml.util.KimlUtil;
+import de.cau.cs.kieler.papyrus.sequence.p6export.ExportStrategy;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
@@ -267,6 +268,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
      */
     protected LayoutMapping<IGraphicalEditPart> buildSequenceLayoutGraph(
             final IGraphicalEditPart layoutRootPart) {
+        
         LayoutMapping<IGraphicalEditPart> mapping = new LayoutMapping<IGraphicalEditPart>();
         mapping.setProperty(CONNECTIONS, new LinkedList<ConnectionEditPart>());
 
@@ -278,6 +280,8 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
 
         KNode topNode = KimlUtil.createInitializedNode();
         KShapeLayout shapeLayout = topNode.getData(KShapeLayout.class);
+        shapeLayout.setProperty(SequenceDiagramProperties.COORDINATE_SYSTEM, ExportStrategy.PAPYRUS);
+        
         Rectangle rootBounds = layoutRootPart.getFigure().getBounds();
         if (layoutRootPart instanceof DiagramEditPart) {
             // start with the whole diagram as root for layout
@@ -357,10 +361,10 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
      * @param currentEditPart
      *            the currently analyzed edit part
      */
-    private void buildSequenceLayoutGraphRecursively(
-            final LayoutMapping<IGraphicalEditPart> mapping,
+    private void buildSequenceLayoutGraphRecursively(final LayoutMapping<IGraphicalEditPart> mapping,
             final IGraphicalEditPart parentEditPart, final KNode parentLayoutNode,
             final IGraphicalEditPart currentEditPart) {
+        
         Maybe<KInsets> kinsets = new Maybe<KInsets>();
 
         parentLayoutNode.getData(KShapeLayout.class).setProperty(SequenceDiagramProperties.AREAS,

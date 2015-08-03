@@ -11,7 +11,7 @@
  * This code is provided under the terms of the Eclipse Public License (EPL).
  * See the file epl-v10.html for the license text.
  */
-package de.cau.cs.kieler.papyrus.sequence.graph.transform;
+package de.cau.cs.kieler.papyrus.sequence.p0import;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -32,6 +32,8 @@ import de.cau.cs.kieler.klay.layered.graph.LLabel;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.graph.LPort;
 import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
+import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
+import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 import de.cau.cs.kieler.papyrus.sequence.graph.SComment;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraphElement;
@@ -44,32 +46,47 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
 
 /**
- * Importer class that converts the KGraph into a SGraph and builds the LayeredGraph out of the
- * SGraph.
+ * Turns the KGraph of a layout context into an SGraph and an LGraph.
  * 
  * @author grh
  * @kieler.design 2012-11-20 cds, msp
  * @kieler.rating proposed yellow grh
  */
-public final class KGraphImporter {
+public final class KGraphImporter implements ISequenceLayoutProcessor {
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
+        progressMonitor.begin("Graph import", 1);
+        
+        context.sgraph = importGraph(context.kgraph);
+        context.lgraph = createLayeredGraph(context.sgraph);
+        
+        progressMonitor.done();
+    }
+    
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // SGraph Creation
+    
     /**
      * Builds a PGraph out of a given KGraph by associating every KNode to a PLifeline and every
      * KEdge to a PMessage.
      * 
      * @param topNode
      *            the KGraphElement, that holds the nodes
-     * @param progressMonitor
-     *            the progress monitor
-     * @return the built PGraph
+     * @return the built SGraph
      */
-    public SGraph importGraph(final KNode topNode, final IKielerProgressMonitor progressMonitor) {
-        progressMonitor.begin("Import graph", 1);
-
+    private SGraph importGraph(final KNode topNode) {
         // Create a graph object
         SGraph sgraph = new SGraph();
+        
         // Initialize node-lifeline and edge-message maps
         HashMap<KNode, SLifeline> nodeMap = Maps.newHashMap();
         HashMap<KEdge, SMessage> edgeMap = Maps.newHashMap();
+        
         // Get the list of areas
         List<SequenceArea> areas = topNode.getData(KShapeLayout.class).getProperty(
                 SequenceDiagramProperties.AREAS);
@@ -117,76 +134,7 @@ public final class KGraphImporter {
         // Copy the areas property to the SGraph
         sgraph.setProperty(SequenceDiagramProperties.AREAS, areas);
 
-        progressMonitor.done();
-
         return sgraph;
-    }
-
-    /**
-     * Builds a layered graph that contains every message as a node. Edges are representations of
-     * the relative order of the messages.
-     * 
-     * @param sgraph
-     *            the given SGraph
-     * @param progressMonitor
-     *            the progress monitor
-     * @return the layeredGraph
-     */
-    public LGraph createLayeredGraph(final SGraph sgraph,
-            final IKielerProgressMonitor progressMonitor) {
-        progressMonitor.begin("Create layered graph", 1);
-
-        LGraph lgraph = new LGraph();
-
-        // Build a node for every message.
-        int i = 0;
-        for (SLifeline lifeline : sgraph.getLifelines()) {
-            for (SMessage message : lifeline.getOutgoingMessages()) {
-                LNode node = new LNode(lgraph);
-                node.getLabels().add(new LLabel("Node" + i++));
-                node.setProperty(InternalProperties.ORIGIN, message);
-                message.setProperty(SequenceDiagramProperties.LAYERED_NODE, node);
-                lgraph.getLayerlessNodes().add(node);
-            }
-            // Handle found messages (they have no source lifeline)
-            for (SMessage message : lifeline.getIncomingMessages()) {
-                if (message.getSource().isDummy()) {
-                    LNode node = new LNode(lgraph);
-                    node.getLabels().add(new LLabel("Node" + i++));
-                    node.setProperty(InternalProperties.ORIGIN, message);
-                    message.setProperty(SequenceDiagramProperties.LAYERED_NODE, node);
-                    lgraph.getLayerlessNodes().add(node);
-                }
-            }
-        }
-
-        // Add an edge for every neighbored pair of messages at every lifeline
-        // indicating the relative order of the messages.
-        for (SLifeline lifeline : sgraph.getLifelines()) {
-            List<SMessage> messages = lifeline.getMessages();
-            for (int j = 1; j < messages.size(); j++) {
-                // Add an edge from the node belonging to message j-1 to the node belonging to
-                // message j
-                LNode sourceNode = messages.get(j - 1).getProperty(
-                        SequenceDiagramProperties.LAYERED_NODE);
-                LNode targetNode = messages.get(j).getProperty(
-                        SequenceDiagramProperties.LAYERED_NODE);
-                if (sourceNode != targetNode) {
-                    LPort sourcePort = new LPort();
-                    sourcePort.setNode(sourceNode);
-                    LPort targetPort = new LPort();
-                    targetPort.setNode(targetNode);
-                    LEdge edge = new LEdge();
-                    edge.setSource(sourcePort);
-                    edge.setTarget(targetPort);
-                    edge.setProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE, lifeline);
-                }
-            }
-        }
-
-        progressMonitor.done();
-
-        return lgraph;
     }
 
     /**
@@ -273,6 +221,7 @@ public final class KGraphImporter {
                     distance = Math.abs((edgeLayout.getTargetPoint().getY())
                             - (commentLayout.getYpos() + commentLayout.getHeight() / 2));
                 }
+                
                 if (distance < smallestDistance) {
                     smallestDistance = distance;
                     nextMessage = message;
@@ -408,6 +357,7 @@ public final class KGraphImporter {
                     }
                 }
             }
+            
             if (targetLL.getProperty(SequenceDiagramProperties.EXECUTIONS) != null) {
                 for (SequenceExecution execution : targetLL.getProperty(
                         SequenceDiagramProperties.EXECUTIONS)) {
@@ -473,9 +423,9 @@ public final class KGraphImporter {
      * @param node
      *            the KNode to search its incoming edges.
      */
-    private void createIncomingMessages(final SGraph sgraph,
-            final HashMap<KNode, SLifeline> nodeMap, final HashMap<KEdge, SMessage> edgeMap,
-            final KNode node) {
+    private void createIncomingMessages(final SGraph sgraph, final HashMap<KNode, SLifeline> nodeMap,
+            final HashMap<KEdge, SMessage> edgeMap, final KNode node) {
+        
         for (KEdge edge : node.getIncomingEdges()) {
             KEdgeLayout layout = edge.getData(KEdgeLayout.class);
 
@@ -620,15 +570,91 @@ public final class KGraphImporter {
         if (point.getX() < area.getPosition().x) {
             return false;
         }
+        
         if (point.getX() > area.getPosition().x + area.getSize().x) {
             return false;
         }
+        
         if (point.getY() < area.getPosition().y) {
             return false;
         }
+        
         if (point.getY() > area.getPosition().y + area.getSize().y) {
             return false;
         }
+        
         return true;
     }
+    
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // LGraph Creation
+
+    /**
+     * Builds a layered graph that contains every message as a node. Edges are representations of
+     * the relative order of the messages.
+     * 
+     * @param sgraph
+     *            the given SGraph
+     * @param progressMonitor
+     *            the progress monitor
+     * @return the layeredGraph
+     */
+    private LGraph createLayeredGraph(final SGraph sgraph) {
+        LGraph lgraph = new LGraph();
+
+        // Build a node for every message.
+        int i = 0;
+        for (SLifeline lifeline : sgraph.getLifelines()) {
+            for (SMessage message : lifeline.getOutgoingMessages()) {
+                LNode node = new LNode(lgraph);
+                node.getLabels().add(new LLabel("Node" + i++));
+                node.setProperty(InternalProperties.ORIGIN, message);
+                message.setProperty(SequenceDiagramProperties.LAYERED_NODE, node);
+                lgraph.getLayerlessNodes().add(node);
+            }
+            // Handle found messages (they have no source lifeline)
+            for (SMessage message : lifeline.getIncomingMessages()) {
+                if (message.getSource().isDummy()) {
+                    LNode node = new LNode(lgraph);
+                    node.getLabels().add(new LLabel("Node" + i++));
+                    node.setProperty(InternalProperties.ORIGIN, message);
+                    message.setProperty(SequenceDiagramProperties.LAYERED_NODE, node);
+                    lgraph.getLayerlessNodes().add(node);
+                }
+            }
+        }
+
+        // Add an edge for every neighbored pair of messages at every lifeline
+        // indicating the relative order of the messages.
+        for (SLifeline lifeline : sgraph.getLifelines()) {
+            List<SMessage> messages = lifeline.getMessages();
+            for (int j = 1; j < messages.size(); j++) {
+                // Add an edge from the node belonging to message j-1 to the node belonging to
+                // message j
+                LNode sourceNode = messages.get(j - 1).getProperty(
+                        SequenceDiagramProperties.LAYERED_NODE);
+                LNode targetNode = messages.get(j).getProperty(
+                        SequenceDiagramProperties.LAYERED_NODE);
+                
+                if (sourceNode != targetNode) {
+                    LPort sourcePort = new LPort();
+                    sourcePort.setNode(sourceNode);
+                    
+                    LPort targetPort = new LPort();
+                    targetPort.setNode(targetNode);
+                    
+                    LEdge edge = new LEdge();
+                    
+                    edge.setSource(sourcePort);
+                    edge.setTarget(targetPort);
+                    
+                    edge.setProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE, lifeline);
+                }
+            }
+        }
+
+        return lgraph;
+    }
+    
 }

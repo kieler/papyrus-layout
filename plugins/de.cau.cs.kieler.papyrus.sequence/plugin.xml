@@ -45,6 +45,9 @@
                default="false"
                option="de.cau.cs.kieler.papyrus.sequence.groupAreas">
          </knownOption>
+         <knownOption
+               option="de.cau.cs.kieler.papyrus.sequence.coordinateSystem">
+         </knownOption>
       </layoutAlgorithm>
       <layoutOption
             advanced="false"
@@ -123,6 +126,16 @@
                option="de.cau.cs.kieler.papyrus.sequence.lifelineSorting"
                value="SHORT_MESSAGES">
          </dependency>
+      </layoutOption>
+      <layoutOption
+            advanced="true"
+            appliesTo="parents"
+            class="de.cau.cs.kieler.papyrus.sequence.p6export.ExportStrategy"
+            default="KGRAPH"
+            description="The coordinate system the diagram's coordinates are computed for."
+            id="de.cau.cs.kieler.papyrus.sequence.coordinateSystem"
+            name="Coordinate System"
+            type="enum">
       </layoutOption>
    </extension>
 
