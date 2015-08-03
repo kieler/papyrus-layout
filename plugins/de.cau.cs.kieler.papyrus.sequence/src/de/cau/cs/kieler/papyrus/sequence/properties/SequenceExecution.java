@@ -32,7 +32,7 @@ import de.cau.cs.kieler.core.math.KVector;
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
  */
-public class SequenceExecution {
+public final class SequenceExecution {
     
     /**
      * The type of sequence execution.

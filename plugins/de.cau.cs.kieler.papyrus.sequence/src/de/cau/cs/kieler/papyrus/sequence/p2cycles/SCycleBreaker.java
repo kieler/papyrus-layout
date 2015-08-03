@@ -11,7 +11,7 @@
  * This code is provided under the terms of the Eclipse Public License (EPL).
  * See the file epl-v10.html for the license text.
  */
-package de.cau.cs.kieler.papyrus.sequence;
+package de.cau.cs.kieler.papyrus.sequence.p2cycles;
 
 import java.util.Iterator;
 import java.util.List;
@@ -27,18 +27,22 @@ import de.cau.cs.kieler.klay.layered.graph.LEdge;
 import de.cau.cs.kieler.klay.layered.graph.LGraph;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
+import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
+import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
 /**
- * Heuristic implementation of cycle breaking.
+ * Heuristic implementation of cycle breaking. Breaks the cycles in the layered graph of the layout
+ * context. Cycles are broken by splitting one of the affected nodes (which represent messages).
+ * With that, this message is not drawn horizontally anymore.
  * 
  * @author grh
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
  */
-public class SCycleBreaker {
+public final class SCycleBreaker implements ISequenceLayoutProcessor {
     /** A node with this ID was not visited yet. */
     private static final int NOT_VISITED = 0;
     /** A node with this ID was already visited, but not as part of the current path. */
@@ -53,29 +57,23 @@ public class SCycleBreaker {
     
 
     /**
-     * Break the cycles in the given layered graph. Cycles are broken by splitting one of the
-     * affected nodes (which represent messages). With that, this message is not drawn horizontally
-     * anymore.
-     * 
-     * @param lgraph
-     *            the layered graph
-     * @param progressMonitor
-     *            the progress monitor
+     * {@inheritDoc}
      */
-    public void breakCycles(final LGraph lgraph, final IKielerProgressMonitor progressMonitor) {
+    @Override
+    public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
         progressMonitor.begin("Cycle Breaking", 1);
 
         // The set of edges to be split after the cycle detecting phase
         split = Sets.newHashSet();
-        chain = Lists.newArrayListWithCapacity(lgraph.getLayerlessNodes().size());
+        chain = Lists.newArrayListWithCapacity(context.lgraph.getLayerlessNodes().size());
 
         // Use node IDs to indicate if a node was already visited
-        for (LNode node : lgraph.getLayerlessNodes()) {
+        for (LNode node : context.lgraph.getLayerlessNodes()) {
             node.id = NOT_VISITED;
         }
 
         // Start a dfs only when the node was not visited by any other earlier dfs
-        for (LNode node : lgraph.getLayerlessNodes()) {
+        for (LNode node : context.lgraph.getLayerlessNodes()) {
             if (node.id == NOT_VISITED) {
                 dfs(node);
             }
@@ -83,11 +81,12 @@ public class SCycleBreaker {
 
         // split all nodes in the hashSet
         for (LNode node : split) {
-            splitNode(lgraph, node);
+            splitNode(context.lgraph, node);
         }
 
         progressMonitor.done();
     }
+    
 
     /**
      * Split the given node into two nodes for each of the corresponding lifelines. Rearrange edges
@@ -174,4 +173,5 @@ public class SCycleBreaker {
         }
         split.add(uppermost);
     }
+    
 }

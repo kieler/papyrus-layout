@@ -11,13 +11,13 @@
  * This code is provided under the terms of the Eclipse Public License (EPL).
  * See the file epl-v10.html for the license text.
  */
-package de.cau.cs.kieler.papyrus.sequence.sorter;
+package de.cau.cs.kieler.papyrus.sequence.p4sorting;
 
 import java.util.List;
 
 import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
-import de.cau.cs.kieler.klay.layered.graph.LGraph;
-import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
+import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
+import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 
 /**
@@ -28,29 +28,28 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
  */
-public class InteractiveLifelineSorter implements ILifelineSorter {
+public final class InteractiveLifelineSorter implements ISequenceLayoutProcessor {
 
     /**
-     * Sort lifelines as they were sorted before layout.
      * {@inheritDoc}
      */
-    public List<SLifeline> sortLifelines(final SGraph graph, final LGraph lgraph, 
-            final IKielerProgressMonitor progressMonitor) {
-        
+    @Override
+    public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
         progressMonitor.begin("Interactive lifeline sorting", 1);
         
         // Sort the lifelines by their x coordinates
-        List<SLifeline> lifelines = (List<SLifeline>) graph.getLifelines();
+        List<SLifeline> lifelines = context.sgraph.getLifelines();
         java.util.Collections.sort(lifelines);
         
         // Apply lifeline slots
         for (int i = 0; i < lifelines.size(); i++) {
             lifelines.get(i).setHorizontalSlot(i);
         }
+
+        // Return the list of lifelines in the calculated order
+        context.lifelineOrder = lifelines;
         
         progressMonitor.done();
-        
-        return lifelines;
     }
 
 }

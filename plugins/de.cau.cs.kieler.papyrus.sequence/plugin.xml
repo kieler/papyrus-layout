@@ -94,7 +94,7 @@
       <layoutOption
             advanced="false"
             appliesTo="parents"
-            class="de.cau.cs.kieler.papyrus.sequence.sorter.LifelineSortingStrategy"
+            class="de.cau.cs.kieler.papyrus.sequence.p4sorting.LifelineSortingStrategy"
             default="INTERACTIVE"
             description="The sorting strategy that is used to order the lifelines horizontally."
             id="de.cau.cs.kieler.papyrus.sequence.lifelineSorting"

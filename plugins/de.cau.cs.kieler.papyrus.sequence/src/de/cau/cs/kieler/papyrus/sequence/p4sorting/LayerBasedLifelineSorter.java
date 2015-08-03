@@ -11,7 +11,7 @@
  * This code is provided under the terms of the Eclipse Public License (EPL).
  * See the file epl-v10.html for the license text.
  */
-package de.cau.cs.kieler.papyrus.sequence.sorter;
+package de.cau.cs.kieler.papyrus.sequence.p4sorting;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -23,7 +23,8 @@ import de.cau.cs.kieler.klay.layered.graph.LGraph;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.graph.Layer;
 import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
-import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
+import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
+import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 
@@ -34,37 +35,37 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
  * @author grh
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
- * 
  */
-public class LayerBasedLifelineSorter implements ILifelineSorter {
+public final class LayerBasedLifelineSorter implements ISequenceLayoutProcessor {
     private int position;
     private List<SLifeline> lifelines = Lists.newArrayList();
     private List<SLifeline> sortedLifelines;
 
+    
     /**
-     * Sorts the lifelines in a stairway-like fashion. {@inheritDoc}
+     * {@inheritDoc}
      */
-    public List<SLifeline> sortLifelines(final SGraph graph, final LGraph lgraph,
-            final IKielerProgressMonitor progressMonitor) {
-        
+    @Override
+    public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
         progressMonitor.begin("Layer based lifeline sorting", 1);
 
-        lifelines.addAll(graph.getLifelines());
+        lifelines.addAll(context.sgraph.getLifelines());
         sortedLifelines = new LinkedList<SLifeline>();
 
-        if (lgraph.getLayers().size() == 0) {
+        if (context.lgraph.getLayers().size() == 0) {
             // Abort, if no layers are set (e.g. outer node)
-            return lifelines;
+            context.lifelineOrder = lifelines;
+            return;
         }
 
         // Add the layerIndex Property to messages
-        addLayerToMessages(lgraph);
+        addLayerToMessages(context.lgraph);
 
         position = 0;
 
         while (!lifelines.isEmpty()) {
             // Find the message with the uppermost position whose source has not been set
-            SMessage m0 = findUppermostMessage(lgraph);
+            SMessage m0 = findUppermostMessage(context.lgraph);
             if (m0 == null) {
                 // Left lifelines are not connected by any message => assign positions arbitrarily
                 assignToNextPosition(lifelines.get(0));
@@ -83,13 +84,13 @@ public class LayerBasedLifelineSorter implements ILifelineSorter {
                 assignToNextPosition(x);
 
                 // Find the uppermost outgoing message of the next lifeline
-                m0 = findUppermostOutgoingMessage(lgraph, x);
+                m0 = findUppermostOutgoingMessage(context.lgraph, x);
             } while (m0 != null);
         }
+        
+        context.lifelineOrder = sortedLifelines;
 
         progressMonitor.done();
-
-        return sortedLifelines;
     }
 
     /**

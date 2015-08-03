@@ -11,7 +11,7 @@
  * This code is provided under the terms of the Eclipse Public License (EPL).
  * See the file epl-v10.html for the license text.
  */
-package de.cau.cs.kieler.papyrus.sequence.sorter;
+package de.cau.cs.kieler.papyrus.sequence.p4sorting;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -24,6 +24,8 @@ import de.cau.cs.kieler.klay.layered.graph.LGraph;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.graph.Layer;
 import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
+import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
+import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
@@ -40,7 +42,7 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
  */
-public class EqualDistributionLifelineSorter implements ILifelineSorter {
+public final class EqualDistributionLifelineSorter implements ISequenceLayoutProcessor {
 
     /**
      * A list of these nodes is a very basic implementation of a simple graph. Every node has a map
@@ -48,7 +50,7 @@ public class EqualDistributionLifelineSorter implements ILifelineSorter {
      * lifeline in the sequence diagram. The degree of an edge represents the number of messages
      * connecting the corresponding lifelines.
      */
-    private static class EDLSNode {
+    private static final class EDLSNode {
         /**
          * A map that contains every adjacent node and the weight of the corresponding edge. Edges
          * are stored in both of their connected nodes.
@@ -128,11 +130,6 @@ public class EqualDistributionLifelineSorter implements ILifelineSorter {
 
     /** Option that indicates, if the starting node is searched by layering attributes. */
     private boolean layerBased = true;
-    /**
-     * Option that indicates, if areas are considered by the sorter. If so, edges corresponding to
-     * messages in an area are given higher weight.
-     */
-    private boolean considerAreas = false;
     /** List of nodes that are already placed by the algorithm. */
     private List<EDLSNode> placedNodes;
     /** The map of lifeline <-> node correspondences. */
@@ -140,26 +137,14 @@ public class EqualDistributionLifelineSorter implements ILifelineSorter {
 
     
     /**
-     * Constructor with parameter for the area grouping option.
-     * 
-     * @param groupAreas
-     *            if messages that are contained in areas should be given increased priority in the
-     *            message length minimization process.
-     */
-    public EqualDistributionLifelineSorter(final boolean groupAreas) {
-        this.considerAreas = groupAreas;
-    }
-    
-
-    /**
      * {@inheritDoc}
      */
-    public List<SLifeline> sortLifelines(final SGraph sgraph, final LGraph lgraph,
-            final IKielerProgressMonitor progressMonitor) {
+    @Override
+    public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
         progressMonitor.begin("Equal distribution lifeline sorting", 1);
 
         // Create the simple graph representation that this algorithm works with.
-        createEDLSNodes(sgraph);
+        createEDLSNodes(context);
 
         // Initialize list of nodes that are already placed. Nodes will be inserted one by one here.
         placedNodes = new LinkedList<EDLSNode>();
@@ -167,17 +152,17 @@ public class EqualDistributionLifelineSorter implements ILifelineSorter {
         // Calculate the starting node in a first step
         EDLSNode first;
         if (layerBased) {
-            first = layerBasedFirstNode(sgraph, lgraph);
+            first = layerBasedFirstNode(context.sgraph, context.lgraph);
         } else {
-            first = degreeBasedFirstNode(sgraph, lgraph);
+            first = degreeBasedFirstNode(context.sgraph, context.lgraph);
         }
         placedNodes.add(first);
         // Update the TL-values for connected nodes
         first.incrementNeighborsTL();
 
         // Calculate following nodes one after another
-        for (int i = 2; i <= sgraph.getLifelines().size(); i++) {
-            EDLSNode next = calculateNextNode(sgraph);
+        for (int i = 2; i <= context.sgraph.getLifelines().size(); i++) {
+            EDLSNode next = calculateNextNode(context.sgraph);
             placedNodes.add(next);
             // Update the TL-value for connected nodes
             next.incrementNeighborsTL();
@@ -193,15 +178,16 @@ public class EqualDistributionLifelineSorter implements ILifelineSorter {
             i++;
         }
 
+        // Return the list of lifelines in the calculated order
+        context.lifelineOrder = lifelines;
+
         // Free memory
         placedNodes = null;
         correspondences = null;
         
         progressMonitor.done();
-
-        // Return the list of lifelines in the calculated order
-        return lifelines;
     }
+    
 
     /**
      * Set the layer-based option.
@@ -214,24 +200,14 @@ public class EqualDistributionLifelineSorter implements ILifelineSorter {
     }
 
     /**
-     * Set the consider-areas option.
-     * 
-     * @param considerAreas
-     *            the new value for the consider-areas option
-     */
-    public void setConsiderAreas(final boolean considerAreas) {
-        this.considerAreas = considerAreas;
-    }
-
-    /**
      * Create the lightweight graph implementation out of the SGraph.
      * 
-     * @param graph
-     *            the sequence graph
+     * @param context
+     *            the layout context that contains all relevant information for the current layout run.
      */
-    private void createEDLSNodes(final SGraph graph) {
+    private void createEDLSNodes(final LayoutContext context) {
         // List of lifelines
-        List<SLifeline> lifelines = graph.getLifelines();
+        List<SLifeline> lifelines = context.sgraph.getLifelines();
 
         // Initialize correspondences list
         correspondences = HashBiMap.create(lifelines.size());
@@ -246,8 +222,8 @@ public class EqualDistributionLifelineSorter implements ILifelineSorter {
         // contained in an area.
         // Prepare this by filling a map of (message <-> number of its areas) pairs.
         HashMap<SMessage, Integer> areaMessages = new HashMap<SMessage, Integer>();
-        if (considerAreas) {
-            List<SequenceArea> areas = graph.getProperty(SequenceDiagramProperties.AREAS);
+        if (context.groupAreasWhenSorting) {
+            List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramProperties.AREAS);
             if (areas != null) {
                 for (SequenceArea area : areas) {
                     for (Object messageObject : area.getMessages()) {
@@ -271,7 +247,7 @@ public class EqualDistributionLifelineSorter implements ILifelineSorter {
             // Update or create entry in the edges map for every message
             for (SMessage message : lifeline.getOutgoingMessages()) {
                 int increaseValue = 1;
-                if (considerAreas) {
+                if (context.groupAreasWhenSorting) {
                     if (areaMessages.containsKey(message)) {
                         increaseValue += areaMessages.get(message);
                     }

@@ -32,7 +32,7 @@ import de.cau.cs.kieler.core.math.KVector;
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
  */
-public class SequenceArea {
+public final class SequenceArea {
     /** The originating object of the execution. */
     private KNode origin;
     /** The list of messages contained in the area. */

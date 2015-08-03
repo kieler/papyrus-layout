@@ -11,7 +11,7 @@
  * This code is provided under the terms of the Eclipse Public License (EPL).
  * See the file epl-v10.html for the license text.
  */
-package de.cau.cs.kieler.papyrus.sequence;
+package de.cau.cs.kieler.papyrus.sequence.graph.transform;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -50,9 +50,8 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
  * @author grh
  * @kieler.design 2012-11-20 cds, msp
  * @kieler.rating proposed yellow grh
- * 
  */
-public class SGraphImporter {
+public final class SGraphImporter {
     /**
      * Builds a PGraph out of a given KGraph by associating every KNode to a PLifeline and every
      * KEdge to a PMessage.
