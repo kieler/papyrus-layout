@@ -37,8 +37,11 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
  * @kieler.rating proposed yellow grh
  */
 public final class LayerBasedLifelineSorter implements ISequenceLayoutProcessor {
-    private int position;
-    private List<SLifeline> lifelines = Lists.newArrayList();
+    /** The next position a lifeline will be placed in. */
+    private int nextPosition;
+    /** List of lifelines to be processed. */
+    private List<SLifeline> unprocessedLifelines = Lists.newArrayList();
+    /** List of lifelines that have already been sorted. */
     private List<SLifeline> sortedLifelines;
 
     
@@ -49,43 +52,43 @@ public final class LayerBasedLifelineSorter implements ISequenceLayoutProcessor 
     public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
         progressMonitor.begin("Layer based lifeline sorting", 1);
 
-        lifelines.addAll(context.sgraph.getLifelines());
+        unprocessedLifelines.addAll(context.sgraph.getLifelines());
         sortedLifelines = new LinkedList<SLifeline>();
 
         if (context.lgraph.getLayers().size() == 0) {
             // Abort, if no layers are set (e.g. outer node)
-            context.lifelineOrder = lifelines;
+            context.lifelineOrder = unprocessedLifelines;
             return;
         }
 
         // Add the layerIndex Property to messages
         addLayerToMessages(context.lgraph);
 
-        position = 0;
+        nextPosition = 0;
 
-        while (!lifelines.isEmpty()) {
+        while (!unprocessedLifelines.isEmpty()) {
             // Find the message with the uppermost position whose source has not been set
-            SMessage m0 = findUppermostMessage(context.lgraph);
-            if (m0 == null) {
+            SMessage uppermostMessage = findUppermostMessage(context.lgraph);
+            if (uppermostMessage == null) {
                 // Left lifelines are not connected by any message => assign positions arbitrarily
-                assignToNextPosition(lifelines.get(0));
+                assignToNextPosition(unprocessedLifelines.get(0));
                 continue;
             }
-            SLifeline x = m0.getSource();
+            SLifeline x = uppermostMessage.getSource();
 
             // Append Lifeline to the ordered lifelines list
             assignToNextPosition(x);
 
             do {
                 // The target of this lifeline is set to next position
-                x = m0.getTarget();
+                x = uppermostMessage.getTarget();
 
                 // Append Lifeline to the ordered lifelines list
                 assignToNextPosition(x);
 
                 // Find the uppermost outgoing message of the next lifeline
-                m0 = findUppermostOutgoingMessage(context.lgraph, x);
-            } while (m0 != null);
+                uppermostMessage = findUppermostOutgoingMessage(context.lgraph, x);
+            } while (uppermostMessage != null);
         }
         
         context.lifelineOrder = sortedLifelines;
@@ -102,9 +105,9 @@ public final class LayerBasedLifelineSorter implements ISequenceLayoutProcessor 
     private void assignToNextPosition(final SLifeline lifeline) {
         if (!sortedLifelines.contains(lifeline)) {
             sortedLifelines.add(lifeline);
-            lifeline.setHorizontalSlot(position);
-            position++;
-            lifelines.remove(lifeline);
+            lifeline.setHorizontalSlot(nextPosition);
+            nextPosition++;
+            unprocessedLifelines.remove(lifeline);
         }
     }
 
@@ -140,7 +143,7 @@ public final class LayerBasedLifelineSorter implements ISequenceLayoutProcessor 
         for (Layer layer : lgraph.getLayers()) {
             for (LNode node : layer.getNodes()) {
                 SMessage message = (SMessage) node.getProperty(InternalProperties.ORIGIN);
-                if (message != null && lifelines.contains(message.getSource())) {
+                if (message != null && unprocessedLifelines.contains(message.getSource())) {
                     candidates.add(node);
                 }
             }
@@ -184,7 +187,7 @@ public final class LayerBasedLifelineSorter implements ISequenceLayoutProcessor 
         for (SMessage outgoingMessage : lifeline.getOutgoingMessages()) {
             if (outgoingMessage.getMessageLayer() < bestLayer) {
                 // check if target lifeline was already set
-                if (lifelines.contains(outgoingMessage.getTarget())) {
+                if (unprocessedLifelines.contains(outgoingMessage.getTarget())) {
                     uppermostMessage = outgoingMessage;
                     bestLayer = outgoingMessage.getMessageLayer();
                 }

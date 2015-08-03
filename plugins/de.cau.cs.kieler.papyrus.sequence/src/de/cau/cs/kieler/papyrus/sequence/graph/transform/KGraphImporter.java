@@ -51,7 +51,7 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
  * @kieler.design 2012-11-20 cds, msp
  * @kieler.rating proposed yellow grh
  */
-public final class SGraphImporter {
+public final class KGraphImporter {
     /**
      * Builds a PGraph out of a given KGraph by associating every KNode to a PLifeline and every
      * KEdge to a PMessage.

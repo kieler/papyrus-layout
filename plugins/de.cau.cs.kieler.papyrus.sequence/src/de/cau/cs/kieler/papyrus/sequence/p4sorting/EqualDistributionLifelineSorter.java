@@ -44,90 +44,6 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
  */
 public final class EqualDistributionLifelineSorter implements ISequenceLayoutProcessor {
 
-    /**
-     * A list of these nodes is a very basic implementation of a simple graph. Every node has a map
-     * with adjacent nodes and the weight of the connecting edge. Every node corresponds to a
-     * lifeline in the sequence diagram. The degree of an edge represents the number of messages
-     * connecting the corresponding lifelines.
-     */
-    private static final class EDLSNode {
-        /**
-         * A map that contains every adjacent node and the weight of the corresponding edge. Edges
-         * are stored in both of their connected nodes.
-         */
-        private HashMap<EDLSNode, Integer> edges;
-        /**
-         * For an unplaced node, the weighted sum of edges to nodes that are already placed. At
-         * first, this value is 0 since there are no nodes placed so far.
-         */
-        private int tl = 0;
-        /** Indicates, if the node was already placed. */
-        private boolean placed = false;
-
-        /** Constructor. */
-        public EDLSNode() {
-            edges = new HashMap<EqualDistributionLifelineSorter.EDLSNode, Integer>();
-        }
-
-        /**
-         * @return the tl value
-         */
-        public int getTl() {
-            return tl;
-        }
-
-        /**
-         * @param tl
-         *            the new tl value
-         */
-        public void setTl(final int tl) {
-            this.tl = tl;
-        }
-
-        /**
-         * Increment the sum of the edge-weights for neighbored nodes. This is necessary, if this
-         * node was placed in the last step.
-         */
-        public void incrementNeighborsTL() {
-            for (EDLSNode node : edges.keySet()) {
-                // If a connected node is node placed yet, its TL-value has to be incremented by the
-                // connecting edge's weight
-                if (!node.isPlaced()) {
-                    node.setTl(node.getTl() + edges.get(node));
-                }
-            }
-        }
-
-        /**
-         * @return the placed value
-         */
-        public boolean isPlaced() {
-            return placed;
-        }
-
-        /**
-         * @param placed
-         *            the new placed value
-         */
-        public void setPlaced(final boolean placed) {
-            this.placed = placed;
-        }
-
-        /**
-         * Get the weighted degree of a node. The weighted degree is the sum of all edge-weights of
-         * connected edges.
-         * 
-         * @return the weighted degree for the node
-         */
-        public int getWeightedDegree() {
-            int ret = 0;
-            for (int value : edges.values()) {
-                ret += value;
-            }
-            return ret;
-        }
-    }
-
     /** Option that indicates, if the starting node is searched by layering attributes. */
     private boolean layerBased = true;
     /** List of nodes that are already placed by the algorithm. */
@@ -394,4 +310,93 @@ public final class EqualDistributionLifelineSorter implements ISequenceLayoutPro
         candidate.setPlaced(true);
         return candidate;
     }
+    
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // EDSLNode Class
+
+    /**
+     * A list of these nodes is a very basic implementation of a simple graph. Every node has a map
+     * with adjacent nodes and the weight of the connecting edge. Every node corresponds to a
+     * lifeline in the sequence diagram. The degree of an edge represents the number of messages
+     * connecting the corresponding lifelines.
+     */
+    private static final class EDLSNode {
+        /**
+         * A map that contains every adjacent node and the weight of the corresponding edge. Edges
+         * are stored in both of their connected nodes.
+         */
+        private HashMap<EDLSNode, Integer> edges;
+        /**
+         * For an unplaced node, the weighted sum of edges to nodes that are already placed. At
+         * first, this value is 0 since there are no nodes placed so far.
+         */
+        private int tl = 0;
+        /** Indicates, if the node was already placed. */
+        private boolean placed = false;
+
+        /** Constructor. */
+        public EDLSNode() {
+            edges = new HashMap<EqualDistributionLifelineSorter.EDLSNode, Integer>();
+        }
+
+        /**
+         * @return the tl value
+         */
+        public int getTl() {
+            return tl;
+        }
+
+        /**
+         * @param tl
+         *            the new tl value
+         */
+        public void setTl(final int tl) {
+            this.tl = tl;
+        }
+
+        /**
+         * Increment the sum of the edge-weights for neighbored nodes. This is necessary, if this
+         * node was placed in the last step.
+         */
+        public void incrementNeighborsTL() {
+            for (EDLSNode node : edges.keySet()) {
+                // If a connected node is node placed yet, its TL-value has to be incremented by the
+                // connecting edge's weight
+                if (!node.isPlaced()) {
+                    node.setTl(node.getTl() + edges.get(node));
+                }
+            }
+        }
+
+        /**
+         * @return the placed value
+         */
+        public boolean isPlaced() {
+            return placed;
+        }
+
+        /**
+         * @param placed
+         *            the new placed value
+         */
+        public void setPlaced(final boolean placed) {
+            this.placed = placed;
+        }
+
+        /**
+         * Get the weighted degree of a node. The weighted degree is the sum of all edge-weights of
+         * connected edges.
+         * 
+         * @return the weighted degree for the node
+         */
+        public int getWeightedDegree() {
+            int ret = 0;
+            for (int value : edges.values()) {
+                ret += value;
+            }
+            return ret;
+        }
+    }
+    
 }

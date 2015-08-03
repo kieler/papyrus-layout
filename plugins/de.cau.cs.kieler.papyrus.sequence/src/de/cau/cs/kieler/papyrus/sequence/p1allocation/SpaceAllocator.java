@@ -30,9 +30,9 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
 /**
- * Allocates vertical space for various objects by introducing dummy nodes in the LGraph.
- * 
- * TODO: Add further documentation.
+ * Allocates vertical space for various objects by introducing dummy nodes in the LGraph. Space is
+ * required wherever messages cannot be allowed to be placed. This includes space required for message
+ * comments or for headers of combined fragments.
  * 
  * @author grh
  * @author cds
@@ -87,8 +87,8 @@ public final class SpaceAllocator implements ISequenceLayoutProcessor {
                     }
                     
                     if (uppermostMessage != null) {
-                        LNode node = uppermostMessage
-                                .getProperty(SequenceDiagramProperties.LAYERED_NODE);
+                        LNode node = uppermostMessage.getProperty(
+                                SequenceDiagramProperties.LAYERED_NODE);
                         createLGraphDummyNode(context.lgraph, node, true);
                     }
                 }
@@ -111,15 +111,17 @@ public final class SpaceAllocator implements ISequenceLayoutProcessor {
                     attachedMess = (SMessage) element;
                 }
             }
+            
             if (attachedMess != null) {
                 // Get height of the comment and calculate number of dummy nodes needed
                 double height = comment.getSize().y;
                 int dummys = (int) Math.ceil(height / context.messageSpacing);
+                
                 // Add dummy nodes in the layered graph
-                LNode node = attachedMess.getProperty(SequenceDiagramProperties.LAYERED_NODE);
-                if (node != null) {
+                LNode lnode = attachedMess.getProperty(SequenceDiagramProperties.LAYERED_NODE);
+                if (lnode != null) {
                     for (int i = 0; i < dummys; i++) {
-                        createLGraphDummyNode(context.lgraph, node, true);
+                        createLGraphDummyNode(context.lgraph, lnode, true);
                     }
                     comment.setMessage(attachedMess);
                     attachedMess.getComments().add(comment);
@@ -172,10 +174,13 @@ public final class SpaceAllocator implements ISequenceLayoutProcessor {
      */
     private void createLGraphDummyNode(final LGraph lgraph, final LNode node, final boolean beforeNode) {
         LNode dummy = new LNode(lgraph);
+        
         LPort dummyIn = new LPort();
-        LPort dummyOut = new LPort();
         dummyIn.setNode(dummy);
+        
+        LPort dummyOut = new LPort();
         dummyOut.setNode(dummy);
+        
         LPort newPort = new LPort();
         newPort.setNode(node);
 
@@ -184,25 +189,32 @@ public final class SpaceAllocator implements ISequenceLayoutProcessor {
         // To avoid concurrent modification, two lists are needed
         if (beforeNode) {
             List<LEdge> incomingEdges = new LinkedList<LEdge>();
+            
             for (LEdge edge : node.getIncomingEdges()) {
                 incomingEdges.add(edge);
             }
+            
             for (LEdge edge : incomingEdges) {
                 edge.setTarget(dummyIn);
             }
+            
             dummyEdge.setSource(dummyOut);
             dummyEdge.setTarget(newPort);
         } else {
             List<LEdge> outgoingEdges = new LinkedList<LEdge>();
+            
             for (LEdge edge : node.getOutgoingEdges()) {
                 outgoingEdges.add(edge);
             }
+            
             for (LEdge edge : outgoingEdges) {
                 edge.setSource(dummyOut);
             }
+            
             dummyEdge.setTarget(dummyIn);
             dummyEdge.setSource(newPort);
         }
+        
         lgraph.getLayerlessNodes().add(dummy);
     }
 

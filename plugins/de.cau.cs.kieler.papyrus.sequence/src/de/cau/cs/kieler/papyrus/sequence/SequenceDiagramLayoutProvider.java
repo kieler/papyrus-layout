@@ -32,7 +32,7 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SComment;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
-import de.cau.cs.kieler.papyrus.sequence.graph.transform.SGraphImporter;
+import de.cau.cs.kieler.papyrus.sequence.graph.transform.KGraphImporter;
 import de.cau.cs.kieler.papyrus.sequence.p1allocation.SpaceAllocator;
 import de.cau.cs.kieler.papyrus.sequence.p2cycles.SCycleBreaker;
 import de.cau.cs.kieler.papyrus.sequence.p3layering.MessageLayerer;
@@ -80,12 +80,12 @@ public final class SequenceDiagramLayoutProvider extends AbstractLayoutProvider 
 
         progressMonitor.begin("Sequence Diagrem Layouter", 1 + 1 + 1 + 1);
         
-        // Initialize our class fields
+        // Initialize our layout context
         KLayoutData parentNodeLayoutData = parentNode.getData(KLayoutData.class);
         LayoutContext context = LayoutContext.fromLayoutData(parentNodeLayoutData);
 
         // Convert the KGraph into an SGraph and into an LGraph
-        SGraphImporter importer = new SGraphImporter();
+        KGraphImporter importer = new KGraphImporter();
         context.sgraph = importer.importGraph(parentNode, progressMonitor.subTask(1));
         context.lgraph = importer.createLayeredGraph(context.sgraph, progressMonitor.subTask(1));
         
