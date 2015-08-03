@@ -16,4 +16,5 @@ Import-Package: de.cau.cs.kieler.core.kgraph,
  de.cau.cs.kieler.klay.layered.graph,
  de.cau.cs.kieler.klay.layered.p2layers
 Export-Package: de.cau.cs.kieler.papyrus.sequence,
- de.cau.cs.kieler.papyrus.sequence.properties
+ de.cau.cs.kieler.papyrus.sequence.properties,
+ de.cau.cs.kieler.papyrus.sequence.sorter
