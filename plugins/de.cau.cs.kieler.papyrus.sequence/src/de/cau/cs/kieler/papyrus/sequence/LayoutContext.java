@@ -86,12 +86,16 @@ public final class LayoutContext {
      * Creates a new instance initialized based on the given layout data. Should be called with the
      * layout data of the sequence diagram graph.
      * 
-     * @param layoutData
-     *            the layout data to initialize the new context object with.
+     * @param parentNode
+     *            parent node of the graph that is to be laid out.
      * @return initialized context object.
      */
-    public static LayoutContext fromLayoutData(final KLayoutData layoutData) {
+    public static LayoutContext fromLayoutData(final KNode parentNode) {
         LayoutContext context = new LayoutContext();
+        
+        KLayoutData layoutData = parentNode.getData(KLayoutData.class);
+        
+        context.kgraph = parentNode;
         
         context.borderSpacing = layoutData.getProperty(
                 SequenceDiagramProperties.BORDER_SPACING).doubleValue();

@@ -21,7 +21,6 @@ import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
 import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.kiml.AbstractLayoutProvider;
 import de.cau.cs.kieler.kiml.UnsupportedGraphException;
-import de.cau.cs.kieler.kiml.klayoutdata.KLayoutData;
 import de.cau.cs.kieler.papyrus.sequence.p0import.KGraphImporter;
 import de.cau.cs.kieler.papyrus.sequence.p1allocation.SpaceAllocator;
 import de.cau.cs.kieler.papyrus.sequence.p2cycles.SCycleBreaker;
@@ -30,6 +29,7 @@ import de.cau.cs.kieler.papyrus.sequence.p4sorting.InteractiveLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.LayerBasedLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.ShortMessageLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.p5coordinates.CoordinateCalculator;
+import de.cau.cs.kieler.papyrus.sequence.p6export.KGraphExporter;
 import de.cau.cs.kieler.papyrus.sequence.p6export.PapyrusExporter;
 
 /**
@@ -40,12 +40,10 @@ import de.cau.cs.kieler.papyrus.sequence.p6export.PapyrusExporter;
  * @kieler.rating proposed yellow grh
  */
 public final class SequenceDiagramLayoutProvider extends AbstractLayoutProvider {
+    
     /** The layout provider's ID. */
     public static final String ID = "de.cau.cs.kieler.papyrus.sequence.layout";
     
-    
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    // Core Algorithm
 
     @Override
     public void doLayout(final KNode parentNode, final IKielerProgressMonitor progressMonitor) {
@@ -56,13 +54,12 @@ public final class SequenceDiagramLayoutProvider extends AbstractLayoutProvider 
         }
         
         // Initialize our layout context
-        KLayoutData parentNodeLayoutData = parentNode.getData(KLayoutData.class);
-        LayoutContext context = LayoutContext.fromLayoutData(parentNodeLayoutData);
+        LayoutContext context = LayoutContext.fromLayoutData(parentNode);
 
         // Assemble and execute the algorithm
         List<ISequenceLayoutProcessor> algorithm = assembleLayoutProcessors(context);
         
-        progressMonitor.begin("Sequence Diagrem Layouter", algorithm.size());
+        progressMonitor.begin("Sequence Diagram Layouter", algorithm.size());
         
         for (ISequenceLayoutProcessor processor : algorithm) {
             processor.process(context, progressMonitor.subTask(1));
@@ -112,7 +109,8 @@ public final class SequenceDiagramLayoutProvider extends AbstractLayoutProvider 
             break;
             
         default:
-            // TODO Add new exporter here.    
+            processors.add(new KGraphExporter());
+            break;   
         }
         
         return processors;
