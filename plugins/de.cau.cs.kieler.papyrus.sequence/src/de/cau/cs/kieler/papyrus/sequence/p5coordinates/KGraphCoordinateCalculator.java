@@ -36,11 +36,19 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
 /**
- * Calculates coordinates for all objects in a sequence diagram.
+ * Calculates coordinates for all objects in a sequence diagram. The coordinates are calculated such
+ * that the {@link de.cau.cs.kieler.papyrus.sequence.p6export.KGraphExporter} knows how to interpret
+ * them.
+ * 
+ * <p>
+ * The division between this coordinate calculator and the {@link PapyrusCoordinateCalculator} is
+ * mighty unfortunate. At some point, the {@link KGraphExporter} should be changed to work with the
+ * results produced by this class.
+ * </p>
  * 
  * @author cds
  */
-public class CoordinateCalculator implements ISequenceLayoutProcessor {
+public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
 
     /**
      * {@inheritDoc}
@@ -115,7 +123,7 @@ public class CoordinateCalculator implements ISequenceLayoutProcessor {
      */
     private void calculateMessageYCoords(final LayoutContext context) {
         // Position of first layer of messages
-        double layerpos = context.lifelineYPos + context.messageSpacing;
+        double layerpos = context.lifelineYPos + context.lifelineHeader + context.messageSpacing;
 
         // Iterate the layers of nodes that represent messages
         for (int i = 0; i < context.lgraph.getLayers().size(); i++) {
@@ -129,11 +137,11 @@ public class CoordinateCalculator implements ISequenceLayoutProcessor {
                     continue;
                 }
 
-                SLifeline lifeline = node
-                        .getProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE);
-                // This property is set only for splitted messages
+                SLifeline lifeline = node.getProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE);
+                
+                // This property is set only for split messages
                 if (lifeline != null) {
-                    // consider messages that have different layers for source and target
+                    // Consider messages that have different layers for source and target
                     // nodes/heights
                     if (message.getTarget() == lifeline) {
                         message.setTargetYPos(layerpos);

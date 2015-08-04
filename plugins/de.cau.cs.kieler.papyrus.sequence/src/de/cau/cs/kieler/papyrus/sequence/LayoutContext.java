@@ -21,7 +21,7 @@ import de.cau.cs.kieler.klay.layered.graph.LGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.LifelineSortingStrategy;
-import de.cau.cs.kieler.papyrus.sequence.p6export.ExportStrategy;
+import de.cau.cs.kieler.papyrus.sequence.properties.CoordinateSystem;
 import de.cau.cs.kieler.papyrus.sequence.properties.LabelAlignment;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
@@ -67,8 +67,8 @@ public final class LayoutContext {
     public LifelineSortingStrategy sortingStrategy;
     /** Whether to include areas in the lifeline sorting process. Used by some sorters. */
     public boolean groupAreasWhenSorting;
-    /** The export algorithm to use. */
-    public ExportStrategy exportStrategy;
+    /** The coordinate system to use. */
+    public CoordinateSystem coordinateSystem;
     /** The label alignment strategy. */
     public LabelAlignment labelAlignment;
     
@@ -110,7 +110,7 @@ public final class LayoutContext {
         context.labelAlignment = layoutData.getProperty(SequenceDiagramProperties.LABEL_ALIGNMENT);
         context.sortingStrategy = layoutData.getProperty(SequenceDiagramProperties.LIFELINE_SORTING);
         context.groupAreasWhenSorting = layoutData.getProperty(SequenceDiagramProperties.GROUP_AREAS);
-        context.exportStrategy = layoutData.getProperty(SequenceDiagramProperties.COORDINATE_SYSTEM);
+        context.coordinateSystem = layoutData.getProperty(SequenceDiagramProperties.COORDINATE_SYSTEM);
         
         return context;
     }

@@ -23,7 +23,6 @@ import de.cau.cs.kieler.kiml.options.LayoutOptions;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.LifelineSortingStrategy;
-import de.cau.cs.kieler.papyrus.sequence.p6export.ExportStrategy;
 
 /**
  * Properties for sequence diagrams.
@@ -150,7 +149,7 @@ public final class SequenceDiagramProperties {
     /**
      * The coordinate system the layout results are computed for.
      */
-    public static final IProperty<ExportStrategy> COORDINATE_SYSTEM = new Property<ExportStrategy>(
-            "de.cau.cs.kieler.papyrus.sequence.coordinateSystem", ExportStrategy.KGRAPH);
+    public static final IProperty<CoordinateSystem> COORDINATE_SYSTEM = new Property<CoordinateSystem>(
+            "de.cau.cs.kieler.papyrus.sequence.coordinateSystem", CoordinateSystem.KGRAPH);
     
 }

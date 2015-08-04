@@ -28,7 +28,8 @@ import de.cau.cs.kieler.papyrus.sequence.p3layering.MessageLayerer;
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.InteractiveLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.LayerBasedLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.ShortMessageLifelineSorter;
-import de.cau.cs.kieler.papyrus.sequence.p5coordinates.CoordinateCalculator;
+import de.cau.cs.kieler.papyrus.sequence.p5coordinates.KGraphCoordinateCalculator;
+import de.cau.cs.kieler.papyrus.sequence.p5coordinates.PapyrusCoordinateCalculator;
 import de.cau.cs.kieler.papyrus.sequence.p6export.KGraphExporter;
 import de.cau.cs.kieler.papyrus.sequence.p6export.PapyrusExporter;
 
@@ -100,15 +101,15 @@ public final class SequenceDiagramLayoutProvider extends AbstractLayoutProvider 
             break;
         }
         
-        processors.add(new CoordinateCalculator());
-        
-        // There are different exporters available
-        switch (context.exportStrategy) {
+        // The rest of the algorithm depends on the coordinate system that is to be used
+        switch (context.coordinateSystem) {
         case PAPYRUS:
+            processors.add(new PapyrusCoordinateCalculator());
             processors.add(new PapyrusExporter());
             break;
             
         default:
+            processors.add(new KGraphCoordinateCalculator());
             processors.add(new KGraphExporter());
             break;   
         }

@@ -11,7 +11,7 @@
  * This code is provided under the terms of the Eclipse Public License (EPL).
  * See the file epl-v10.html for the license text.
  */
-package de.cau.cs.kieler.papyrus.sequence.p6export;
+package de.cau.cs.kieler.papyrus.sequence.properties;
 
 /**
  * The available coordinate systems. The selected system influences how coordinates are computed.
@@ -20,7 +20,7 @@ package de.cau.cs.kieler.papyrus.sequence.p6export;
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
  */
-public enum ExportStrategy {
+public enum CoordinateSystem {
 
     /**
      * All coordinates are to be interpreted in the KGraph coordinate system. With this strategy, the
@@ -41,7 +41,7 @@ public enum ExportStrategy {
      *            ordinal value
      * @return the related enumeration value
      */
-    public static ExportStrategy valueOf(final int i) {
+    public static CoordinateSystem valueOf(final int i) {
         return values()[i];
     }
     
