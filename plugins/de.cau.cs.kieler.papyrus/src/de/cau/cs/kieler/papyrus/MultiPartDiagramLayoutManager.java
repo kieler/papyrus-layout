@@ -80,7 +80,7 @@ import de.cau.cs.kieler.kiml.options.EdgeLabelPlacement;
 import de.cau.cs.kieler.kiml.options.LayoutOptions;
 import de.cau.cs.kieler.kiml.service.LayoutMapping;
 import de.cau.cs.kieler.kiml.util.KimlUtil;
-import de.cau.cs.kieler.papyrus.sequence.p6export.ExportStrategy;
+import de.cau.cs.kieler.papyrus.sequence.properties.CoordinateSystem;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
@@ -280,7 +280,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
 
         KNode topNode = KimlUtil.createInitializedNode();
         KShapeLayout shapeLayout = topNode.getData(KShapeLayout.class);
-        shapeLayout.setProperty(SequenceDiagramProperties.COORDINATE_SYSTEM, ExportStrategy.PAPYRUS);
+        shapeLayout.setProperty(SequenceDiagramProperties.COORDINATE_SYSTEM, CoordinateSystem.PAPYRUS);
         
         Rectangle rootBounds = layoutRootPart.getFigure().getBounds();
         if (layoutRootPart instanceof DiagramEditPart) {
