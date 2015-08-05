@@ -49,23 +49,61 @@
                option="de.cau.cs.kieler.papyrus.sequence.coordinateSystem">
          </knownOption>
       </layoutAlgorithm>
+      
       <layoutOption
-            advanced="false"
-            appliesTo="parents"
-            default="20"
-            description="The border or margin width"
-            id="de.cau.cs.kieler.borderSpacing"
-            name="Border spacing"
-            type="float">
+            advanced="true"
+            appliesTo="nodes"
+            class="de.cau.cs.kieler.papyrus.sequence.properties.NodeType"
+            default="LIFELINE"
+            description="The type of a node."
+            id="de.cau.cs.kieler.papyrus.sequence.nodeType"
+            name="Node type"
+            type="enum">
       </layoutOption>
       <layoutOption
-            advanced="false"
+            advanced="true"
+            appliesTo="edges"
+            class="de.cau.cs.kieler.papyrus.sequence.properties.MessageType"
+            default="ASYNCHRONOUS"
+            description="The type of a message."
+            id="de.cau.cs.kieler.papyrus.sequence.messageType"
+            name="Message type"
+            type="enum">
+      </layoutOption>
+      <layoutOption
             appliesTo="parents"
-            default="50"
-            description="The horizontal spacing between two neighbored lifelines."
-            id="de.cau.cs.kieler.papyrus.sequence.lifelineSpacing"
-            name="Lifeline spacing"
-            type="float">
+            description="Area-like constructs in the diagram."
+            id="de.cau.cs.kieler.papyrus.sequence.area"
+            name="Areas"
+            type="object">
+      </layoutOption>
+      <layoutOption
+            appliesTo="parents"
+            description="List of executions in the diagram."
+            id="de.cau.cs.kieler.papyrus.sequence.executionSpecifications"
+            name="Executions"
+            type="object">
+      </layoutOption>
+      <layoutOption
+            appliesTo="nodes"
+            description="Type of the attached element for comments."
+            id="de.cau.cs.kieler.papyrus.sequence.attachedElement"
+            name="Attached element type"
+            type="string">
+      </layoutOption>
+      <layoutOption
+            appliesTo="nodes"
+            description="The objects a comment is attached to."
+            id="de.cau.cs.kieler.papyrus.sequence.attachedTo"
+            name="Attached to"
+            type="object">
+      </layoutOption>
+      <layoutOption
+            appliesTo="nodes"
+            description="The node that is the destruction event to a lifeline."
+            id="de.cau.cs.kieler.papyrus.sequence.destruction"
+            name="Destruction node"
+            type="object">
       </layoutOption>
       <layoutOption
             advanced="false"
@@ -82,17 +120,8 @@
             default="30"
             description="Height of lifeline headers."
             id="de.cau.cs.kieler.papyrus.sequence.lifelineHeader"
-            name="Lifeline header spacing"
+            name="Lifeline header height"
             type="float">
-      </layoutOption>
-      <layoutOption
-            advanced="true"
-            appliesTo="parents"
-            default="10"
-            description="Vertical position of lifeline headers."
-            id="de.cau.cs.kieler.papyrus.sequence.lifelineYPos"
-            name="Vertical lifeline position"
-            type="int">
       </layoutOption>
       <layoutOption
             advanced="false"
@@ -111,8 +140,57 @@
             default="SOURCE_CENTER"
             description="The strategy that is used to find the right horizontal position for message labels."
             id="de.cau.cs.kieler.papyrus.sequence.labelAlignment"
-            name="Label Alignment"
+            name="Label alignment"
             type="enum">
+      </layoutOption>
+      <layoutOption
+            appliesTo="parents"
+            default="5"
+            description="The offset between two nested areas."
+            id="de.cau.cs.kieler.papyrus.sequence.containmentOffset"
+            name="Containment offset"
+            type="int">
+      </layoutOption>
+      
+      
+      
+      
+      
+      
+      
+      <layoutOption
+            advanced="true"
+            appliesTo="parents"
+            default="10"
+            description="Vertical position of lifeline headers."
+            id="de.cau.cs.kieler.papyrus.sequence.lifelineYPos"
+            name="Vertical lifeline position"
+            type="int">
+      </layoutOption>
+      <layoutOption
+            advanced="false"
+            appliesTo="parents"
+            default="50"
+            description="The horizontal spacing between two neighbored lifelines."
+            id="de.cau.cs.kieler.papyrus.sequence.lifelineSpacing"
+            name="Lifeline spacing"
+            type="float">
+      </layoutOption>
+      <layoutOption
+            appliesTo="parents"
+            default="25"
+            description="Height of the header of areas, such as combined fragments."
+            id="de.cau.cs.kieler.papyrus.sequence.areaHeader"
+            name="Area header height"
+            type="int">
+      </layoutOption>
+      <layoutOption
+            appliesTo="parents"
+            default="20"
+            description="The width of time observations."
+            id="de.cau.cs.kieler.papyrus.sequence.timeObservationWidth"
+            name="Time observation width"
+            type="int">
       </layoutOption>
       <layoutOption
             advanced="false"

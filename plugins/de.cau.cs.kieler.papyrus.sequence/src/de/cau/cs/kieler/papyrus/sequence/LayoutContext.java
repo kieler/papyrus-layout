@@ -46,31 +46,30 @@ public final class LayoutContext {
     
     // Layout Settings
     
-    /** The height of the lifeline's header. */
-    public int lifelineHeader;
-    /** The vertical position of lifelines. */
-    public int lifelineYPos;
-    /** The height of the header of combined fragments. */
-    public int areaHeader;
-    /** The offset between two nested areas. */
-    public int containmentOffset;
     /** Border spacing. */
     public double borderSpacing;
-    /** Horizontal spacing between two neighbored lifelines. */
-    public double lifelineSpacing;
     /** Vertical spacing between two neighbored layers of messages. */
     public double messageSpacing;
-    
-    // Algorithm Config
-    
+    /** Horizontal spacing between two neighbored lifelines. */
+    public double lifelineSpacing;
+    /** The vertical position of lifelines. */
+    public int lifelineYPos;
+    /** The height of the lifeline's header. */
+    public int lifelineHeader;
+    /** The height of the header of combined fragments. */
+    public int areaHeader;
+    /** The width of timing observations. */
+    public int timeObservationWidth;
+    /** The offset between two nested areas. */
+    public int containmentOffset;
+    /** The label alignment strategy. */
+    public LabelAlignment labelAlignment;
     /** The lifeline sorting strategy. */
     public LifelineSortingStrategy sortingStrategy;
     /** Whether to include areas in the lifeline sorting process. Used by some sorters. */
     public boolean groupAreasWhenSorting;
     /** The coordinate system to use. */
     public CoordinateSystem coordinateSystem;
-    /** The label alignment strategy. */
-    public LabelAlignment labelAlignment;
     
     // CHECKSTYLEON VisibilityModifier
     
@@ -99,14 +98,16 @@ public final class LayoutContext {
         
         context.borderSpacing = layoutData.getProperty(
                 SequenceDiagramProperties.BORDER_SPACING).doubleValue();
-        context.lifelineHeader = layoutData.getProperty(SequenceDiagramProperties.LIFELINE_HEADER);
-        context.lifelineYPos = layoutData.getProperty(SequenceDiagramProperties.LIFELINE_Y_POS);
-        context.areaHeader = layoutData.getProperty(SequenceDiagramProperties.AREA_HEADER);
-        context.containmentOffset = layoutData.getProperty(SequenceDiagramProperties.CONTAINMENT_OFFSET);
-        context.lifelineSpacing = layoutData.getProperty(
-                SequenceDiagramProperties.LIFELINE_SPACING).doubleValue();
         context.messageSpacing = layoutData.getProperty(
                 SequenceDiagramProperties.MESSAGE_SPACING).doubleValue();
+        context.lifelineSpacing = layoutData.getProperty(
+                SequenceDiagramProperties.LIFELINE_SPACING).doubleValue();
+        context.lifelineYPos = layoutData.getProperty(SequenceDiagramProperties.LIFELINE_Y_POS);
+        context.lifelineHeader = layoutData.getProperty(SequenceDiagramProperties.LIFELINE_HEADER);
+        context.areaHeader = layoutData.getProperty(SequenceDiagramProperties.AREA_HEADER);
+        context.timeObservationWidth = layoutData.getProperty(
+                SequenceDiagramProperties.TIME_OBSERVATION_WIDTH);
+        context.containmentOffset = layoutData.getProperty(SequenceDiagramProperties.CONTAINMENT_OFFSET);
         context.labelAlignment = layoutData.getProperty(SequenceDiagramProperties.LABEL_ALIGNMENT);
         context.sortingStrategy = layoutData.getProperty(SequenceDiagramProperties.LIFELINE_SORTING);
         context.groupAreasWhenSorting = layoutData.getProperty(SequenceDiagramProperties.GROUP_AREAS);

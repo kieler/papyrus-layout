@@ -68,8 +68,6 @@ public final class SequenceDiagramProperties {
     /** The destruction event of a lifeline. */
     public static final IProperty<KNode> DESTRUCTION = new Property<KNode>(
             "de.cau.cs.kieler.papyrus.sequence.destruction");
-    
-    
 
     
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -78,34 +76,22 @@ public final class SequenceDiagramProperties {
     /** Spacing to the border of the drawing. */
     public static final Property<Float> BORDER_SPACING = new Property<Float>(
             LayoutOptions.BORDER_SPACING, 12.0f, 0.0f);
-
     
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    // Other Properties
-
-    /** The lifeline to which an element of the SGraph belongs. */
-    public static final IProperty<SLifeline> BELONGS_TO_LIFELINE = new Property<SLifeline>(
-            "de.cau.cs.kieler.papyrus.sequence.belongsToLifeline");
-
-    /** The node in the layered graph that corresponds to a message. */
-    public static final IProperty<LNode> LAYERED_NODE = new Property<LNode>(
-            "de.cau.cs.kieler.papyrus.sequence.layeredNode");
-
-    /** The node in the KGraph that corresponds to the destruction event of a lifeline. */
-    public static final IProperty<KNode> DESTRUCTION_EVENT = new Property<KNode>(
-            "de.cau.cs.kieler.papyrus.sequence.destructionEvent");
-
-    /** The KEdge that connects the comment to another element of the diagram. */
-    public static final IProperty<KEdge> COMMENT_CONNECTION = new Property<KEdge>(
-            "de.cau.cs.kieler.papyrus.sequence.commentConnection");
+    /** The vertical space between two neighbored messages. This property may be set by the user. */
+    public static final IProperty<Float> MESSAGE_SPACING = new Property<Float>(
+            "de.cau.cs.kieler.papyrus.sequence.messageSpacing", 50.0f);
+    
+    /** The horizontal space between two neighbored lifelines. This property may be set by the user. */
+    public static final IProperty<Float> LIFELINE_SPACING = new Property<Float>(
+            "de.cau.cs.kieler.papyrus.sequence.lifelineSpacing", 50.0f);
+    
+    /** The vertical position of lifelines. */
+    public static final IProperty<Integer> LIFELINE_Y_POS = new Property<Integer>(
+            "de.cau.cs.kieler.papyrus.sequence.lifelineYPos", 10);
 
     /** The height of the lifeline's header. */
     public static final IProperty<Integer> LIFELINE_HEADER = new Property<Integer>(
             "de.cau.cs.kieler.papyrus.sequence.lifelineHeader", 30);
-
-    /** The vertical position of lifelines. */
-    public static final IProperty<Integer> LIFELINE_Y_POS = new Property<Integer>(
-            "de.cau.cs.kieler.papyrus.sequence.lifelineYPos", 10);
 
     /** The height of the header of combined fragments. */
     public static final IProperty<Integer> AREA_HEADER = new Property<Integer>(
@@ -119,26 +105,15 @@ public final class SequenceDiagramProperties {
     public static final IProperty<Integer> CONTAINMENT_OFFSET = new Property<Integer>(
             "de.cau.cs.kieler.papyrus.sequence.containmentOffset", 5);
 
-    /** The horizontal space between two neighbored lifelines. This property may be set by the user. */
-    public static final IProperty<Float> LIFELINE_SPACING = new Property<Float>(
-            "de.cau.cs.kieler.papyrus.sequence.lifelineSpacing", 50.0f);
-
-    /** The vertical space between two neighbored messages. This property may be set by the user. */
-    public static final IProperty<Float> MESSAGE_SPACING = new Property<Float>(
-            "de.cau.cs.kieler.papyrus.sequence.messageSpacing", 50.0f);
-
     /** The alignment of message labels. This property may be set by the user. */
     public static final IProperty<LabelAlignment> LABEL_ALIGNMENT = new Property<LabelAlignment>(
             "de.cau.cs.kieler.papyrus.sequence.labelAlignment", LabelAlignment.SOURCE_CENTER);
-
-    /**
-     * The lifeline sorting strategy that should be used in the algorithm. This property may be set
-     * by the user.
-     */
+    
+    /** The lifeline sorting strategy that should be used in the algorithm. May be set by the user. */
     public static final Property<LifelineSortingStrategy> LIFELINE_SORTING =
             new Property<LifelineSortingStrategy>("de.cau.cs.kieler.papyrus.sequence.lifelineSorting",
                     LifelineSortingStrategy.INTERACTIVE);
-
+    
     /**
      * If messages in areas should be grouped together. This property may be set by the user if the
      * SHORT_MESSAGES lifeline sorter is chosen.
@@ -151,5 +126,21 @@ public final class SequenceDiagramProperties {
      */
     public static final IProperty<CoordinateSystem> COORDINATE_SYSTEM = new Property<CoordinateSystem>(
             "de.cau.cs.kieler.papyrus.sequence.coordinateSystem", CoordinateSystem.KGRAPH);
+
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Internal Properties
+
+    /** The lifeline to which an element of the SGraph belongs. */
+    public static final IProperty<SLifeline> BELONGS_TO_LIFELINE = new Property<SLifeline>(
+            "de.cau.cs.kieler.papyrus.sequence.belongsToLifeline");
+
+    /** The node in the layered graph that corresponds to a message. */
+    public static final IProperty<LNode> LAYERED_NODE = new Property<LNode>(
+            "de.cau.cs.kieler.papyrus.sequence.layeredNode");
+
+    /** The KEdge that connects the comment to another element of the diagram. */
+    public static final IProperty<KEdge> COMMENT_CONNECTION = new Property<KEdge>(
+            "de.cau.cs.kieler.papyrus.sequence.commentConnection");
     
 }

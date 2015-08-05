@@ -161,14 +161,13 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
         SComment comment = new SComment();
         comment.setProperty(InternalProperties.ORIGIN, node);
         comment.setProperty(SequenceDiagramProperties.NODE_TYPE, nodeType);
-        String attachedElement = commentLayout.getProperty(
-                SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE);
-        comment.setProperty(SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE, attachedElement);
+        comment.setProperty(SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE,
+                commentLayout.getProperty(SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE));
         
         // Attach connected edge to comment
         if (!node.getOutgoingEdges().isEmpty()) {
-            comment.setProperty(SequenceDiagramProperties.COMMENT_CONNECTION, node
-                    .getOutgoingEdges().get(0));
+            comment.setProperty(SequenceDiagramProperties.COMMENT_CONNECTION,
+                    node.getOutgoingEdges().get(0));
         }
 
         // Copy all the entries of the list of attached elements to the comment object
@@ -192,7 +191,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
 
         // Handle time observations
         if (nodeType == NodeType.TIME_OBSERVATION) {
-            comment.getSize().x =
+            comment.getSize().x = 
                     sgraph.getProperty(SequenceDiagramProperties.TIME_OBSERVATION_WIDTH).doubleValue();
 
             // Find lifeline that is next to the time observation
@@ -533,10 +532,8 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             lifeline.setComments(new LinkedList<SComment>());
 
             // Copy destruction to lifeline
-            KNode destruction = layout.getProperty(SequenceDiagramProperties.DESTRUCTION);
-            if (destruction != null) {
-                lifeline.setProperty(SequenceDiagramProperties.DESTRUCTION_EVENT, destruction);
-            }
+            lifeline.setProperty(SequenceDiagramProperties.DESTRUCTION,
+                    layout.getProperty(SequenceDiagramProperties.DESTRUCTION));
         }
     }
 

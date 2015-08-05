@@ -65,7 +65,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             KShapeLayout nodeLayout = node.getData(KShapeLayout.class);
 
             // Handle messages of the lifeline and their labels
-            applyMessageCoordinates(context, diagramHeight, lifeline);
+            applyMessageCoordinates(context, lifeline);
 
             // Apply execution coordinates and adjust positions of messages attached to these executions
             applyExecutionCoordinates(context, lifeline);
@@ -76,7 +76,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             nodeLayout.setHeight((float) lifeline.getSize().y);
 
             // Place destruction if existing
-            KNode destruction = lifeline.getProperty(SequenceDiagramProperties.DESTRUCTION_EVENT);
+            KNode destruction = lifeline.getProperty(SequenceDiagramProperties.DESTRUCTION);
             if (destruction != null) {
                 KShapeLayout destructLayout = destruction.getData(KShapeLayout.class);
                 double destructionXPos = nodeLayout.getWidth() / 2 - destructLayout.getWidth() / 2;
@@ -102,41 +102,21 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
     // Messages
 
     /**
-     * Apply the calculated coordinates of the messages that are connected to the given lifeline.
+     * Apply the calculated coordinates of the messages that are connected to the given lifeline. If
+     * there are any incoming create or destroy messages, the lifeline's height and y coordinate may be
+     * changed here as well.
      * 
      * @param context
      *            the layout context that contains all relevant information for the current layout run.
-     * @param diagramHeight
-     *            the height of the whole diagram
      * @param lifeline
      *            the lifeline whose messages are handled
      */
-    private void applyMessageCoordinates(final LayoutContext context, final double diagramHeight,
-            final SLifeline lifeline) {
+    private void applyMessageCoordinates(final LayoutContext context, final SLifeline lifeline) {
         
-        // Resize node if there are any create or delete messages involved
-        for (SMessage message : lifeline.getIncomingMessages()) {
-            MessageType messageType = message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
-            if (messageType == MessageType.CREATE) {
-                // Set lifeline's yPos to the yPos of the create-message and modify lifeline height
-                // accordingly
-                double delta = message.getTargetYPos() - context.lifelineHeader / 2
-                        - lifeline.getPosition().y;
-                
-                lifeline.getPosition().y += delta;
-                lifeline.getSize().y -= delta;
-            } else if (messageType == MessageType.DELETE) {
-                // Modify height of lifeline in order to end at the yPos of the delete-message
-                lifeline.getSize().y = message.getTargetYPos() - lifeline.getPosition().y;
-            }
-        }
-
-        // Handle outgoing messages
         for (SMessage message : lifeline.getOutgoingMessages()) {
             applyOutgoingMessageCoordinates(lifeline, message, context);
         }
 
-        // Handle incoming messages
         for (SMessage message : lifeline.getIncomingMessages()) {
             applyIncomingMessageCoordinates(lifeline, message, context);
         }
@@ -244,6 +224,14 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         targetPoint.setX((float) llCenter);
         
         if (messageType == MessageType.CREATE) {
+            // Set lifeline's yPos to the yPos of the create-message and modify lifeline height
+            // accordingly
+            double delta = message.getTargetYPos() - context.lifelineHeader / 2
+                    - lifeline.getPosition().y;
+            
+            lifeline.getPosition().y += delta;
+            lifeline.getSize().y -= delta;
+            
             // Reset x-position of create message because it leads to the header and not the line
             targetPoint.setX((float) lifeline.getPosition().x);
         } else if (messageType == MessageType.DELETE) {

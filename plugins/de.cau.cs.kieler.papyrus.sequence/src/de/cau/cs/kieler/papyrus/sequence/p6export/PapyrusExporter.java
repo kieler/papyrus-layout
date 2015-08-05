@@ -88,7 +88,7 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
             nodeLayout.setHeight((float) lifeline.getSize().y);
 
             // Place destruction if existing
-            KNode destruction = lifeline.getProperty(SequenceDiagramProperties.DESTRUCTION_EVENT);
+            KNode destruction = lifeline.getProperty(SequenceDiagramProperties.DESTRUCTION);
             if (destruction != null) {
                 KShapeLayout destructLayout = destruction.getData(KShapeLayout.class);
                 double destructionXPos = nodeLayout.getWidth() / 2 - destructLayout.getWidth() / 2;
