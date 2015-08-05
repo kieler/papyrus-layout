@@ -20,6 +20,7 @@ import de.cau.cs.kieler.core.kgraph.KEdge;
 import de.cau.cs.kieler.core.kgraph.KLabel;
 import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.kiml.klayoutdata.KEdgeLayout;
+import de.cau.cs.kieler.kiml.klayoutdata.KLayoutDataFactory;
 import de.cau.cs.kieler.kiml.klayoutdata.KPoint;
 import de.cau.cs.kieler.kiml.klayoutdata.KShapeLayout;
 import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
@@ -31,7 +32,6 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
-import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution.SequenceExecutionType;
@@ -52,7 +52,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         
         // The height of the diagram (the surrounding interaction)
         double diagramHeight = context.sgraph.getSize().y + context.messageSpacing
-                + context.lifelineHeader + context.lifelineYPos;
+                + context.lifelineHeader + context.lifelineYPos + context.borderSpacing;
         
         // Set position for lifelines/nodes
         for (SLifeline lifeline : context.lifelineOrder) {
@@ -64,20 +64,10 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             KNode node = (KNode) lifeline.getProperty(InternalProperties.ORIGIN);
             KShapeLayout nodeLayout = node.getData(KShapeLayout.class);
 
-            if (nodeLayout.getProperty(SequenceDiagramProperties.NODE_TYPE)
-                    == NodeType.SURROUNDING_INTERACTION) {
-                
-                // This is the surrounding node
-                break;
-            }
-
             // Handle messages of the lifeline and their labels
-            List<SequenceExecution> executions = lifeline.getProperty(
-                    SequenceDiagramProperties.EXECUTIONS);
-            applyMessageCoordinates(context, diagramHeight, lifeline, executions);
+            applyMessageCoordinates(context, diagramHeight, lifeline);
 
-            // Apply execution coordinates and adjust positions of messages attached to these
-            // executions.
+            // Apply execution coordinates and adjust positions of messages attached to these executions
             applyExecutionCoordinates(context, lifeline);
 
             // Set position and height for the lifeline.
@@ -107,6 +97,9 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         progressMonitor.done();
     }
     
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // Messages
 
     /**
      * Apply the calculated coordinates of the messages that are connected to the given lifeline.
@@ -117,166 +110,193 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      *            the height of the whole diagram
      * @param lifeline
      *            the lifeline whose messages are handled
-     * @param executions
-     *            the list of executions
      */
     private void applyMessageCoordinates(final LayoutContext context, final double diagramHeight,
-            final SLifeline lifeline, final List<SequenceExecution> executions) {
+            final SLifeline lifeline) {
         
-        /*
-         * TODO Set this to one if Papyrus team fixes its bug. Workaround for Papyrus bug:
-         * Y-coordinates are stored in a strange way by Papyrus. When the message starts or ends at
-         * a lifeline, y-coordinates must be given relative to the lifeline. However, these relative
-         * coordinates must be scaled as if the lifeline was having the height of its surrounding
-         * interaction.
-         */
-        double factor = (diagramHeight + SequenceLayoutConstants.TWENTY) / lifeline.getSize().y;
-
         // Resize node if there are any create or delete messages involved
         for (SMessage message : lifeline.getIncomingMessages()) {
-            if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.CREATE) {
-                // Set lifeline's yPos to the yPos of the create-message
-                lifeline.getPosition().y = message.getTargetYPos() + context.lifelineHeader / 2;
+            MessageType messageType = message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+            if (messageType == MessageType.CREATE) {
+                // Set lifeline's yPos to the yPos of the create-message and modify lifeline height
+                // accordingly
+                double delta = message.getTargetYPos() - context.lifelineHeader / 2
+                        - lifeline.getPosition().y;
                 
-                // Modify height of lifeline in order to compensate yPos changes
-                lifeline.getSize().y += context.lifelineYPos - message.getTargetYPos()
-                        - context.lifelineHeader / 2;
-            } else if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) 
-                    == MessageType.DELETE) {
-                
+                lifeline.getPosition().y += delta;
+                lifeline.getSize().y -= delta;
+            } else if (messageType == MessageType.DELETE) {
                 // Modify height of lifeline in order to end at the yPos of the delete-message
-                lifeline.getSize().y -= context.sgraph.getSize().y + context.messageSpacing
-                        - message.getTargetYPos();
+                lifeline.getSize().y = message.getTargetYPos() - lifeline.getPosition().y;
             }
         }
 
-        // The horizontal center of the current lifeline
-        double llCenter = lifeline.getPosition().x + lifeline.getSize().x / 2;
-
         // Handle outgoing messages
         for (SMessage message : lifeline.getOutgoingMessages()) {
-            KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
-            KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
-            KPoint sourcePoint = edgeLayout.getSourcePoint();
-            sourcePoint.setY((float) (message.getSourceYPos() * factor));
-            sourcePoint.setX((float) (lifeline.getPosition().x + lifeline.getSize().x / 2));
-
-            // Set execution coordinates according to connected messages coordinates
-            if (executions != null) {
-                for (SequenceExecution execution : executions) {
-                    if (execution.getMessages().contains(message)) {
-                        double sourceYPos = message.getSourceYPos();
-                        if (execution.getPosition().y == 0) {
-                            execution.getPosition().y = sourceYPos;
-                            execution.getSize().y = 0;
-                        } else {
-                            if (sourceYPos < execution.getPosition().y) {
-                                if (message.getSource() != message.getTarget()) {
-                                    double diff = execution.getPosition().y - sourceYPos;
-                                    execution.getPosition().y = sourceYPos;
-                                    if (execution.getSize().y >= 0) {
-                                        execution.getSize().y += diff;
-                                    }
-                                }
-                            }
-                            if (sourceYPos > execution.getPosition().y + execution.getSize().y) {
-                                execution.getSize().y = sourceYPos - execution.getPosition().y;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Handle messages that lead to something else than a lifeline
-            if (message.getTarget().isDummy()) {
-                KPoint targetPoint = edgeLayout.getTargetPoint();
-                double reverseFactor = lifeline.getSize().y
-                        / (diagramHeight + SequenceLayoutConstants.FOURTY);
-                targetPoint.setY((float)
-                        (SequenceLayoutConstants.TWENTY + message.getTargetYPos() * reverseFactor));
-
-                // Lost-messages end between its source and the next lifeline
-                if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.LOST) {
-                    targetPoint.setX((float) (lifeline.getPosition().x + lifeline.getSize().x 
-                            + context.lifelineSpacing / 2));
-                }
-            }
-
-            if (message.getSource() == message.getTarget()) {
-                // Specify bendpoints for selfloops
-                List<KPoint> bendPoints = edgeLayout.getBendPoints();
-                bendPoints.get(0).setX((float) (llCenter + context.messageSpacing / 2));
-                bendPoints.get(0).setY(edgeLayout.getSourcePoint().getY());
-            }
-
-            // Walk through the labels and adjust their position
-            placeLabels(context, lifeline, factor, llCenter, message, edge);
+            applyOutgoingMessageCoordinates(lifeline, message, context);
         }
 
         // Handle incoming messages
         for (SMessage message : lifeline.getIncomingMessages()) {
-            KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
-            KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
-            KPoint targetPoint = edgeLayout.getTargetPoint();
-            targetPoint.setX((float) (lifeline.getPosition().x + lifeline.getSize().x / 2));
-            targetPoint.setY((float) (message.getTargetYPos() * factor));
+            applyIncomingMessageCoordinates(lifeline, message, context);
+        }
+    }
 
-            if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.CREATE) {
-                // Reset x-position of create message because it leads to the header and not the line
-                targetPoint.setX((float) lifeline.getPosition().x);
-            } else if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) 
-                    == MessageType.DELETE) {
-                // Reset y-position of delete message to end at the end of the lifeline
-                targetPoint.setY((float) ((lifeline.getPosition().y + lifeline.getSize().y 
-                        - context.lifelineHeader) * factor));
-            }
+    /**
+     * Applies the source coordinates of the given message starting at the given lifeline.
+     * 
+     * @param lifeline the lifeline the message starts at.
+     * @param message the message whose coordinates to apply.
+     * @param context layout context of the current layout run.
+     */
+    private void applyOutgoingMessageCoordinates(final SLifeline lifeline, final SMessage message,
+            final LayoutContext context) {
+        
+        assert lifeline == message.getSource();
+        
+        KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
+        KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
 
-            // Reset execution coordinates if the message is contained in an execution
-            if (executions != null) {
-                for (SequenceExecution execution : executions) {
-                    if (execution.getMessages().contains(message)) {
-                        double targetYPos = message.getTargetYPos();
-                        if (execution.getPosition().y == 0) {
-                            execution.getPosition().y = targetYPos;
-                            execution.getSize().y = 0;
-                        } else {
-                            if (targetYPos < execution.getPosition().y) {
-                                double diff = execution.getPosition().y - targetYPos;
-                                execution.getPosition().y = targetYPos;
-                                if (execution.getSize().y >= 0) {
-                                    execution.getSize().y += diff;
-                                }
+        MessageType messageType = message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+        
+        // Compute the horizontal center of the lifeline to be used later
+        double llCenter = lifeline.getPosition().x + lifeline.getSize().x / 2;
+        
+        // Clear the bend points of all edges (this is safe to do here since we will only be adding
+        // bend points for self loops, which we encounter first as outgoing messages, so we're not
+        // clearing bend points set by the incoming message handling)
+        edgeLayout.getBendPoints().clear();
+        
+        // Apply source point position
+        KPoint sourcePoint = edgeLayout.getSourcePoint();
+        sourcePoint.setY((float) message.getSourceYPos());
+        sourcePoint.setX((float) llCenter);
+
+        // Check if the message connects to executions
+        List<SequenceExecution> executions = lifeline.getProperty(SequenceDiagramProperties.EXECUTIONS);
+        if (executions != null) {
+            for (SequenceExecution execution : executions) {
+                if (execution.getMessages().contains(message)) {
+                    // Adjust the execution's vertical extend
+                    double sourceYPos = message.getSourceYPos();
+                    if (execution.getPosition().y == 0) {
+                        // If this is the first message to encounter this execution, initialize the
+                        // execution's y coordinate and height
+                        execution.getPosition().y = sourceYPos;
+                        execution.getSize().y = 0;
+                    } else {
+                        // The execution already has a position and size; adjust.
+                        if (sourceYPos < execution.getPosition().y) {
+                            if (message.getSource() != message.getTarget()) {
+                                double delta = execution.getPosition().y - sourceYPos;
+                                execution.getPosition().y = sourceYPos;
+                                execution.getSize().y += delta;
                             }
-                            if (targetYPos > execution.getPosition().y + execution.getSize().y) {
-                                execution.getSize().y = targetYPos - execution.getPosition().y;
-                            }
+                        } else if (sourceYPos > execution.getPosition().y + execution.getSize().y) {
+                            execution.getSize().y = sourceYPos - execution.getPosition().y;
                         }
                     }
                 }
             }
+        }
 
-            // Handle messages that come from something else than a lifeline
-            if (message.getSource().isDummy()) {
-                KPoint sourcePoint = edgeLayout.getSourcePoint();
-                double reverseFactor = lifeline.getSize().y
-                        / (diagramHeight + SequenceLayoutConstants.FOURTY);
-                sourcePoint.setY((float)
-                        (SequenceLayoutConstants.TWENTY + message.getSourceYPos() * reverseFactor));
+        // Lost messages end between their source and the next lifeline
+        if (messageType == MessageType.LOST) {
+            edgeLayout.getTargetPoint().setX((float)
+                    (lifeline.getPosition().x + lifeline.getSize().x + context.lifelineSpacing / 2));
+        }
+        
+        // Specify bend points for self loops
+        if (message.getSource() == message.getTarget()) {
+            KPoint bendPoint = KLayoutDataFactory.eINSTANCE.createKPoint();
+            bendPoint.setX((float) (llCenter + context.messageSpacing / 2));
+            bendPoint.setY(edgeLayout.getSourcePoint().getY());
+            edgeLayout.getBendPoints().add(bendPoint);
+        }
 
-                // Found-messages start between its source and the previous lifeline
-                if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.FOUND) {
-                    sourcePoint.setX((float) (lifeline.getPosition().x - context.lifelineSpacing / 2));
-                }
-            }
+        // Walk through the labels and adjust their position
+        placeLabels(context, lifeline, llCenter, message, edge);
+    }
 
-            if (message.getSource() == message.getTarget()) {
-                // Specify bendpoints for selfloops
-                List<KPoint> bendPoints = edgeLayout.getBendPoints();
-                bendPoints.get(1).setX((float) (llCenter + context.messageSpacing / 2));
-                bendPoints.get(1).setY(edgeLayout.getTargetPoint().getY());
+    /**
+     * Applies the target coordinates of the given message ending at the given lifeline.
+     * 
+     * @param lifeline the lifeline the message ends at.
+     * @param message the message whose coordinates to apply.
+     * @param context layout context of the current layout run.
+     */
+    private void applyIncomingMessageCoordinates(final SLifeline lifeline, final SMessage message,
+            final LayoutContext context) {
+        
+        assert lifeline == message.getTarget();
+        
+        KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
+        KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
+
+        MessageType messageType = message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+        
+        // Compute the horizontal center of the lifeline to be used later
+        double llCenter = lifeline.getPosition().x + lifeline.getSize().x / 2;
+        
+        // Apply target point position
+        KPoint targetPoint = edgeLayout.getTargetPoint();
+        targetPoint.setY((float) message.getTargetYPos());
+        targetPoint.setX((float) llCenter);
+        
+        if (messageType == MessageType.CREATE) {
+            // Reset x-position of create message because it leads to the header and not the line
+            targetPoint.setX((float) lifeline.getPosition().x);
+        } else if (messageType == MessageType.DELETE) {
+            // If the lifeline extends beyond the message target position, shorten the lifeline
+            if (lifeline.getPosition().y + lifeline.getSize().y > targetPoint.getY()) {
+                lifeline.getSize().y = targetPoint.getY() - lifeline.getPosition().y;
             }
         }
+
+        // Check if the message connects to executions
+        List<SequenceExecution> executions = lifeline.getProperty(SequenceDiagramProperties.EXECUTIONS);
+        if (executions != null) {
+            for (SequenceExecution execution : executions) {
+                if (execution.getMessages().contains(message)) {
+                    // Adjust the execution's vertical extend
+                    double targetYPos = message.getTargetYPos();
+                    if (execution.getPosition().y == 0) {
+                        // If this is the first message to encounter this execution, initialize the
+                        // execution's y coordinate and height
+                        execution.getPosition().y = targetYPos;
+                        execution.getSize().y = 0;
+                    } else {
+                        // The execution already has a position and size; adjust.
+                        if (targetYPos < execution.getPosition().y) {
+                            double delta = execution.getPosition().y - targetYPos;
+                            execution.getPosition().y = targetYPos;
+                            execution.getSize().y += delta;
+                        } else if (targetYPos > execution.getPosition().y + execution.getSize().y) {
+                            execution.getSize().y = targetYPos - execution.getPosition().y;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Found messages start between their target and the previous lifeline
+        if (messageType == MessageType.FOUND) {
+            edgeLayout.getSourcePoint().setX((float)
+                    (lifeline.getPosition().x - context.lifelineSpacing / 2));
+        }
+        
+        // Specify bend points for self loops
+        if (message.getSource() == message.getTarget()) {
+            KPoint bendPoint = KLayoutDataFactory.eINSTANCE.createKPoint();
+            bendPoint.setX((float) (llCenter + context.messageSpacing / 2));
+            bendPoint.setY(edgeLayout.getTargetPoint().getY());
+            edgeLayout.getBendPoints().add(bendPoint);
+        }
     }
+    
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // Labels
 
     /**
      * Place the label(s) of the given message.
@@ -285,8 +305,6 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      *            the layout context that contains all relevant information for the current layout run.
      * @param lifeline
      *            the current lifeline
-     * @param factor
-     *            the edge factor
      * @param llCenter
      *            the horizontal center of the current lifeline
      * @param message
@@ -295,7 +313,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      *            the edge representation of the message
      */
     private void placeLabels(final LayoutContext context, final SLifeline lifeline,
-            final double factor, final double llCenter, final SMessage message, final KEdge edge) {
+            final double llCenter, final SMessage message, final KEdge edge) {
         
         for (KLabel label : edge.getLabels()) {
             KShapeLayout labelLayout = label.getData(KShapeLayout.class);
@@ -332,8 +350,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                 if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.CREATE) {
                     labelLayout.setXpos((float) (llCenter + SequenceLayoutConstants.LABELSPACING));
                 }
-                labelLayout.setYpos((float) ((message.getSourceYPos() - labelLayout.getHeight() - 2)
-                        * factor));
+                labelLayout.setYpos((float) ((message.getSourceYPos() - labelLayout.getHeight() - 2)));
             } else if (message.getTarget().getHorizontalSlot() < lifeline.getHorizontalSlot()) {
                 // Message leads leftwards
                 switch (context.labelAlignment) {
@@ -360,7 +377,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                     labelLayout.setXpos((float) ((llCenter + targetCenter) / 2 - labelLayout
                             .getWidth() / 2));
                 }
-                labelLayout.setYpos((float) ((message.getSourceYPos() + 2) * factor));
+                labelLayout.setYpos((float) (message.getSourceYPos() + 2));
             } else {
                 // Message is selfloop
                 
@@ -374,12 +391,16 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                     xPos = edgeLayout.getSourcePoint().getX();
                 }
                 labelLayout.setYpos((float)
-                        ((message.getSourceYPos() + SequenceLayoutConstants.LABELSPACING) * factor));
+                        (message.getSourceYPos() + SequenceLayoutConstants.LABELSPACING));
                 labelLayout.setXpos((float)
                         (xPos + SequenceLayoutConstants.LABELMARGIN / 2));
             }
         }
     }
+    
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // Executions
 
     /**
      * Apply execution coordinates and adjust positions of messages attached to these executions.
@@ -572,6 +593,10 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             execution.getSize().x = executionWidth;
         }
     }
+    
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // Comments
 
     /**
      * Place the comment objects (comments, constraints) according to their calculated coordinates.
