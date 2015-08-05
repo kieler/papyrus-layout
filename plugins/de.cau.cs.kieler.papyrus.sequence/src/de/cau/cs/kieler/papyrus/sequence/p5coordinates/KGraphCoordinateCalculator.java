@@ -92,6 +92,7 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
 
             // Apply maximum comment width to new xPos
             xPos += lifeline.getSize().x + thisLifelinesSpacing;
+            
             // Reset the graph's horizontal size
             if (context.sgraph.getSize().x < xPos) {
                 context.sgraph.getSize().x = xPos;
@@ -103,9 +104,8 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
 
         // Handle areas (interactions / combined fragments / interaction operands)
         List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramProperties.AREAS);
-        // Check containments (hierarchy) of areas
+        
         checkAreaContainment(areas);
-        // Calculate the areas positions
         calculateAreaPosition(context, areas);
 
         progressMonitor.done();
@@ -126,23 +126,19 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
         double layerpos = context.lifelineYPos + context.lifelineHeader + context.messageSpacing;
 
         // Iterate the layers of nodes that represent messages
-        for (int i = 0; i < context.lgraph.getLayers().size(); i++) {
+        for (int layerIndex = 0; layerIndex < context.lgraph.getLayers().size(); layerIndex++) {
             // Iterate the nodes of the layer
-            for (LNode node : context.lgraph.getLayers().get(i).getNodes()) {
-                // Get the corresponding message
+            for (LNode node : context.lgraph.getLayers().get(layerIndex).getNodes()) {
+                // Get the corresponding message and skip dummy nodes (which don't have a message)
                 SMessage message = (SMessage) node.getProperty(InternalProperties.ORIGIN);
-
-                // Skip dummyNodes
                 if (message == null) {
                     continue;
                 }
-
-                SLifeline lifeline = node.getProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE);
                 
-                // This property is set only for split messages
+                // Check if the node was split (in that case, each parts of the split node have their
+                // corresponding lifeline set)
+                SLifeline lifeline = node.getProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE);
                 if (lifeline != null) {
-                    // Consider messages that have different layers for source and target
-                    // nodes/heights
                     if (message.getTarget() == lifeline) {
                         message.setTargetYPos(layerpos);
                     } else {
@@ -150,39 +146,38 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
                     }
                     continue;
                 }
-
+                
+                // Skip the message if its position was already fully set
                 if (message.isLayerPositionSet()) {
-                    // Skip iteration message if it was already set
                     continue;
                 }
 
-                int sourceXPos = message.getSource().getHorizontalSlot();
-                int targetXPos = message.getTarget().getHorizontalSlot();
+                int sourceSlot = message.getSource().getHorizontalSlot();
+                int targetSlot = message.getTarget().getHorizontalSlot();
 
                 // If the message crosses at least one lifeline, check for overlappings
-                if (Math.abs(sourceXPos - targetXPos) > 1) {
+                if (Math.abs(sourceSlot - targetSlot) > 1) {
                     // Check overlappings with any other node in the layer
-                    for (LNode otherNode : context.lgraph.getLayers().get(i).getNodes()) {
+                    for (LNode otherNode : context.lgraph.getLayers().get(layerIndex).getNodes()) {
                         // Get the corresponding message
                         SMessage otherMessage =
                                 (SMessage) otherNode.getProperty(InternalProperties.ORIGIN);
+                        
                         try {
-                            int otherSourcePos = otherMessage.getSource().getHorizontalSlot();
-                            int otherTargetPos = otherMessage.getTarget().getHorizontalSlot();
+                            int otherSourceSlot = otherMessage.getSource().getHorizontalSlot();
+                            int otherTargetSlot = otherMessage.getTarget().getHorizontalSlot();
 
                             // If the other message starts or ends between the start and the end
                             // of the tested message, there is an overlapping
-                            if (doMessagesOverlap(sourceXPos, targetXPos, otherSourcePos,
-                                    otherTargetPos)) {
-                                
+                            if (overlap(sourceSlot, targetSlot, otherSourceSlot, otherTargetSlot)) {
                                 if (otherMessage.isLayerPositionSet()) {
-                                    // If the other message was already set, this message has to
-                                    // be placed in another layer
+                                    // If the other message was already placed, the current message has
+                                    // to be placed in another layer
                                     layerpos += context.messageSpacing;
                                     break;
-                                } else if (Math.abs(otherSourcePos - otherTargetPos) <= 1) {
-                                    // If the other message was not set and it is a short one,
-                                    // the other message has to be set here
+                                } else if (Math.abs(otherSourceSlot - otherTargetSlot) <= 1) {
+                                    // If the other message has not been placed yet and is a short one,
+                                    // it will be placed here
                                     otherMessage.setLayerYPos(layerpos);
                                     layerpos += context.messageSpacing;
                                     break;
@@ -191,9 +186,9 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
                         } catch (NullPointerException n) {
                             // Ignore
                         }
-
                     }
                 }
+                
                 // Set the vertical position of the message
                 message.setLayerYPos(layerpos);
 
@@ -202,12 +197,14 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
                     message.setSourceYPos(layerpos - context.messageSpacing / 2);
                 }
             }
+            
+            // Advance to the next message routing slot
             layerpos += context.messageSpacing;
         }
     }
 
     /**
-     * Check if two messages are overlap.
+     * Check if two messages overlap.
      * 
      * @param msg1source
      *            the source position of the first message
@@ -217,9 +214,9 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
      *            the source position of the second message
      * @param msg2target
      *            the target position of the second message
-     * @return {@code true} if the messages are overlapping
+     * @return {@code true} if the messages overlap.
      */
-    private boolean doMessagesOverlap(final int msg1source, final int msg1target,
+    private boolean overlap(final int msg1source, final int msg1target,
             final int msg2source, final int msg2target) {
 
         return isBetween(msg1source, msg2source, msg2target)
@@ -230,11 +227,6 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
 
     /**
      * Checks if {@code bound1 < x < bound2}.
-     * 
-     * @param x the value to check.
-     * @param bound1 lower bound.
-     * @param bound2 upper bound.
-     * @return {@code true} if x is between bound1 and bound2.
      */
     private boolean isBetween(final int x, final int bound1, final int bound2) {
         // x is between 1 and 2 if it is not smaller than both or greater than both
