@@ -48,6 +48,10 @@
          <knownOption
                option="de.cau.cs.kieler.papyrus.sequence.coordinateSystem">
          </knownOption>
+         <supportedFeature
+               feature="COMPOUND"
+               priority="0">
+         </supportedFeature>
       </layoutAlgorithm>
       
       <layoutOption

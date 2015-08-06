@@ -24,6 +24,7 @@ import de.cau.cs.kieler.core.kgraph.KEdge;
 import de.cau.cs.kieler.core.kgraph.KLabel;
 import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.kiml.klayoutdata.KEdgeLayout;
+import de.cau.cs.kieler.kiml.klayoutdata.KLayoutData;
 import de.cau.cs.kieler.kiml.klayoutdata.KPoint;
 import de.cau.cs.kieler.kiml.klayoutdata.KShapeLayout;
 import de.cau.cs.kieler.klay.layered.graph.LEdge;
@@ -531,9 +532,22 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
 
             lifeline.setComments(new LinkedList<SComment>());
 
-            // Copy destruction to lifeline
-            lifeline.setProperty(SequenceDiagramProperties.DESTRUCTION,
-                    layout.getProperty(SequenceDiagramProperties.DESTRUCTION));
+            // If the DESTRUCTION property is set, simply copy it over
+            KNode destructionNode = layout.getProperty(SequenceDiagramProperties.DESTRUCTION);
+            if (destructionNode != null) {
+                lifeline.setProperty(SequenceDiagramProperties.DESTRUCTION, destructionNode);
+            } else {
+                // The destruction property is not set. We should go and check if the lifeline has any
+                // children marked as destruction events
+                node.getChildren()
+                    .stream()
+                    .filter(n -> {
+                        KLayoutData layoutData = n.getData(KLayoutData.class);
+                        return layoutData.getProperty(SequenceDiagramProperties.NODE_TYPE)
+                                == NodeType.DESTRUCTION_EVENT;
+                    }).findFirst()
+                    .ifPresent(n -> lifeline.setProperty(SequenceDiagramProperties.DESTRUCTION, n));
+            }
         }
     }
 
