@@ -31,6 +31,7 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SComment;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
+import de.cau.cs.kieler.papyrus.sequence.properties.LabelAlignment;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
@@ -195,7 +196,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         }
 
         // Walk through the labels and adjust their position
-        placeLabels(context, lifeline, llCenter, message, edge);
+        placeLabels(context, message, edge);
     }
 
     /**
@@ -291,85 +292,24 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      * 
      * @param context
      *            the layout context that contains all relevant information for the current layout run.
-     * @param lifeline
-     *            the current lifeline
-     * @param llCenter
-     *            the horizontal center of the current lifeline
      * @param message
-     *            the current message
+     *            the message whose labels to place
      * @param edge
-     *            the edge representation of the message
+     *            the edge representing the message in the original graph
      */
-    private void placeLabels(final LayoutContext context, final SLifeline lifeline,
-            final double llCenter, final SMessage message, final KEdge edge) {
-        
+    private void placeLabels(final LayoutContext context, final SMessage message, final KEdge edge) {
         for (KLabel label : edge.getLabels()) {
             KShapeLayout labelLayout = label.getData(KShapeLayout.class);
-
-            // The index of the current lifeline in the ordered list of lifelines
-            int lifelineIndex = context.lifelineOrder.indexOf(lifeline);
-
-            if (message.getTarget().getHorizontalSlot() > lifeline.getHorizontalSlot()) {
-                // Message leads rightwards
-                switch (context.labelAlignment) {
-                case SOURCE_CENTER:
-                    // If the lifeline is the last lifeline (lost message), fall through to SOURCE
-                    // placement to avoid ArrayIndexOutOfBoundsException
-                    if (lifelineIndex + 1 < context.lifelineOrder.size()) {
-                        // Place labels centered between the source lifeline and its neighbored
-                        // lifeline
-                        SLifeline nextLL = context.lifelineOrder.get(lifelineIndex + 1);
-                        double center = (llCenter + nextLL.getPosition().x + nextLL.getSize().x / 2) / 2;
-                        labelLayout.setXpos((float) (center - labelLayout.getWidth() / 2));
-                        break;
-                    }
-                case SOURCE:
-                    // Place labels near the source lifeline
-                    labelLayout.setXpos((float) llCenter + SequenceLayoutConstants.LABELSPACING);
-                    break;
-                case CENTER:
-                    // Place labels in the center of the message
-                    double targetCenter = message.getTarget().getPosition().x
-                            + message.getTarget().getSize().x / 2;
-                    labelLayout.setXpos((float) ((llCenter + targetCenter) / 2 - labelLayout
-                            .getWidth() / 2));
-                }
-                // Create messages should not overlap the target's header
-                if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.CREATE) {
-                    labelLayout.setXpos((float) (llCenter + SequenceLayoutConstants.LABELSPACING));
-                }
-                labelLayout.setYpos((float) ((message.getSourceYPos() - labelLayout.getHeight() - 2)));
-            } else if (message.getTarget().getHorizontalSlot() < lifeline.getHorizontalSlot()) {
-                // Message leads leftwards
-                switch (context.labelAlignment) {
-                case SOURCE_CENTER:
-                    // If the lifeline is the first lifeline (found message), fall through to SOURCE
-                    // placement to avoid ArrayIndexOutOfBoundsException
-                    if (lifelineIndex > 0) {
-                        // Place labels centered between the source lifeline and its neighbored
-                        // lifeline
-                        SLifeline lastLL = context.lifelineOrder.get(lifelineIndex - 1);
-                        double center = (llCenter + lastLL.getPosition().x + lastLL.getSize().x / 2) / 2;
-                        labelLayout.setXpos((float) (center - labelLayout.getWidth() / 2));
-                        break;
-                    }
-                case SOURCE:
-                    // Place labels near the source lifeline
-                    labelLayout.setXpos((float)
-                            (llCenter - labelLayout.getWidth() - SequenceLayoutConstants.LABELSPACING));
-                    break;
-                case CENTER:
-                    // Place labels in the center of the message
-                    double targetCenter = message.getTarget().getPosition().x
-                            + message.getTarget().getSize().x / 2;
-                    labelLayout.setXpos((float) ((llCenter + targetCenter) / 2 - labelLayout
-                            .getWidth() / 2));
-                }
-                labelLayout.setYpos((float) (message.getSourceYPos() + 2));
+            
+            SLifeline messageTarget = message.getTarget();
+            SLifeline messageSource = message.getSource();
+            
+            if (messageSource.getHorizontalSlot() < messageTarget.getHorizontalSlot()) {
+                placeRightPointingMessageLabels(context, message, labelLayout);
+            } else if (messageSource.getHorizontalSlot() > messageTarget.getHorizontalSlot()) {
+                placeLeftPointingMessageLabels(context, message, labelLayout);
             } else {
-                // Message is selfloop
-                
-                // Place labels right of the selfloop
+                // The message is a self loop, so place labels to its right
                 KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
                 double xPos;
                 if (edgeLayout.getBendPoints().size() > 0) {
@@ -383,6 +323,111 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                 labelLayout.setXpos((float)
                         (xPos + SequenceLayoutConstants.LABELMARGIN / 2));
             }
+        }
+    }
+
+
+    /**
+     * Place a label of the given rightwards pointing message.
+     * 
+     * @param context
+     *            the layout context that contains all relevant information for the current layout run.
+     * @param message
+     *            the message whose label to place
+     * @param labelLayout
+     *            layout of the label to be placed where the layout information will be stored
+     */
+    private void placeRightPointingMessageLabels(final LayoutContext context, final SMessage message,
+            final KShapeLayout labelLayout) {
+        
+        SLifeline srcLifeline = message.getSource();
+        double llCenter = srcLifeline.getPosition().x + srcLifeline.getSize().x / 2;
+        
+        // Labels are placed above messages pointing rightwards
+        labelLayout.setYpos((float) (message.getSourceYPos() - labelLayout.getHeight() - 2));
+        
+        // For the horizontal alignment, we need to check which alignment strategy to use
+        LabelAlignment alignment = context.labelAlignment;
+        
+        if (alignment == LabelAlignment.SOURCE_CENTER
+                && srcLifeline.getHorizontalSlot() + 1 == context.lifelineOrder.size()) {
+            
+            // This is a lost message; fall back to source placement
+            alignment = LabelAlignment.SOURCE;
+        } else if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.CREATE) {
+            // Create messages always use SOURCE placement to avoid overlapping the target lifeline
+            // header
+            alignment = LabelAlignment.SOURCE;
+        }
+        
+        // Actually calculate the horizontal position
+        switch (alignment) {
+        case SOURCE_CENTER:
+            // Place label centered between the source lifeline and the next lifeline
+            SLifeline nextLL = context.lifelineOrder.get(srcLifeline.getHorizontalSlot() + 1);
+            double center = (llCenter + nextLL.getPosition().x + nextLL.getSize().x / 2) / 2;
+            labelLayout.setXpos((float) (center - labelLayout.getWidth() / 2));
+            break;
+        case SOURCE:
+            // Place label near the source lifeline
+            labelLayout.setXpos((float) llCenter + SequenceLayoutConstants.LABELSPACING);
+            break;
+        case CENTER:
+            // Place label at the center of the message
+            double targetCenter = message.getTarget().getPosition().x
+                    + message.getTarget().getSize().x / 2;
+            labelLayout.setXpos((float) ((llCenter + targetCenter) / 2 - labelLayout.getWidth() / 2));
+            break;
+        }
+    }
+
+
+    /**
+     * Place a label of the given leftwards pointing message.
+     * 
+     * @param context
+     *            the layout context that contains all relevant information for the current layout run.
+     * @param message
+     *            the message whose label to place
+     * @param labelLayout
+     *            layout of the label to be placed where the layout information will be stored
+     */
+    private void placeLeftPointingMessageLabels(final LayoutContext context, final SMessage message,
+            final KShapeLayout labelLayout) {
+
+        SLifeline srcLifeline = message.getSource();
+        double llCenter = srcLifeline.getPosition().x + srcLifeline.getSize().x / 2;
+
+        // Labels are placed below messages pointing leftwards
+        labelLayout.setYpos((float) (message.getSourceYPos() + 2));
+        
+        // For the horizontal alignment, we need to check which alignment strategy to use
+        LabelAlignment alignment = context.labelAlignment;
+        
+        if (alignment == LabelAlignment.SOURCE_CENTER && srcLifeline.getHorizontalSlot() == 0) {
+            // This is a found message; fall back to source placement
+            alignment = LabelAlignment.SOURCE;
+        }
+        
+        // Actually calculate the horizontal position
+        switch (alignment) {
+        case SOURCE_CENTER:
+            // Place label centered between the source lifeline and the previous lifeline
+            SLifeline lastLL = context.lifelineOrder.get(srcLifeline.getHorizontalSlot() - 1);
+            double center = (llCenter + lastLL.getPosition().x + lastLL.getSize().x / 2) / 2;
+            labelLayout.setXpos((float) (center - labelLayout.getWidth() / 2));
+            break;
+        case SOURCE:
+            // Place label near the source lifeline
+            labelLayout.setXpos((float)
+                    (llCenter - labelLayout.getWidth() - SequenceLayoutConstants.LABELSPACING));
+            break;
+        case CENTER:
+            // Place label at the center of the message
+            double targetCenter = message.getTarget().getPosition().x
+                    + message.getTarget().getSize().x / 2;
+            labelLayout.setXpos((float) ((llCenter + targetCenter) / 2 - labelLayout.getWidth() / 2));
+            break;
         }
     }
     
