@@ -66,14 +66,24 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
 
         // Arrange comments that are connected to a message or lifeline
         arrangeConnectedComments(context);
+        
+        // The graph size now extends to the y coordinate of the bottom-most message; add a message
+        // spacing and border spacing
+        context.sgraph.getSize().y += context.messageSpacing + context.borderSpacing;
+        
+        // Make sure we meet a minimum height if the graph is empty
+        context.sgraph.getSize().y = Math.max(
+                context.sgraph.getSize().y,
+                context.lifelineYPos + context.lifelineHeader + context.messageSpacing
+                    + context.borderSpacing);
+
+        // The height of all "normal-sized" (not affected by create or delete messages) lifelines
+        double lifelinesHeight = context.sgraph.getSize().y - context.lifelineYPos
+                - context.borderSpacing;
 
         // Position of the next lifeline (at first, of the first lifeline)
         double xPos = context.borderSpacing;
-
-        // The height of all "normal-sized" (not affected by create or delete messages) lifelines
-        double lifelinesHeight =
-                context.lifelineHeader + context.sgraph.getSize().y + context.messageSpacing;
-
+        
         // Set position for lifelines/nodes
         for (SLifeline lifeline : context.lifelineOrder) {
             // Dummy lifelines don't need any layout
@@ -98,6 +108,10 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
                 context.sgraph.getSize().x = xPos;
             }
         }
+        
+        // Adjust the graph's width (the most recent lifeline spacing needs to be replaced by a border
+        // spacing)
+        context.sgraph.getSize().x -= context.lifelineSpacing - context.borderSpacing;
 
         // Arrange unconnected comments (after the last lifeline)
         arrangeUnconnectedComments(context);
@@ -356,11 +370,13 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
                         - lifeline.getSize().x;
             }
         }
+        
         for (SMessage message : lifeline.getOutgoingMessages()) {
             if (message.getLabelWidth() > spacing + lifeline.getSize().x) {
                 spacing = SequenceLayoutConstants.LABELMARGIN + message.getLabelWidth()
                         - lifeline.getSize().x;
             }
+            
             // Labels of create messages should not overlap the target's header
             if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.CREATE) {
                 if (message.getLabelWidth() + SequenceLayoutConstants.LABELMARGIN
@@ -370,6 +386,7 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
                             - message.getTarget().getSize().x / 2;
                 }
             } 
+            
             // Selfloops need a little more space
             if (message.getSource() == message.getTarget()) {
                 if (message.getLabelWidth() + SequenceLayoutConstants.LABELMARGIN
@@ -445,6 +462,7 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
                 }
             }
         }
+        
         return spacing;
     }
     

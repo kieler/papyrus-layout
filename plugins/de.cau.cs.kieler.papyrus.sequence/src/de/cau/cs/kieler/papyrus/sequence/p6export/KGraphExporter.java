@@ -51,10 +51,6 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
     public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
         progressMonitor.begin("Applying Layout Results", 1);
         
-        // The height of the diagram (the surrounding interaction)
-        double diagramHeight = context.sgraph.getSize().y + context.messageSpacing
-                + context.lifelineHeader + context.lifelineYPos + context.borderSpacing;
-        
         // Set position for lifelines/nodes
         for (SLifeline lifeline : context.lifelineOrder) {
             // Dummy lifelines don't need any layout
@@ -92,7 +88,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         // Set position and size of surrounding interaction
         KShapeLayout parentLayout = context.kgraph.getData(KShapeLayout.class);
         parentLayout.setWidth((float) context.sgraph.getSize().x);
-        parentLayout.setHeight((float) diagramHeight);
+        parentLayout.setHeight((float) context.sgraph.getSize().y);
         parentLayout.setPos((float) context.borderSpacing, (float) context.borderSpacing);
         
         progressMonitor.done();

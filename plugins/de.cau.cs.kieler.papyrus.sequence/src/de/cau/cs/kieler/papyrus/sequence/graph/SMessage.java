@@ -187,8 +187,8 @@ public final class SMessage extends SGraphElement {
         this.sourceYPos = sourceYPos;
         
         // Update the graph's size if the message's y position is greater than the graph's size.
-        // This is done in order to find the new vertical size of the diagram on the fly.
-        // TODO: What about lifeline sizes?
+        // This is done in order to find the new vertical size of the diagram on the fly. Lifeline
+        // sizes are adjusted later.
         if (source.getGraph().getSize().y < sourceYPos) {
             source.getGraph().getSize().y = sourceYPos;
         }
