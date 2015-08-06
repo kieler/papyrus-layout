@@ -35,7 +35,7 @@ import de.cau.cs.kieler.papyrus.sequence.properties.LabelAlignment;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
-import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution.SequenceExecutionType;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecutionType;
 
 /**
  * Applies the layout results back to the original KGraph using the standard KGraph coordinate system.

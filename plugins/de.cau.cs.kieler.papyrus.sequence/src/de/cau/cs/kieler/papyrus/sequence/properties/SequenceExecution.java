@@ -34,21 +34,6 @@ import de.cau.cs.kieler.core.math.KVector;
  */
 public final class SequenceExecution {
     
-    /**
-     * The type of sequence execution.
-     * 
-     * @author dja
-     */
-    public static enum SequenceExecutionType {
-        /** It's an execution. */
-        EXECUTION,
-        /** It's a duration.*/
-        DURATION,
-        /** It's a time constraint. */
-        TIME_CONSTRAINT;
-    }
-    
-    
     /** The originating KNode of the execution. */
     private KNode origin;
     /** The type of the execution. */
@@ -62,9 +47,8 @@ public final class SequenceExecution {
     
     
     /**
-     * Constructor that initializes the execution.
-     * 
-     * TODO: Explain what origin does, exactly.
+     * Constructor that initializes the execution. The origin can be used to map the sequence execution
+     * to an original KNode that the size and position will eventually be transferred to.
      * 
      * @param origin
      *            the origin this object is created for

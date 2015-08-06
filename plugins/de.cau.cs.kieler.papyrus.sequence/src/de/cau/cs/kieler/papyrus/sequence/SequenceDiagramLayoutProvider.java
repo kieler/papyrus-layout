@@ -22,6 +22,7 @@ import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.kiml.AbstractLayoutProvider;
 import de.cau.cs.kieler.kiml.UnsupportedGraphException;
 import de.cau.cs.kieler.papyrus.sequence.p0import.KGraphImporter;
+import de.cau.cs.kieler.papyrus.sequence.p0import.PapyrusImporter;
 import de.cau.cs.kieler.papyrus.sequence.p1allocation.SpaceAllocator;
 import de.cau.cs.kieler.papyrus.sequence.p2cycles.SCycleBreaker;
 import de.cau.cs.kieler.papyrus.sequence.p3layering.MessageLayerer;
@@ -80,8 +81,18 @@ public final class SequenceDiagramLayoutProvider extends AbstractLayoutProvider 
      */
     private List<ISequenceLayoutProcessor> assembleLayoutProcessors(final LayoutContext context) {
         List<ISequenceLayoutProcessor> processors = Lists.newArrayList();
+
+        // The import algorithm depends on the coordinate system that is to be used
+        switch (context.coordinateSystem) {
+        case PAPYRUS:
+            processors.add(new PapyrusImporter());
+            break;
+            
+        default:
+            processors.add(new KGraphImporter());
+            break;   
+        }
         
-        processors.add(new KGraphImporter());
         processors.add(new SpaceAllocator());
         processors.add(new SCycleBreaker());
         processors.add(new MessageLayerer());

@@ -25,7 +25,9 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.LifelineSortingStrategy;
 
 /**
- * Properties for sequence diagrams.
+ * Properties for sequence diagrams. Since the layout algorithm can work in one of two modes (Papyrus
+ * and KGraph), some of these properties are mode-specific. If this is the case for a property, the
+ * documentation will say so.
  * 
  * @author grh
  * @kieler.design 2012-11-20 cds, msp
@@ -39,6 +41,17 @@ public final class SequenceDiagramProperties {
     
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties Describing the Graph Structure
+    
+    /**
+     * An ID that can be given to diagram elements and referenced by other elements. The ID must be
+     * unique in the diagram for it to be of any use and should be {@code >= 0}.
+     * 
+     * <p>
+     * The ID is only used in KGraph mode.
+     * </p>
+     */
+    public static final IProperty<Integer> ELEMENT_ID = new Property<Integer>(
+            "de.cau.cs.kieler.papyrus.sequence.elementId", -1);
 
     /** The type of a node. */
     public static final IProperty<NodeType> NODE_TYPE = new Property<NodeType>(
@@ -52,20 +65,70 @@ public final class SequenceDiagramProperties {
     public static final IProperty<List<SequenceArea>> AREAS = new Property<List<SequenceArea>>(
             "de.cau.cs.kieler.papyrus.sequence.area");
 
-    /** The list of execution specifications of a lifeline. */
+    /**
+     * The list of execution specifications of a lifeline.
+     * 
+     * <p>
+     * This is only used in Papyrus mode.
+     * </p>
+     */
     public static final IProperty<List<SequenceExecution>> EXECUTIONS = 
             new Property<List<SequenceExecution>>(
                     "de.cau.cs.kieler.papyrus.sequence.executionSpecifications");
+    
+    /**
+     * The type of execution a node represents.
+     * 
+     * <p>
+     * This is only used in KGraph mode.
+     * </p>
+     */
+    public static final IProperty<SequenceExecutionType> EXECUTION_TYPE = new Property<>(
+            "de.cau.cs.kieler.papyrus.sequence.executionType", SequenceExecutionType.EXECUTION);
+    
+    /**
+     * ID of the execution a message starts at, if any.
+     * 
+     * <p>
+     * This is only used in KGraph mode.
+     * </p>
+     */
+    public static final IProperty<Integer> SOURCE_EXECUTION_ID = new Property<Integer>(
+            "de.cau.cs.kieler.papyrus.sequence.executionId.source", -1);
+    
+    /**
+     * ID of the execution a message ends at, if any.
+     * 
+     * <p>
+     * This is only used in KGraph mode.
+     * </p>
+     */
+    public static final IProperty<Integer> TARGET_EXECUTION_ID = new Property<Integer>(
+            "de.cau.cs.kieler.papyrus.sequence.executionId.target", -1);
 
     /** Property of a comment that indicates to what kind of element it is attached. */
     public static final IProperty<String> ATTACHED_ELEMENT_TYPE = new Property<String>(
             "de.cau.cs.kieler.papyrus.sequence.attachedElement");
 
-    /** The list of objects, a comment is attached to. */
+    /**
+     * The list of objects, a comment is attached to.
+     * 
+     * <p>
+     * In Papyrus mode, this is a list of concrete diagram elements. In KGraph mode, this is a list of
+     * IDs of diagram elements.
+     * </p>
+     */
     public static final IProperty<List<Object>> ATTACHED_TO = new Property<List<Object>>(
             "de.cau.cs.kieler.papyrus.sequence.attachedTo");
 
-    /** The destruction event of a lifeline. */
+    /**
+     * The destruction event of a lifeline.
+     * 
+     * <p>
+     * This is only used in Papyrus mode. In KGraph mode, the algorithm automatically finds the
+     * destruction event node, if there is any.
+     * </p> 
+     */
     public static final IProperty<KNode> DESTRUCTION = new Property<KNode>(
             "de.cau.cs.kieler.papyrus.sequence.destruction");
 

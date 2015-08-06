@@ -53,6 +53,15 @@
                priority="0">
          </supportedFeature>
       </layoutAlgorithm>
+      <layoutOption
+            advanced="true"
+            appliesTo="parents, nodes, ports, edges, labels"
+            default="-1"
+            description="ID that uniquely identifies diagram elements."
+            id="de.cau.cs.kieler.papyrus.sequence.elementId"
+            name="Element ID"
+            type="int">
+      </layoutOption>
       
       <layoutOption
             advanced="true"
@@ -87,6 +96,34 @@
             id="de.cau.cs.kieler.papyrus.sequence.executionSpecifications"
             name="Executions"
             type="object">
+      </layoutOption>
+      <layoutOption
+            advanced="true"
+            appliesTo="nodes"
+            class="de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecutionType"
+            default="EXECUTION"
+            description="The kind of execution a node represents."
+            id="de.cau.cs.kieler.papyrus.sequence.executionType"
+            name="Execution type"
+            type="enum">
+      </layoutOption>
+      <layoutOption
+            advanced="true"
+            appliesTo="edges"
+            default="-1"
+            description="ID of the execution a message starts at, if any."
+            id="de.cau.cs.kieler.papyrus.sequence.executionId.source"
+            name="Source execution ID"
+            type="int">
+      </layoutOption>
+      <layoutOption
+            advanced="true"
+            appliesTo="edges"
+            default="-1"
+            description="ID of the execution a message ends at, if any."
+            id="de.cau.cs.kieler.papyrus.sequence.executionId.target"
+            name="Target execution ID"
+            type="int">
       </layoutOption>
       <layoutOption
             appliesTo="nodes"
