@@ -29,6 +29,10 @@ public final class SequenceLayoutConstants {
     public static final int LABELSPACING = 5;
     /** The horizontal margin for message labels. */
     public static final int LABELMARGIN = 10;
+    /** The minimum height of an execution. */
+    public static final int MIN_EXECUTION_HEIGHT = 20;
+    /** The width of executions. This could well be turned into a layout option at some point. */
+    public static final int EXECUCTION_WIDTH = 16;
     
 
     /**

@@ -437,124 +437,61 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      * @param context
      *            the layout context that contains all relevant information for the current layout run.
      * @param lifeline
-     *            the lifeline, whose executions are placed
+     *            the lifeline whose executions are to be placed.
      */
     private void applyExecutionCoordinates(final LayoutContext context, final SLifeline lifeline) {
         List<SequenceExecution> executions = lifeline.getProperty(SequenceDiagramProperties.EXECUTIONS);
-        if (executions == null) {
+        if (executions == null || executions.isEmpty()) {
             return;
         }
-
+        
         // Set xPos, maxXPos and height / maxYPos
-        arrangeExecutions(executions, lifeline.getSize().x);
-
-        // Get the layout data of the execution
-        KNode node = (KNode) lifeline.getProperty(InternalProperties.ORIGIN);
-        KShapeLayout nodeLayout = node.getData(KShapeLayout.class);
-
+        arrangeExecutions(executions, lifeline);
+        
         // Walk through the lifeline's executions
-        nodeLayout.setProperty(SequenceDiagramProperties.EXECUTIONS, executions);
         for (SequenceExecution execution : executions) {
-            Object executionObj = execution.getOrigin();
+            // TODO We need to calculate proper sizes for these guys
+            if (execution.getType() == SequenceExecutionType.DURATION
+                    || execution.getType() == SequenceExecutionType.TIME_CONSTRAINT) {
+                
+                execution.getPosition().y += SequenceLayoutConstants.TWENTY;
+            }
 
-            if (executionObj instanceof KNode) {
-                if (execution.getType() == SequenceExecutionType.DURATION
-                        || execution.getType() == SequenceExecutionType.TIME_CONSTRAINT) {
-                    
-                    execution.getPosition().y += SequenceLayoutConstants.TWENTY;
-                }
+            // Apply calculated coordinates to the execution
+            KNode executionNode = (KNode) execution.getOrigin();
+            
+            KShapeLayout executionlayout = executionNode.getData(KShapeLayout.class);
+            executionlayout.setXpos((float) execution.getPosition().x);
+            executionlayout.setYpos((float) (execution.getPosition().y - context.lifelineYPos));
+            executionlayout.setWidth((float) execution.getSize().x);
+            executionlayout.setHeight((float) execution.getSize().y);
 
-                // Apply calculated coordinates to the execution
-                KNode executionNode = (KNode) executionObj;
-                KShapeLayout shapelayout = executionNode.getData(KShapeLayout.class);
-                shapelayout.setXpos((float) execution.getPosition().x);
-                shapelayout.setYpos((float) (execution.getPosition().y - context.lifelineYPos));
-                shapelayout.setWidth((float) execution.getSize().x);
-                shapelayout.setHeight((float) execution.getSize().y);
+            // Walk through execution's messages and adjust their position
+            for (Object messObj : execution.getMessages()) {
+                SMessage smessage = (SMessage) messObj;
+                
+                // Check if the message points leftwards
+                boolean toLeft = smessage.getSource().getHorizontalSlot()
+                        > smessage.getTarget().getHorizontalSlot();
 
-                // Determine max and min y-pos of messages
-                double minYPos = lifeline.getSize().y;
-                double maxYPos = 0;
-                for (Object messObj : execution.getMessages()) {
-                    if (messObj instanceof SMessage) {
-                        SMessage message = (SMessage) messObj;
-                        double messageYPos;
-                        if (message.getSource() == lifeline) {
-                            messageYPos = message.getSourceYPos();
-                        } else {
-                            messageYPos = message.getTargetYPos();
-                        }
-                        if (messageYPos < minYPos) {
-                            minYPos = messageYPos;
-                        }
-                        if (messageYPos > maxYPos) {
-                            maxYPos = messageYPos;
-                        }
+                KEdge edge = (KEdge) smessage.getProperty(InternalProperties.ORIGIN);
+                KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
+                
+                // x coordinate for messages attached to the left side of the execution
+                double newXPos = lifeline.getPosition().x + execution.getPosition().x;
+                
+                if (smessage.getSource() == lifeline) {
+                    if (!toLeft) {
+                        newXPos += execution.getSize().x;
                     }
+                    edgeLayout.getSourcePoint().setX((float) newXPos);
                 }
-
-                /*
-                 * TODO set executionFactor to one if the Papyrus team fixes the bug. Calculate
-                 * conversion factor. Conversion is necessary because Papyrus stores the
-                 * y-coordinates in a very strange way. When the message starts or ends at an
-                 * execution, y-coordinates must be given relative to the execution. However, these
-                 * relative coordinates must be scaled as if the execution was having the height of
-                 * its lifeline.
-                 */
-                double effectiveHeight = lifeline.getSize().y - SequenceLayoutConstants.TWENTY;
-                double executionHeight = maxYPos - minYPos;
-                double executionFactor = effectiveHeight / executionHeight;
-
-                // Walk through execution's messages and adjust their position
-                for (Object messObj : execution.getMessages()) {
-                    if (messObj instanceof SMessage) {
-                        SMessage mess = (SMessage) messObj;
-                        boolean toLeft = false;
-                        if (mess.getSource().getHorizontalSlot() > mess.getTarget()
-                                .getHorizontalSlot()) {
-                            // Message leads leftwards
-                            toLeft = true;
-                        }
-
-                        KEdge edge = (KEdge) mess.getProperty(InternalProperties.ORIGIN);
-                        KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
-                        double newXPos = lifeline.getPosition().x + execution.getPosition().x;
-                        if (mess.getSource() == mess.getTarget()) {
-                            // Selfloop: insert bend points
-                            edgeLayout.getBendPoints().get(0).setY(edgeLayout.getSourcePoint().getY());
-                            edgeLayout.getBendPoints().get(1).setY(edgeLayout.getTargetPoint().getY());
-                            edgeLayout.getTargetPoint().setX((float) (newXPos + execution.getSize().x));
-                            edgeLayout.getTargetPoint().setY(0);
-                        } else if (mess.getSource() == lifeline) {
-                            if (!toLeft) {
-                                newXPos += execution.getSize().x;
-                            }
-                            edgeLayout.getSourcePoint().setX((float) newXPos);
-
-                            // Calculate the message's height relative to the execution
-                            double relHeight = mess.getSourceYPos() - minYPos;
-                            if (relHeight == 0) {
-                                edgeLayout.getSourcePoint().setY(0);
-                            } else {
-                                edgeLayout.getSourcePoint().setY(
-                                        (float) (context.lifelineHeader + relHeight * executionFactor));
-                            }
-                        } else {
-                            if (toLeft) {
-                                newXPos += execution.getSize().x;
-                            }
-                            edgeLayout.getTargetPoint().setX((float) newXPos);
-
-                            // Calculate the message's height relative to the execution
-                            double relHeight = mess.getTargetYPos() - minYPos;
-                            if (relHeight == 0) {
-                                edgeLayout.getTargetPoint().setY(0);
-                            } else {
-                                edgeLayout.getTargetPoint().setY(
-                                        (float) (context.lifelineHeader + relHeight * executionFactor));
-                            }
-                        }
+                
+                if (smessage.getTarget() == lifeline) {
+                    if (toLeft) {
+                        newXPos += execution.getSize().x;
                     }
+                    edgeLayout.getTargetPoint().setX((float) newXPos);
                 }
             }
         }
@@ -565,61 +502,57 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      * 
      * @param executions
      *            List of {@link SequenceExecution} at the given {@link SLifeline}
-     * @param parentWidth
-     *            Width of the {@link SLifeline}
+     * @param lifeline
+     *            the lifeline the executions belong to.
      */
-    private void arrangeExecutions(final List<SequenceExecution> executions, final double parentWidth) {
-        final double minHeight = 20;
-        final double executionWidth = 16;
-
-        // Initially set horizontal position and height of empty executions
+    private void arrangeExecutions(final List<SequenceExecution> executions, final SLifeline lifeline) {
+        // All executions are initially centered in their lifeline
         for (SequenceExecution execution : executions) {
-            execution.getPosition().x = (parentWidth - executionWidth) / 2;
-            // Give executions without messages their original height and yPos
-            if (execution.getMessages().size() == 0) {
-                KShapeLayout shapelayout = execution.getOrigin().getData(KShapeLayout.class);
-                execution.getPosition().y = shapelayout.getYpos();
-                execution.getSize().y = shapelayout.getHeight();
-            }
+            execution.getPosition().x =
+                    (lifeline.getSize().x - SequenceLayoutConstants.EXECUCTION_WIDTH) / 2;
         }
 
+        // If there are multiple executions, some may have to be shifted horizontally if they overlap
         if (executions.size() > 1) {
-            // reset xPos if execution is attached to another execution
             for (SequenceExecution execution : executions) {
                 if (execution.getType() == SequenceExecutionType.DURATION
                         || execution.getType() == SequenceExecutionType.TIME_CONSTRAINT) {
+                    
                     continue;
                 }
                 
-                int pos = 0;
+                int slot = 0;
                 for (SequenceExecution otherExecution : executions) {
                     if (execution != otherExecution) {
-                        if (execution.getPosition().y > otherExecution.getPosition().y
-                                && execution.getPosition().y + execution.getSize().y < otherExecution
-                                        .getPosition().y + otherExecution.getSize().y) {
-                            pos++;
+                        boolean topOverlaps = execution.getPosition().y > otherExecution.getPosition().y;
+                        boolean bottomOverlaps = execution.getPosition().y + execution.getSize().y
+                                < otherExecution.getPosition().y + otherExecution.getSize().y;
+                        
+                        if (topOverlaps && bottomOverlaps) {
+                            slot++;
                         }
                     }
                 }
-                if (pos > 0) {
-                    execution.getPosition().x = execution.getPosition().x + pos * executionWidth
-                            / 2;
-                }
+                
+                // Shift execution position
+                execution.getPosition().x += slot * SequenceLayoutConstants.EXECUCTION_WIDTH / 2;
             }
         }
 
         // Check minimum height of executions and set width
         for (SequenceExecution execution : executions) {
-            if (execution.getSize().y < minHeight) {
-                execution.getSize().y = minHeight;
+            if (execution.getSize().y < SequenceLayoutConstants.MIN_EXECUTION_HEIGHT) {
+                execution.getSize().y = SequenceLayoutConstants.MIN_EXECUTION_HEIGHT;
             }
             
-            if (execution.getType() == SequenceExecutionType.DURATION
-                    || execution.getType() == SequenceExecutionType.TIME_CONSTRAINT) {
+            if (execution.getType() == SequenceExecutionType.EXECUTION) {
+                execution.getSize().x = SequenceLayoutConstants.EXECUCTION_WIDTH;
                 
-                continue;
+                // If an execution has no messages, place it at the bottom of its lifeline
+                if (execution.getMessages().isEmpty()) {
+                    execution.getSize().y = SequenceLayoutConstants.MIN_EXECUTION_HEIGHT;
+                }
             }
-            execution.getSize().x = executionWidth;
         }
     }
     
