@@ -148,7 +148,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         KPoint sourcePoint = edgeLayout.getSourcePoint();
         sourcePoint.setY((float) message.getSourceYPos());
         sourcePoint.setX((float) llCenter);
-
+        
         // Check if the message connects to executions
         List<SequenceExecution> executions = lifeline.getProperty(SequenceDiagramProperties.EXECUTIONS);
         if (executions != null) {
@@ -181,6 +181,13 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         if (messageType == MessageType.LOST) {
             edgeLayout.getTargetPoint().setX((float)
                     (lifeline.getPosition().x + lifeline.getSize().x + context.lifelineSpacing / 2));
+            edgeLayout.getTargetPoint().setY((float) message.getTargetYPos());
+            
+            // A lost message is supposed to have a target dummy node in the KGraph; set its position
+            KNode dummy = edge.getTarget();
+            KShapeLayout dummyLayout = dummy.getData(KShapeLayout.class);
+            dummyLayout.setXpos(edgeLayout.getTargetPoint().getX());
+            dummyLayout.setYpos(edgeLayout.getTargetPoint().getY() - dummyLayout.getHeight() / 2);
         }
         
         // Specify bend points for self loops
@@ -268,6 +275,13 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         if (messageType == MessageType.FOUND) {
             edgeLayout.getSourcePoint().setX((float)
                     (lifeline.getPosition().x - context.lifelineSpacing / 2));
+            edgeLayout.getSourcePoint().setY((float) message.getSourceYPos());
+            
+            // A lost message is supposed to have a target dummy node in the KGraph; set its position
+            KNode dummy = edge.getSource();
+            KShapeLayout dummyLayout = dummy.getData(KShapeLayout.class);
+            dummyLayout.setXpos(edgeLayout.getSourcePoint().getX() - dummyLayout.getWidth());
+            dummyLayout.setYpos(edgeLayout.getSourcePoint().getY() - dummyLayout.getHeight() / 2);
         }
         
         // Specify bend points for self loops

@@ -48,7 +48,11 @@ public enum NodeType {
     /** A duration constraint. */
     DURATION_CONSTRAINT,
     /** A duration observation. */
-    DURATION_OBSERVATION;
+    DURATION_OBSERVATION,
+    /** A dummy node that provides a non-null source for a found message. */
+    FOUND_MESSAGE_SOURCE,
+    /** A dummy node that provides a non-null target for a lost message. */
+    LOST_MESSAGE_TARGET;
     
     
     /**
