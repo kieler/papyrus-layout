@@ -13,10 +13,10 @@
  */
 package de.cau.cs.kieler.papyrus.sequence.p0import;
 
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
@@ -24,7 +24,6 @@ import de.cau.cs.kieler.core.kgraph.KEdge;
 import de.cau.cs.kieler.core.kgraph.KLabel;
 import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.kiml.klayoutdata.KEdgeLayout;
-import de.cau.cs.kieler.kiml.klayoutdata.KLayoutData;
 import de.cau.cs.kieler.kiml.klayoutdata.KPoint;
 import de.cau.cs.kieler.kiml.klayoutdata.KShapeLayout;
 import de.cau.cs.kieler.klay.layered.graph.LEdge;
@@ -45,6 +44,7 @@ import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecutionType;
 
 /**
  * Turns the KGraph of a layout context into an SGraph and an LGraph.
@@ -54,6 +54,7 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
  * @kieler.rating proposed yellow grh
  */
 public final class KGraphImporter implements ISequenceLayoutProcessor {
+    
 
     /**
      * {@inheritDoc}
@@ -72,6 +73,14 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // SGraph Creation
     
+    /** A map from KNodes in the layout graph to the lifelines created for them. */
+    private Map<KNode, SLifeline> lifelineMap = Maps.newHashMap();
+    /** A map from KEdges in the layout graph to messages created for them in the SGraph. */
+    private Map<KEdge, SMessage> messageMap = Maps.newHashMap();
+    /** A map from element IDs to the corresponding executions. */
+    private Map<Integer, SequenceExecution> executionMap = Maps.newHashMap();
+    
+    
     /**
      * Builds a PGraph out of a given KGraph by associating every KNode to a PLifeline and every
      * KEdge to a PMessage.
@@ -84,38 +93,37 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
         // Create a graph object
         SGraph sgraph = new SGraph();
         
-        // Initialize node-lifeline and edge-message maps
-        HashMap<KNode, SLifeline> nodeMap = Maps.newHashMap();
-        HashMap<KEdge, SMessage> edgeMap = Maps.newHashMap();
-        
         // Get the list of areas
         List<SequenceArea> areas = topNode.getData(KShapeLayout.class).getProperty(
                 SequenceDiagramProperties.AREAS);
 
-        // Create lifeline objects
+        // Create lifelines
         for (KNode node : topNode.getChildren()) {
-            createLifeline(sgraph, nodeMap, node);
+            NodeType nodeType = node.getData(KShapeLayout.class).getProperty(
+                    SequenceDiagramProperties.NODE_TYPE);
+            
+            if (nodeType == NodeType.LIFELINE) {
+                createLifeline(sgraph, node);
+            }
         }
 
         // Walk through lifelines (create their messages) and comments
         for (KNode node : topNode.getChildren()) {
             NodeType nodeType = node.getData(KShapeLayout.class).getProperty(
                     SequenceDiagramProperties.NODE_TYPE);
+            
             if (nodeType == NodeType.LIFELINE) {
-                // Node is a lifeline
-
                 // Create SMessages for each of the outgoing edges
-                createMessages(sgraph, nodeMap, edgeMap, areas, node);
+                createMessages(sgraph, node, areas);
 
                 // Handle found messages (incoming messages)
-                createIncomingMessages(sgraph, nodeMap, edgeMap, node);
+                createIncomingMessages(sgraph, node);
             } else if (nodeType == NodeType.COMMENT
                     || nodeType == NodeType.CONSTRAINT
                     || nodeType == NodeType.DURATION_OBSERVATION
                     || nodeType == NodeType.TIME_OBSERVATION) {
                 
-                // Node is comment, constraint or time observation/constraint 
-                createCommentLikeNode(sgraph, nodeMap, edgeMap, node);
+                createCommentLikeNode(sgraph, node);
             }
         }
 
@@ -134,25 +142,271 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
 
         // Copy the areas property to the SGraph
         sgraph.setProperty(SequenceDiagramProperties.AREAS, areas);
+        
+        // Clear maps
+        lifelineMap.clear();
+        messageMap.clear();
+        executionMap.clear();
 
         return sgraph;
     }
+    
+    
+    //////////////////////////////////////////////////////////////
+    // Lifelines
+
+    /**
+     * Creates the SLifeline for the given KNode, sets up its properties, and looks through its children
+     * to setup destructions and executions.
+     * 
+     * @param sgraph
+     *            the Sequence Graph
+     * @param klifeline
+     *            the KNode to create a lifeline for
+     */
+    private void createLifeline(final SGraph sgraph, final KNode klifeline) {
+        KShapeLayout klayout = klifeline.getData(KShapeLayout.class);
+        
+        assert klayout.getProperty(SequenceDiagramProperties.NODE_TYPE) == NodeType.LIFELINE;
+        
+        // Node is lifeline
+        SLifeline slifeline = new SLifeline();
+        if (klifeline.getLabels().size() > 0) {
+            slifeline.setName(klifeline.getLabels().get(0).getText());
+        }
+        
+        slifeline.setProperty(InternalProperties.ORIGIN, klifeline);
+        lifelineMap.put(klifeline, slifeline);
+        sgraph.addLifeline(slifeline);
+
+        // Copy layout information to lifeline
+        slifeline.getPosition().x = klayout.getXpos();
+        slifeline.getPosition().y = klayout.getYpos();
+        slifeline.getSize().x = klayout.getWidth();
+        slifeline.getSize().y = klayout.getHeight();
+        
+        // Iterate through the lifeline's children to collect destructions and executions
+        List<SequenceExecution> executions = Lists.newArrayList();
+        
+        for (KNode kchild : klifeline.getChildren()) {
+            KShapeLayout kchildLayout = kchild.getData(KShapeLayout.class);
+            NodeType kchildNodeType = kchildLayout.getProperty(SequenceDiagramProperties.NODE_TYPE);
+            
+            if (kchildNodeType.isExecutionType()) {
+                // Create a new sequence execution for this thing
+                SequenceExecution execution = new SequenceExecution(kchild);
+                execution.setType(SequenceExecutionType.fromNodeType(kchildNodeType));
+                executions.add(execution);
+                executionMap.put(
+                        kchildLayout.getProperty(SequenceDiagramProperties.ELEMENT_ID), execution);
+                
+                // Remember layout
+                execution.getPosition().x = kchildLayout.getXpos();
+                execution.getPosition().y = kchildLayout.getYpos();
+                execution.getSize().x = kchildLayout.getWidth();
+                execution.getSize().y = kchildLayout.getHeight();
+            } else if (kchildNodeType == NodeType.DESTRUCTION_EVENT) {
+                slifeline.setProperty(SequenceDiagramProperties.DESTRUCTION, kchild);
+            }
+        }
+        
+        slifeline.setProperty(SequenceDiagramProperties.EXECUTIONS, executions);
+    }
+    
+    
+    //////////////////////////////////////////////////////////////
+    // Messages
+
+    /**
+     * Walk through the lifeline's outgoing edges and create SMessages for each of them.
+     * 
+     * @param sgraph
+     *            the Sequence Graph
+     * @param klifeline
+     *            the KNode to search its outgoing edges
+     * @param areas
+     *            the list of areas
+     */
+    private void createMessages(final SGraph sgraph, final KNode klifeline,
+            final List<SequenceArea> areas) {
+        
+        for (KEdge kedge : klifeline.getOutgoingEdges()) {
+            SLifeline sourceLL = lifelineMap.get(kedge.getSource());
+            SLifeline targetLL = lifelineMap.get(kedge.getTarget());
+
+            // Lost-messages and messages to the surrounding interaction don't have a lifeline, so
+            // create dummy lifeline
+            if (targetLL == null) {
+                SLifeline sdummy = new SLifeline();
+                sdummy.setDummy(true);
+                sdummy.setGraph(sgraph);
+                targetLL = sdummy;
+            }
+
+            // Create message object
+            SMessage smessage = new SMessage(sourceLL, targetLL);
+            smessage.setProperty(InternalProperties.ORIGIN, kedge);
+
+            KEdgeLayout kedgelayout = kedge.getData(KEdgeLayout.class);
+            smessage.setSourceYPos(kedgelayout.getSourcePoint().getY());
+            smessage.setTargetYPos(kedgelayout.getTargetPoint().getY());
+
+            // Read size of the attached labels
+            double maxLabelLength = 0;
+            for (KLabel klabel : kedge.getLabels()) {
+                KShapeLayout klabelLayout = klabel.getData(KShapeLayout.class);
+                if (klabelLayout.getWidth() > maxLabelLength) {
+                    maxLabelLength = klabelLayout.getWidth();
+                }
+            }
+            smessage.setLabelWidth(maxLabelLength);
+
+            // Add message to the source and the target lifeline's list of messages
+            sourceLL.addMessage(smessage);
+            targetLL.addMessage(smessage);
+
+            // Put edge and message into the edge map
+            messageMap.put(kedge, smessage);
+            
+            // Check if the edge connects to executions
+            SequenceExecution sourceExecution = executionMap.get(
+                    kedgelayout.getProperty(SequenceDiagramProperties.SOURCE_EXECUTION_ID));
+            if (sourceExecution != null) {
+                sourceExecution.addMessage(smessage);
+            }
+            
+            SequenceExecution targetExecution = executionMap.get(
+                    kedgelayout.getProperty(SequenceDiagramProperties.SOURCE_EXECUTION_ID));
+            if (targetExecution != null) {
+                targetExecution.addMessage(smessage);
+            }
+
+            // Append the message type of the edge to the message
+            MessageType messageType = kedgelayout.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+            if (messageType == MessageType.ASYNCHRONOUS
+                    || messageType == MessageType.CREATE
+                    || messageType == MessageType.DELETE
+                    || messageType == MessageType.SYNCHRONOUS
+                    || messageType == MessageType.LOST) {
+                
+                smessage.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, messageType);
+            }
+
+            // Outgoing messages to the surrounding interaction are drawn to the right and therefore
+            // their target lifeline should have highest position
+            if (targetLL.isDummy() && messageType != MessageType.LOST) {
+                targetLL.setHorizontalSlot(sgraph.getLifelines().size() + 1);
+            }
+
+            // check if message is in any area
+            if (areas != null) {
+                for (SequenceArea area : areas) {
+                    if (isInArea(kedgelayout.getSourcePoint(), area)
+                            && isInArea(kedgelayout.getTargetPoint(), area)) {
+                        
+                        area.getMessages().add(smessage);
+                        area.addLifeline(smessage.getSource());
+                        area.addLifeline(smessage.getTarget());
+                        
+                        for (SequenceArea subArea : area.getSubAreas()) {
+                            if (isInArea(kedgelayout.getSourcePoint(), subArea)
+                                    && isInArea(kedgelayout.getTargetPoint(), subArea)) {
+                                
+                                subArea.getMessages().add(smessage);
+                                subArea.addLifeline(smessage.getSource());
+                                subArea.addLifeline(smessage.getTarget());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Walk through incoming edges of the given lifeline and check if there are found messages
+     * ormessages that come from the surrounding interaction. If so, create the corresponding
+     * SMessage.
+     * 
+     * @param sgraph
+     *            the Sequence Graph
+     * @param klifeline
+     *            the KNode to search its incoming edges.
+     */
+    private void createIncomingMessages(final SGraph sgraph, final KNode klifeline) {
+        for (KEdge kedge : klifeline.getIncomingEdges()) {
+            KEdgeLayout kedgelayout = kedge.getData(KEdgeLayout.class);
+
+            SLifeline sourceLL = lifelineMap.get(kedge.getSource());
+            
+            // We are only interested in messages that don't come from a lifeline
+            if (sourceLL != null) {
+                continue;
+            }
+            
+            // TODO consider connections to comments and constraints!
+            
+            // Create dummy lifeline as source since the message has no source lifeline
+            // TODO We could think about using a single dummy lifeline for all found messages
+            SLifeline sdummy = new SLifeline();
+            sdummy.setDummy(true);
+            sdummy.setGraph(sgraph);
+            sourceLL = sdummy;
+            
+            SLifeline targetLL = lifelineMap.get(kedge.getTarget());
+
+            // Create message object
+            SMessage smessage = new SMessage(sourceLL, targetLL);
+            smessage.setProperty(InternalProperties.ORIGIN, kedge);
+            smessage.setTargetYPos(kedgelayout.getTargetPoint().getY());
+
+            // Add the message to the source and target lifeline's list of messages
+            sourceLL.addMessage(smessage);
+            targetLL.addMessage(smessage);
+
+            // Put edge and message into the edge map
+            messageMap.put(kedge, smessage);
+
+            // Append the message type of the edge to the message
+            MessageType messageType = kedgelayout.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+            if (messageType == MessageType.FOUND) {
+                smessage.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, MessageType.FOUND);
+            } else {
+                // Since incoming messages come from the left side of the surrounding
+                // interaction, give its dummy lifeline position -1
+                sourceLL.setHorizontalSlot(-1);
+
+                if (messageType == MessageType.ASYNCHRONOUS
+                        || messageType == MessageType.CREATE
+                        || messageType == MessageType.DELETE
+                        || messageType == MessageType.SYNCHRONOUS) {
+                    
+                    smessage.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, messageType);
+                }
+            }
+
+            // Check if the message connects to a target execution
+            SequenceExecution targetExecution = executionMap.get(
+                    kedgelayout.getProperty(SequenceDiagramProperties.SOURCE_EXECUTION_ID));
+            if (targetExecution != null) {
+                targetExecution.addMessage(smessage);
+            }
+        }
+    }
+    
+    
+    //////////////////////////////////////////////////////////////
+    // Comment-like Nodes
 
     /**
      * Create a comment object for comments or constraints (which are handled like comments).
      * 
      * @param sgraph
      *            the Sequence Graph
-     * @param nodeMap
-     *            the map of node-lifeline connections
-     * @param edgeMap
-     *            the map of edge-message connections
      * @param node
      *            the node to create a comment object from
      */
-    private void createCommentLikeNode(final SGraph sgraph, final HashMap<KNode, SLifeline> nodeMap,
-            final HashMap<KEdge, SMessage> edgeMap, final KNode node) {
-
+    private void createCommentLikeNode(final SGraph sgraph, final KNode node) {
         KShapeLayout commentLayout = node.getData(KShapeLayout.class);
 
         // Get the node's type
@@ -177,9 +431,9 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             List<SGraphElement> attTo = comment.getAttachedTo();
             for (Object att : attachedTo) {
                 if (att instanceof KNode) {
-                    attTo.add(nodeMap.get(att));
+                    attTo.add(lifelineMap.get(att));
                 } else if (att instanceof KEdge) {
-                    attTo.add(edgeMap.get(att));
+                    attTo.add(messageMap.get(att));
                 }
             }
         }
@@ -236,6 +490,10 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
 
         sgraph.getComments().add(comment);
     }
+    
+    
+    //////////////////////////////////////////////////////////////
+    // Areas
 
     /**
      * Check, where to place an empty area.
@@ -285,268 +543,6 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             }
             if (nextMessage != null) {
                 area.setNextMessage(nextMessage);
-            }
-        }
-    }
-
-    /**
-     * Walk through the node's outgoing edges and create SMessages for each of them.
-     * 
-     * @param sgraph
-     *            the Sequence Graph
-     * @param nodeMap
-     *            the map of node-lifeline connections
-     * @param edgeMap
-     *            the map of edge-message connections
-     * @param areas
-     *            the list of areas
-     * @param node
-     *            the KNode to search its outgoing edges
-     */
-    private void createMessages(final SGraph sgraph, final HashMap<KNode, SLifeline> nodeMap,
-            final HashMap<KEdge, SMessage> edgeMap, final List<SequenceArea> areas, final KNode node) {
-        
-        for (KEdge edge : node.getOutgoingEdges()) {
-            SLifeline sourceLL = nodeMap.get(edge.getSource());
-            SLifeline targetLL = nodeMap.get(edge.getTarget());
-
-            // Lost-messages and messages to the surrounding interaction don't have a lifeline, so
-            // create dummy lifeline
-            if (targetLL == null) {
-                SLifeline dummy = new SLifeline();
-                dummy.setDummy(true);
-                dummy.setGraph(sgraph);
-                targetLL = dummy;
-            }
-
-            // Create message object
-            SMessage message = new SMessage(sourceLL, targetLL);
-            message.setProperty(InternalProperties.ORIGIN, edge);
-            message.setComments(new LinkedList<SComment>());
-
-            KEdgeLayout layout = edge.getData(KEdgeLayout.class);
-            message.setSourceYPos(layout.getSourcePoint().getY());
-            message.setTargetYPos(layout.getTargetPoint().getY());
-
-            // Read size of the attached label
-            double maxLabelLength = 0;
-            for (KLabel label : edge.getLabels()) {
-                KShapeLayout labelLayout = label.getData(KShapeLayout.class);
-                if (labelLayout.getWidth() > maxLabelLength) {
-                    maxLabelLength = labelLayout.getWidth();
-                }
-            }
-            message.setLabelWidth(maxLabelLength);
-
-            // Add message to the source and the target lifeline's list of messages
-            sourceLL.addMessage(message);
-            targetLL.addMessage(message);
-
-            // Put edge and message into the edge map
-            edgeMap.put(edge, message);
-
-            // Replace KEdge by its SMessage if it appears in one of the lifeline's executions. It
-            // is better to do it this way than running through the list of executions since that
-            // would lead to concurrent modification exceptions.
-            if (sourceLL.getProperty(SequenceDiagramProperties.EXECUTIONS) != null) {
-                for (SequenceExecution execution : sourceLL.getProperty(
-                        SequenceDiagramProperties.EXECUTIONS)) {
-                    
-                    if (execution.getMessages().remove(edge)) {
-                        execution.addMessage(message);
-                    }
-                }
-            }
-            
-            if (targetLL.getProperty(SequenceDiagramProperties.EXECUTIONS) != null) {
-                for (SequenceExecution execution : targetLL.getProperty(
-                        SequenceDiagramProperties.EXECUTIONS)) {
-                    
-                    if (execution.getMessages().remove(edge)) {
-                        execution.addMessage(message);
-                    }
-                }
-            }
-
-            // Append the message type of the edge to the message
-            MessageType messageType = layout.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
-            if (messageType == MessageType.ASYNCHRONOUS
-                    || messageType == MessageType.CREATE
-                    || messageType == MessageType.DELETE
-                    || messageType == MessageType.SYNCHRONOUS
-                    || messageType == MessageType.LOST) {
-                
-                message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, messageType);
-            }
-
-            // Outgoing messages to the surrounding interaction are drawn to the right and therefore
-            // their target lifeline should have highest position
-            if (targetLL.isDummy() && messageType != MessageType.LOST) {
-                targetLL.setHorizontalSlot(sgraph.getLifelines().size() + 1);
-            }
-
-            // check if message is in any area
-            if (areas != null) {
-                for (SequenceArea area : areas) {
-                    if (isInArea(layout.getSourcePoint(), area)
-                            && isInArea(layout.getTargetPoint(), area)) {
-                        
-                        area.getMessages().add(message);
-                        area.addLifeline(message.getSource());
-                        area.addLifeline(message.getTarget());
-                        
-                        for (SequenceArea subArea : area.getSubAreas()) {
-                            if (isInArea(layout.getSourcePoint(), subArea)
-                                    && isInArea(layout.getTargetPoint(), subArea)) {
-                                
-                                subArea.getMessages().add(message);
-                                subArea.addLifeline(message.getSource());
-                                subArea.addLifeline(message.getTarget());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Walk through incoming edges and check if there are found messages or messages that come from
-     * the surrounding interaction. If so, create the corresponding SMessage.
-     * 
-     * @param sgraph
-     *            the Sequence Graph
-     * @param nodeMap
-     *            the map of node-lifeline connections
-     * @param edgeMap
-     *            the map of edge-message connections
-     * @param node
-     *            the KNode to search its incoming edges.
-     */
-    private void createIncomingMessages(final SGraph sgraph, final HashMap<KNode, SLifeline> nodeMap,
-            final HashMap<KEdge, SMessage> edgeMap, final KNode node) {
-        
-        for (KEdge edge : node.getIncomingEdges()) {
-            KEdgeLayout layout = edge.getData(KEdgeLayout.class);
-
-            SLifeline sourceLL = nodeMap.get(edge.getSource());
-            if (sourceLL == null) {
-                // TODO consider connections to comments and constraints!
-                // Create dummy lifeline as source since the message has no source lifeline
-                SLifeline dummy = new SLifeline();
-                dummy.setDummy(true);
-                dummy.setGraph(sgraph);
-                sourceLL = dummy;
-                SLifeline targetLL = nodeMap.get(edge.getTarget());
-
-                // Create message object
-                SMessage message = new SMessage(sourceLL, targetLL);
-                message.setProperty(InternalProperties.ORIGIN, edge);
-                message.setComments(new LinkedList<SComment>());
-                message.setTargetYPos(layout.getTargetPoint().getY());
-
-                // Add the message to the source and target lifeline's list of messages
-                sourceLL.addMessage(message);
-                targetLL.addMessage(message);
-
-                // Put edge and message into the edge map
-                edgeMap.put(edge, message);
-
-                // Append the message type of the edge to the message
-                MessageType messageType = layout.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
-                if (messageType == MessageType.FOUND) {
-                    message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, MessageType.FOUND);
-                } else {
-                    // Since incoming messages come from the left side of the surrounding
-                    // interaction, give its dummy lifeline position -1
-                    sourceLL.setHorizontalSlot(-1);
-
-                    if (messageType == MessageType.ASYNCHRONOUS
-                            || messageType == MessageType.CREATE
-                            || messageType == MessageType.DELETE
-                            || messageType == MessageType.SYNCHRONOUS) {
-                        
-                        message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, messageType);
-                    }
-                }
-
-                // replace KEdge by its SMessage if it appears in one of the lifeline's
-                // executions
-                if (sourceLL.getProperty(SequenceDiagramProperties.EXECUTIONS) != null) {
-                    for (SequenceExecution execution : sourceLL.getProperty(
-                            SequenceDiagramProperties.EXECUTIONS)) {
-                        
-                        if (execution.getMessages().remove(edge)) {
-                            execution.addMessage(message);
-                        }
-                    }
-                }
-                
-                if (targetLL.getProperty(SequenceDiagramProperties.EXECUTIONS) != null) {
-                    for (SequenceExecution execution : targetLL.getProperty(
-                            SequenceDiagramProperties.EXECUTIONS)) {
-                        
-                        if (execution.getMessages().remove(edge)) {
-                            execution.addMessage(message);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Creates the SLifeline for the KNode and copies its properties.
-     * 
-     * @param sgraph
-     *            the Sequence Graph
-     * @param nodeMap
-     *            the map of node-lifeline connections
-     * @param node
-     *            the KNode to create a lifeline for
-     */
-    private void createLifeline(final SGraph sgraph, final HashMap<KNode, SLifeline> nodeMap,
-            final KNode node) {
-        
-        KShapeLayout layout = node.getData(KShapeLayout.class);
-        if (layout.getProperty(SequenceDiagramProperties.NODE_TYPE) == NodeType.LIFELINE) {
-            // Node is lifeline
-            SLifeline lifeline = new SLifeline();
-            if (node.getLabels().size() > 0) {
-                lifeline.setName(node.getLabels().get(0).getText());
-            }
-            lifeline.setProperty(InternalProperties.ORIGIN, node);
-            nodeMap.put(node, lifeline);
-            sgraph.addLifeline(lifeline);
-
-            // Copy layout information to lifeline
-            lifeline.getPosition().x = layout.getXpos();
-            lifeline.getPosition().y = layout.getYpos();
-            lifeline.getSize().x = layout.getWidth();
-            lifeline.getSize().y = layout.getHeight();
-
-            // Copy executions to lifeline
-            List<SequenceExecution> executions = layout.getProperty(
-                    SequenceDiagramProperties.EXECUTIONS);
-            lifeline.setProperty(SequenceDiagramProperties.EXECUTIONS, executions);
-
-            lifeline.setComments(new LinkedList<SComment>());
-
-            // If the DESTRUCTION property is set, simply copy it over
-            KNode destructionNode = layout.getProperty(SequenceDiagramProperties.DESTRUCTION);
-            if (destructionNode != null) {
-                lifeline.setProperty(SequenceDiagramProperties.DESTRUCTION, destructionNode);
-            } else {
-                // The destruction property is not set. We should go and check if the lifeline has any
-                // children marked as destruction events
-                node.getChildren()
-                    .stream()
-                    .filter(n -> {
-                        KLayoutData layoutData = n.getData(KLayoutData.class);
-                        return layoutData.getProperty(SequenceDiagramProperties.NODE_TYPE)
-                                == NodeType.DESTRUCTION_EVENT;
-                    }).findFirst()
-                    .ifPresent(n -> lifeline.setProperty(SequenceDiagramProperties.DESTRUCTION, n));
             }
         }
     }

@@ -20,6 +20,7 @@ package de.cau.cs.kieler.papyrus.sequence.properties;
  * @author dja
  */
 public enum NodeType {
+    
     /** The root node. */
     SURROUNDING_INTERACTION,
     /** A lifeline. */
@@ -48,4 +49,18 @@ public enum NodeType {
     DURATION_CONSTRAINT,
     /** A duration observation. */
     DURATION_OBSERVATION;
+    
+    
+    /**
+     * Checks if the node models one of the execution type nodes.
+     * 
+     * @return {@code true} if a node with this type should be handled as an execution.
+     */
+    public boolean isExecutionType() {
+        return this == BEHAVIOUR_EXEC_SPECIFICATION
+                || this == ACTION_EXEC_SPECIFICATION
+                || this == TIME_CONSTRAINT
+                || this == DURATION_CONSTRAINT;
+    }
+    
 }
