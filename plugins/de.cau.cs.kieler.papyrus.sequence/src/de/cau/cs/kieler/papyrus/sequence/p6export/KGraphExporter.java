@@ -109,7 +109,6 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      *            the lifeline whose messages are handled
      */
     private void applyMessageCoordinates(final LayoutContext context, final SLifeline lifeline) {
-        
         for (SMessage message : lifeline.getOutgoingMessages()) {
             applyOutgoingMessageCoordinates(lifeline, message, context);
         }
@@ -476,7 +475,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             
             KShapeLayout executionlayout = executionNode.getData(KShapeLayout.class);
             executionlayout.setXpos((float) execution.getPosition().x);
-            executionlayout.setYpos((float) (execution.getPosition().y - context.lifelineYPos));
+            executionlayout.setYpos((float) (execution.getPosition().y - lifeline.getPosition().y));
             executionlayout.setWidth((float) execution.getSize().x);
             executionlayout.setHeight((float) execution.getSize().y);
 

@@ -199,12 +199,6 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
                 executions.add(execution);
                 executionMap.put(
                         kchildLayout.getProperty(SequenceDiagramProperties.ELEMENT_ID), execution);
-                
-                // Remember layout
-                execution.getPosition().x = kchildLayout.getXpos();
-                execution.getPosition().y = kchildLayout.getYpos();
-                execution.getSize().x = kchildLayout.getWidth();
-                execution.getSize().y = kchildLayout.getHeight();
             } else if (kchildNodeType == NodeType.DESTRUCTION_EVENT) {
                 slifeline.setProperty(SequenceDiagramProperties.DESTRUCTION, kchild);
             }
@@ -276,7 +270,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             }
             
             SequenceExecution targetExecution = executionMap.get(
-                    kedgelayout.getProperty(SequenceDiagramProperties.SOURCE_EXECUTION_ID));
+                    kedgelayout.getProperty(SequenceDiagramProperties.TARGET_EXECUTION_ID));
             if (targetExecution != null) {
                 targetExecution.addMessage(smessage);
             }
