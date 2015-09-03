@@ -24,7 +24,7 @@ import de.cau.cs.kieler.core.kgraph.KEdge;
 import de.cau.cs.kieler.core.kgraph.KLabel;
 import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.kiml.klayoutdata.KEdgeLayout;
-import de.cau.cs.kieler.kiml.klayoutdata.KPoint;
+import de.cau.cs.kieler.kiml.klayoutdata.KLayoutData;
 import de.cau.cs.kieler.kiml.klayoutdata.KShapeLayout;
 import de.cau.cs.kieler.klay.layered.graph.LEdge;
 import de.cau.cs.kieler.klay.layered.graph.LGraph;
@@ -78,7 +78,9 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
     /** A map from KEdges in the layout graph to messages created for them in the SGraph. */
     private Map<KEdge, SMessage> messageMap = Maps.newHashMap();
     /** A map from element IDs to the corresponding executions. */
-    private Map<Integer, SequenceExecution> executionMap = Maps.newHashMap();
+    private Map<Integer, SequenceExecution> executionIdMap = Maps.newHashMap();
+    /** A map from element IDs to the corresponding sequence area. */
+    private Map<Integer, SequenceArea> areaIdMap = Maps.newHashMap();
     
     
     /**
@@ -86,16 +88,15 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
      * KEdge to a PMessage.
      * 
      * @param topNode
-     *            the KGraphElement, that holds the nodes
+     *            the surrounding interaction node.
      * @return the built SGraph
      */
     private SGraph importGraph(final KNode topNode) {
         // Create a graph object
         SGraph sgraph = new SGraph();
         
-        // Get the list of areas
-        List<SequenceArea> areas = topNode.getData(KShapeLayout.class).getProperty(
-                SequenceDiagramProperties.AREAS);
+        // Create... well, as it says: sequence areas...
+        createSequenceAreas(topNode, sgraph);
 
         // Create lifelines
         for (KNode node : topNode.getChildren()) {
@@ -114,7 +115,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             
             if (nodeType == NodeType.LIFELINE) {
                 // Create SMessages for each of the outgoing edges
-                createMessages(sgraph, node, areas);
+                createMessages(sgraph, node);
 
                 // Handle found messages (incoming messages)
                 createIncomingMessages(sgraph, node);
@@ -127,31 +128,72 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             }
         }
 
-        // Check areas that have no messages in it
-        if (areas != null) {
-            for (SequenceArea area : areas) {
-                if (area.getMessages().size() == 0) {
-                    handleEmptyArea(sgraph, area);
-                }
-            }
-        }
-
         // Reset graph size to zero before layouting
         sgraph.getSize().x = 0;
         sgraph.getSize().y = 0;
-
-        // Copy the areas property to the SGraph
-        sgraph.setProperty(SequenceDiagramProperties.AREAS, areas);
         
         // Clear maps
         lifelineMap.clear();
         messageMap.clear();
-        executionMap.clear();
+        executionIdMap.clear();
 
         return sgraph;
     }
     
     
+    //////////////////////////////////////////////////////////////
+    // Areas
+    
+    /**
+     * Creates all sequence areas for the given graph.
+     * 
+     * @param topNode
+     *            the surrounding interaction node.
+     * @param sgraph
+     *            the Sequence Graph
+     */
+    private void createSequenceAreas(final KNode topNode, final SGraph sgraph) {
+        // Initialize the list of areas (fragments and such)
+        List<SequenceArea> areas = Lists.newArrayList();
+        
+        // Find nodes that represent areas
+        for (KNode node : topNode.getChildren()) {
+            KLayoutData layoutData = node.getData(KLayoutData.class);
+            NodeType nodeType = layoutData.getProperty(SequenceDiagramProperties.NODE_TYPE);
+            
+            if (nodeType == NodeType.COMBINED_FRAGMENT) {
+                SequenceArea area = new SequenceArea(node);
+                areas.add(area);
+                areaIdMap.put(layoutData.getProperty(SequenceDiagramProperties.ELEMENT_ID), area);
+            }
+        }
+        
+        // Now that all areas have been created, find nodes that represent nested areas
+        for (KNode node : topNode.getChildren()) {
+            KLayoutData layoutData = node.getData(KLayoutData.class);
+            NodeType nodeType = layoutData.getProperty(SequenceDiagramProperties.NODE_TYPE);
+            
+            if (nodeType == NodeType.COMBINED_FRAGMENT) {
+                int parentId = layoutData.getProperty(SequenceDiagramProperties.PARENT_AREA_ID);
+                
+                if (parentId != -1) {
+                    SequenceArea parentArea = areaIdMap.get(parentId);
+                    SequenceArea childArea = areaIdMap.get(
+                            layoutData.getProperty(SequenceDiagramProperties.ELEMENT_ID));
+                    
+                    if (parentArea != null && childArea != null) {
+                        parentArea.getContainedAreas().add(childArea);
+                    }
+                    // TODO Possibly throw an exception in the else case
+                }
+            }
+        }
+        
+        // Remember the areas
+        sgraph.setProperty(SequenceDiagramProperties.AREAS, areas);
+    }
+
+
     //////////////////////////////////////////////////////////////
     // Lifelines
 
@@ -197,7 +239,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
                 SequenceExecution execution = new SequenceExecution(kchild);
                 execution.setType(SequenceExecutionType.fromNodeType(kchildNodeType));
                 executions.add(execution);
-                executionMap.put(
+                executionIdMap.put(
                         kchildLayout.getProperty(SequenceDiagramProperties.ELEMENT_ID), execution);
             } else if (kchildNodeType == NodeType.DESTRUCTION_EVENT) {
                 slifeline.setProperty(SequenceDiagramProperties.DESTRUCTION, kchild);
@@ -205,9 +247,18 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
         }
         
         slifeline.setProperty(SequenceDiagramProperties.EXECUTIONS, executions);
+        
+        // Check if the lifeline has any empty areas
+        List<Integer> areaIds = klayout.getProperty(SequenceDiagramProperties.AREA_IDS);
+        for (Integer areaId : areaIds) {
+            SequenceArea area = areaIdMap.get(areaId);
+            if (area != null) {
+                area.getLifelines().add(slifeline);
+            }
+        }
     }
-    
-    
+
+
     //////////////////////////////////////////////////////////////
     // Messages
 
@@ -218,12 +269,8 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
      *            the Sequence Graph
      * @param klifeline
      *            the KNode to search its outgoing edges
-     * @param areas
-     *            the list of areas
      */
-    private void createMessages(final SGraph sgraph, final KNode klifeline,
-            final List<SequenceArea> areas) {
-        
+    private void createMessages(final SGraph sgraph, final KNode klifeline) {
         for (KEdge kedge : klifeline.getOutgoingEdges()) {
             SLifeline sourceLL = lifelineMap.get(kedge.getSource());
             SLifeline targetLL = lifelineMap.get(kedge.getTarget());
@@ -263,13 +310,13 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             messageMap.put(kedge, smessage);
             
             // Check if the edge connects to executions
-            SequenceExecution sourceExecution = executionMap.get(
+            SequenceExecution sourceExecution = executionIdMap.get(
                     kedgelayout.getProperty(SequenceDiagramProperties.SOURCE_EXECUTION_ID));
             if (sourceExecution != null) {
                 sourceExecution.addMessage(smessage);
             }
             
-            SequenceExecution targetExecution = executionMap.get(
+            SequenceExecution targetExecution = executionIdMap.get(
                     kedgelayout.getProperty(SequenceDiagramProperties.TARGET_EXECUTION_ID));
             if (targetExecution != null) {
                 targetExecution.addMessage(smessage);
@@ -292,27 +339,23 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
                 targetLL.setHorizontalSlot(sgraph.getLifelines().size() + 1);
             }
 
-            // check if message is in any area
-            if (areas != null) {
-                for (SequenceArea area : areas) {
-                    if (isInArea(kedgelayout.getSourcePoint(), area)
-                            && isInArea(kedgelayout.getTargetPoint(), area)) {
-                        
-                        area.getMessages().add(smessage);
-                        area.getLifelines().add(smessage.getSource());
-                        area.getLifelines().add(smessage.getTarget());
-                        
-                        for (SequenceArea subArea : area.getSubAreas()) {
-                            if (isInArea(kedgelayout.getSourcePoint(), subArea)
-                                    && isInArea(kedgelayout.getTargetPoint(), subArea)) {
-                                
-                                subArea.getMessages().add(smessage);
-                                subArea.getLifelines().add(smessage.getSource());
-                                subArea.getLifelines().add(smessage.getTarget());
-                            }
-                        }
-                    }
+            // Check if message is in any area
+            for (Integer areaId : kedgelayout.getProperty(SequenceDiagramProperties.AREA_IDS)) {
+                SequenceArea area = areaIdMap.get(areaId);
+                if (area != null) {
+                    area.getMessages().add(smessage);
+                    area.getLifelines().add(smessage.getSource());
+                    area.getLifelines().add(smessage.getTarget());
                 }
+                // TODO Possibly throw an exception in the else case
+            }
+            
+            // Check if this message has an empty area that is to be placed directly above it
+            int upperEmptyAreaId = kedgelayout.getProperty(
+                    SequenceDiagramProperties.UPPER_EMPTY_AREA_ID);
+            SequenceArea upperArea = areaIdMap.get(upperEmptyAreaId);
+            if (upperArea != null) {
+                upperArea.setNextMessage(smessage);
             }
         }
     }
@@ -380,7 +423,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             }
 
             // Check if the message connects to a target execution
-            SequenceExecution targetExecution = executionMap.get(
+            SequenceExecution targetExecution = executionIdMap.get(
                     kedgelayout.getProperty(SequenceDiagramProperties.SOURCE_EXECUTION_ID));
             if (targetExecution != null) {
                 targetExecution.addMessage(smessage);
@@ -483,108 +526,6 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
         }
 
         sgraph.getComments().add(comment);
-    }
-    
-    
-    //////////////////////////////////////////////////////////////
-    // Areas
-
-    /**
-     * Check, where to place an empty area.
-     * 
-     * @param sgraph
-     *            the Sequence Graph
-     * @param area
-     *            the area
-     */
-    private void handleEmptyArea(final SGraph sgraph, final SequenceArea area) {
-        // Check which lifelines are involved
-        for (SLifeline lifeline : sgraph.getLifelines()) {
-            if (isLifelineContained(lifeline, area)) {
-                area.getLifelines().add(lifeline);
-            }
-        }
-
-        double lowerEnd = area.getPosition().y + area.getSize().y;
-        SMessage nextMessage = null;
-        double uppermostPosition = Double.MAX_VALUE;
-        // Check which message is the next one below the area
-        for (Object lifelineObj : area.getLifelines()) {
-            SLifeline lifeline = (SLifeline) lifelineObj;
-            for (SMessage message : lifeline.getIncomingMessages()) {
-                Object originObj = message.getProperty(InternalProperties.ORIGIN);
-                if (originObj instanceof KEdge) {
-                    KEdge edge = (KEdge) originObj;
-                    KEdgeLayout layout = edge.getData(KEdgeLayout.class);
-                    double yPos = layout.getTargetPoint().getY();
-                    if (yPos > lowerEnd && yPos < uppermostPosition) {
-                        nextMessage = message;
-                        uppermostPosition = yPos;
-                    }
-                }
-            }
-            for (SMessage message : lifeline.getOutgoingMessages()) {
-                Object originObj = message.getProperty(InternalProperties.ORIGIN);
-                if (originObj instanceof KEdge) {
-                    KEdge edge = (KEdge) originObj;
-                    KEdgeLayout layout = edge.getData(KEdgeLayout.class);
-                    double yPos = layout.getSourcePoint().getY();
-                    if (yPos > lowerEnd && yPos < uppermostPosition) {
-                        nextMessage = message;
-                        uppermostPosition = yPos;
-                    }
-                }
-            }
-            if (nextMessage != null) {
-                area.setNextMessage(nextMessage);
-            }
-        }
-    }
-
-    /**
-     * Checks, if a given lifeline's center is horizontally within an area.
-     * 
-     * @param lifeline
-     *            the lifeline
-     * @param area
-     *            the area
-     * @return true, if the lifeline is inside the area, false otherwise
-     */
-    private boolean isLifelineContained(final SLifeline lifeline, final SequenceArea area) {
-        double lifelineCenter = lifeline.getPosition().x + lifeline.getSize().x / 2;
-        double leftEnd = area.getPosition().x;
-        double rightEnd = area.getPosition().x + area.getSize().x;
-
-        return (lifelineCenter >= leftEnd && lifelineCenter <= rightEnd);
-    }
-
-    /**
-     * Checks if a given KPoint is inside the borders of a given SequenceArea.
-     * 
-     * @param point
-     *            the KPoint
-     * @param area
-     *            the SequenceArea
-     * @return true if the point is inside the area
-     */
-    private boolean isInArea(final KPoint point, final SequenceArea area) {
-        if (point.getX() < area.getPosition().x) {
-            return false;
-        }
-        
-        if (point.getX() > area.getPosition().x + area.getSize().x) {
-            return false;
-        }
-        
-        if (point.getY() < area.getPosition().y) {
-            return false;
-        }
-        
-        if (point.getY() > area.getPosition().y + area.getSize().y) {
-            return false;
-        }
-        
-        return true;
     }
     
     

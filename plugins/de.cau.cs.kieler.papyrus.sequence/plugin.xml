@@ -62,7 +62,6 @@
             name="Element ID"
             type="int">
       </layoutOption>
-      
       <layoutOption
             advanced="true"
             appliesTo="nodes"
@@ -96,6 +95,31 @@
             id="de.cau.cs.kieler.papyrus.sequence.executionSpecifications"
             name="Executions"
             type="object">
+      </layoutOption>
+      <layoutOption
+            appliesTo="nodes edges"
+            description="List of element IDs of areas a message or lifeline belongs to."
+            id="de.cau.cs.kieler.papyrus.sequence.areaIds"
+            name="Area Element IDs"
+            type="object">
+      </layoutOption>
+      <layoutOption
+            advanced="true"
+            appliesTo="nodes"
+            default="-1"
+            description="ID of the parent area of a given area, if any."
+            id="de.cau.cs.kieler.papyrus.sequence.parentAreaId"
+            name="Parent Area ID"
+            type="int">
+      </layoutOption>
+      <layoutOption
+            advanced="true"
+            appliesTo="edges"
+            default="-1"
+            description="ID of an empty area that should be placed directly above a message, if any."
+            id="de.cau.cs.kieler.papyrus.sequence.upperEmptyAreaId"
+            name="Upper Empty Area ID"
+            type="int">
       </layoutOption>
       <layoutOption
             advanced="true"
@@ -192,13 +216,6 @@
             name="Containment offset"
             type="int">
       </layoutOption>
-      
-      
-      
-      
-      
-      
-      
       <layoutOption
             advanced="true"
             appliesTo="parents"

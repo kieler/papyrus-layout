@@ -578,7 +578,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
         Rectangle bounds = getAbsoluteBounds(nodeFigure);
         Rectangle parentBounds = getAbsoluteBounds(nodeFigure.getParent());
 
-        SequenceArea area = SequenceArea.forLayoutNode(layoutNode);
+        SequenceArea area = new SequenceArea(layoutNode);
 
         // Copy layout information
         area.getPosition().x = bounds.x - parentBounds.x;
@@ -602,7 +602,7 @@ public class MultiPartDiagramLayoutManager extends GmfDiagramLayoutManager {
                         Rectangle ioBounds = getAbsoluteBounds(ioEditPart.getFigure());
                         KNode areaNode = KimlUtil.createInitializedNode();
                         mapping.getGraphMap().put(areaNode, ioEditPart);
-                        SequenceArea subArea = SequenceArea.forLayoutNode(areaNode);
+                        SequenceArea subArea = new SequenceArea(areaNode);
                         // Copy layout information
                         subArea.getPosition().x = ioBounds.x - parentBounds.x;
                         subArea.getPosition().y = ioBounds.y - parentBounds.y;

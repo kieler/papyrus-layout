@@ -15,6 +15,8 @@ package de.cau.cs.kieler.papyrus.sequence.properties;
 
 import java.util.List;
 
+import com.google.common.collect.Lists;
+
 import de.cau.cs.kieler.core.kgraph.KEdge;
 import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.core.properties.IProperty;
@@ -64,6 +66,38 @@ public final class SequenceDiagramProperties {
     /** The list of areas (interactions, combined fragments, etc.). */
     public static final IProperty<List<SequenceArea>> AREAS = new Property<List<SequenceArea>>(
             "de.cau.cs.kieler.papyrus.sequence.area");
+    
+    /**
+     * List of element IDs of any areas (such as fragments) a message or lifeline belongs to, if any. On
+     * lifelines, this only has to be set for empty areas.
+     * 
+     * <p>
+     * This is only used in KGraph mode.
+     * </p>
+     */
+    public static final IProperty<List<Integer>> AREA_IDS = new Property<>(
+            "de.cau.cs.kieler.papyrus.sequence.areaIds", Lists.newArrayList());
+
+    /**
+     * Element IDs of an empty area (such as fragments) that should be placed directly above this
+     * message, if any.
+     * 
+     * <p>
+     * This is only used in KGraph mode.
+     * </p>
+     */
+    public static final IProperty<Integer> UPPER_EMPTY_AREA_ID = new Property<>(
+            "de.cau.cs.kieler.papyrus.sequence.upperEmptyAreaId", -1);
+    
+    /**
+     * Element IDs of an area's parent area, if any.
+     * 
+     * <p>
+     * This is only used in KGraph mode.
+     * </p>
+     */
+    public static final IProperty<Integer> PARENT_AREA_ID = new Property<>(
+            "de.cau.cs.kieler.papyrus.sequence.parentAreaId", -1);
 
     /**
      * The list of execution specifications of a lifeline.

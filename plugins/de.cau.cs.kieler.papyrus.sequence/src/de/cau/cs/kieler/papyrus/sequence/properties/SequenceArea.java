@@ -28,20 +28,8 @@ import de.cau.cs.kieler.core.math.KVector;
  * {@link SequenceDiagramProperties#AREAS} property. Thus, while also being used by the algorithm, this
  * class has to be visible to the outside.
  * 
- * This data structure is used differently depending on whether the algorithm operates in KGraph or in
- * Papyrus mode.
- * 
- * <h3>Papyrus Mode</h3>
  * <p>
- * The algorithm expects the origin, size, and position of sequence areas to be set.
- * </p>
- * 
- * <h3>KGraph Mode</h3>
- * <p>
- * The algorithm expects the layout node ID to be set. Further, it expects the list of messages and
- * lifelines to be filled with the element IDs of the edges and nodes that represent the messages
- * contained in this sequence area and the affected lifelines. If the list of messages is empty, the
- * next message is expected to be the element ID of the message this area should be placed above.
+ * This data structure is only used outside of the layout algorithm if the algorithm is in Papyrus mode.
  * </p>
  * 
  * @author grh
@@ -51,8 +39,6 @@ import de.cau.cs.kieler.core.math.KVector;
 public final class SequenceArea {
     /** The layout graph node that represents this sequence area. */
     private KNode layoutNode;
-    /** The element ID of the node in the layout graph that represents this sequence area. */
-    private Integer layoutNodeID;
     /** The list of messages contained in the area. */
     private Set<Object> messages = Sets.newLinkedHashSet();
     /** The list of affected lifelines. */
@@ -70,29 +56,12 @@ public final class SequenceArea {
     
     
     /**
-     * Creates a SequenceArea for the given node in the layout graph. This creation method should be
-     * used in Papyrus mode.
+     * Creates a new sequence area represented in the layout graph by the given node.
      * 
-     * @param node the node in the layout graph that represents the sequence area.
-     * @return the created sequence area.
+     * @param node the node in the layout graph.
      */
-    public static SequenceArea forLayoutNode(final KNode node) {
-        SequenceArea area = new SequenceArea();
-        area.layoutNode = node;
-        return area;
-    }
-
-    /**
-     * Creates a SequenceArea represented by the node with the given element ID in the layout graph.
-     * This creation method should be used in KGraph mode.
-     * 
-     * @param id element id of the node in the layout graph that represents the sequence area.
-     * @return the created sequence area.
-     */
-    public static SequenceArea forElementId(final int id) {
-        SequenceArea area = new SequenceArea();
-        area.layoutNodeID = id;
-        return area;
+    public SequenceArea(final KNode node) {
+        layoutNode = node;
     }
     
 
@@ -132,15 +101,6 @@ public final class SequenceArea {
         layoutNode = node;
     }
     
-    /**
-     * Returns the element ID of the node in the layout graph that represents this area.
-     * 
-     * @return the element ID.
-     */
-    public int getLayoutNodeElementId() {
-        return layoutNodeID;
-    }
-
     /**
      * Get the list of messages that are covered by the area.
      * 
