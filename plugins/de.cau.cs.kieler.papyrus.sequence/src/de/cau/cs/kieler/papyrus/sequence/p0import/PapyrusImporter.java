@@ -248,7 +248,7 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
         // Check which lifelines are involved
         for (SLifeline lifeline : sgraph.getLifelines()) {
             if (isLifelineContained(lifeline, area)) {
-                area.addLifeline(lifeline);
+                area.getLifelines().add(lifeline);
             }
         }
 
@@ -391,16 +391,16 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
                             && isInArea(layout.getTargetPoint(), area)) {
                         
                         area.getMessages().add(message);
-                        area.addLifeline(message.getSource());
-                        area.addLifeline(message.getTarget());
+                        area.getLifelines().add(message.getSource());
+                        area.getLifelines().add(message.getTarget());
                         
                         for (SequenceArea subArea : area.getSubAreas()) {
                             if (isInArea(layout.getSourcePoint(), subArea)
                                     && isInArea(layout.getTargetPoint(), subArea)) {
                                 
                                 subArea.getMessages().add(message);
-                                subArea.addLifeline(message.getSource());
-                                subArea.addLifeline(message.getTarget());
+                                subArea.getLifelines().add(message.getSource());
+                                subArea.getLifelines().add(message.getTarget());
                             }
                         }
                     }

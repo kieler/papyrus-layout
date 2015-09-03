@@ -14,8 +14,10 @@
 package de.cau.cs.kieler.papyrus.sequence.properties;
 
 import java.util.List;
+import java.util.Set;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.core.math.KVector;
@@ -26,19 +28,35 @@ import de.cau.cs.kieler.core.math.KVector;
  * {@link SequenceDiagramProperties#AREAS} property. Thus, while also being used by the algorithm, this
  * class has to be visible to the outside.
  * 
- * TODO: Add a generic type to replace Object in the code?
+ * This data structure is used differently depending on whether the algorithm operates in KGraph or in
+ * Papyrus mode.
+ * 
+ * <h3>Papyrus Mode</h3>
+ * <p>
+ * The algorithm expects the origin, size, and position of sequence areas to be set.
+ * </p>
+ * 
+ * <h3>KGraph Mode</h3>
+ * <p>
+ * The algorithm expects the layout node ID to be set. Further, it expects the list of messages and
+ * lifelines to be filled with the element IDs of the edges and nodes that represent the messages
+ * contained in this sequence area and the affected lifelines. If the list of messages is empty, the
+ * next message is expected to be the element ID of the message this area should be placed above.
+ * </p>
  * 
  * @author grh
  * @kieler.design proposed grh
  * @kieler.rating proposed yellow grh
  */
 public final class SequenceArea {
-    /** The originating object of the execution. */
-    private KNode origin;
+    /** The layout graph node that represents this sequence area. */
+    private KNode layoutNode;
+    /** The element ID of the node in the layout graph that represents this sequence area. */
+    private Integer layoutNodeID;
     /** The list of messages contained in the area. */
-    private List<Object> messages = Lists.newArrayList();
+    private Set<Object> messages = Sets.newLinkedHashSet();
     /** The list of affected lifelines. */
-    private List<Object> lifelines = Lists.newArrayList();
+    private Set<Object> lifelines = Sets.newLinkedHashSet();
     /** The list of subareas (in case of a combined fragment). */
     private List<SequenceArea> subAreas = Lists.newArrayList();
     /** The list of areas that are contained in this area. */
@@ -52,15 +70,29 @@ public final class SequenceArea {
     
     
     /**
-     * Constructor that initializes the area.
+     * Creates a SequenceArea for the given node in the layout graph. This creation method should be
+     * used in Papyrus mode.
      * 
-     * TODO: Explain what origin does, exactly.
-     * 
-     * @param origin
-     *            the origin this object is created for
+     * @param node the node in the layout graph that represents the sequence area.
+     * @return the created sequence area.
      */
-    public SequenceArea(final KNode origin) {
-        this.origin = origin;
+    public static SequenceArea forLayoutNode(final KNode node) {
+        SequenceArea area = new SequenceArea();
+        area.layoutNode = node;
+        return area;
+    }
+
+    /**
+     * Creates a SequenceArea represented by the node with the given element ID in the layout graph.
+     * This creation method should be used in KGraph mode.
+     * 
+     * @param id element id of the node in the layout graph that represents the sequence area.
+     * @return the created sequence area.
+     */
+    public static SequenceArea forElementId(final int id) {
+        SequenceArea area = new SequenceArea();
+        area.layoutNodeID = id;
+        return area;
     }
     
 
@@ -83,12 +115,30 @@ public final class SequenceArea {
     }
 
     /**
-     * Get the origin object.
+     * Returns the node in the layout graph that represents this area.
      * 
-     * @return the origin
+     * @return the layout node.
      */
-    public Object getOrigin() {
-        return origin;
+    public KNode getLayoutNode() {
+        return layoutNode;
+    }
+
+    /**
+     * Sets the node in the layout graph that represents this area.
+     * 
+     * @param node the layout node.
+     */
+    public void setLayoutNode(final KNode node) {
+        layoutNode = node;
+    }
+    
+    /**
+     * Returns the element ID of the node in the layout graph that represents this area.
+     * 
+     * @return the element ID.
+     */
+    public int getLayoutNodeElementId() {
+        return layoutNodeID;
     }
 
     /**
@@ -96,7 +146,7 @@ public final class SequenceArea {
      * 
      * @return the list of messages
      */
-    public List<Object> getMessages() {
+    public Set<Object> getMessages() {
         return messages;
     }
 
@@ -105,20 +155,8 @@ public final class SequenceArea {
      * 
      * @return the list of lifelines
      */
-    public List<Object> getLifelines() {
+    public Set<Object> getLifelines() {
         return lifelines;
-    }
-
-    /**
-     * Add a lifeline to the list of lifelines covered by the area.
-     * 
-     * @param lifeline
-     *            the new lifeline
-     */
-    public void addLifeline(final Object lifeline) {
-        if (!lifelines.contains(lifeline)) {
-            lifelines.add(lifeline);
-        }
     }
 
     /**
@@ -166,7 +204,7 @@ public final class SequenceArea {
         if (subAreas.size() == 0) {
             subareas = "";
         }
-        return "Area " + origin + "\nwith " + messages.size() + " Messages: " + messages + "\nand "
+        return "Area " + layoutNode + "\nwith " + messages.size() + " Messages: " + messages + "\nand "
                 + lifelines.size() + " Lifelines: " + lifelines + "\nat (" + getPosition().x + "/"
                 + getPosition().y + ") + (" + getSize().x + "/" + getSize().y + ")" + subareas;
     }

@@ -501,7 +501,7 @@ public class PapyrusCoordinateCalculator implements ISequenceLayoutProcessor {
                 } else {
                     setAreaPositionByLifelinesAndMessage(context, area);
                 }
-                KNode areaNode = (KNode) area.getOrigin();
+                KNode areaNode = (KNode) area.getLayoutNode();
                 KShapeLayout areaLayout = areaNode.getData(KShapeLayout.class);
 
                 // Check if there are contained areas
@@ -530,7 +530,7 @@ public class PapyrusCoordinateCalculator implements ISequenceLayoutProcessor {
                     double lastPos = 0;
                     KShapeLayout lastLayout = null;
                     for (SequenceArea subArea : area.getSubAreas()) {
-                        KNode subAreaNode = (KNode) subArea.getOrigin();
+                        KNode subAreaNode = (KNode) subArea.getLayoutNode();
                         KShapeLayout subAreaLayout = subAreaNode.getData(KShapeLayout.class);
 
                         subAreaLayout.setXpos(0);

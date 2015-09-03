@@ -15,8 +15,6 @@ package de.cau.cs.kieler.papyrus.sequence.properties;
 
 import java.util.List;
 
-import com.google.common.collect.Lists;
-
 import de.cau.cs.kieler.core.kgraph.KEdge;
 import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.core.properties.IProperty;
@@ -108,16 +106,6 @@ public final class SequenceDiagramProperties {
     public static final IProperty<Integer> TARGET_EXECUTION_ID = new Property<Integer>(
             "de.cau.cs.kieler.papyrus.sequence.executionId.target", -1);
     
-    /**
-     * List of element IDs of any fragments a message belongs to, if any.
-     * 
-     * <p>
-     * This is only used in KGraph mode.
-     * </p>
-     */
-    public static final IProperty<List<Integer>> FRAGMENT_ID = new Property<>(
-            "de.cau.cs.kieler.papyrus.sequence.fragmentId", Lists.newArrayList());
-
     /** Property of a comment that indicates to what kind of element it is attached. */
     public static final IProperty<String> ATTACHED_ELEMENT_TYPE = new Property<String>(
             "de.cau.cs.kieler.papyrus.sequence.attachedElement");

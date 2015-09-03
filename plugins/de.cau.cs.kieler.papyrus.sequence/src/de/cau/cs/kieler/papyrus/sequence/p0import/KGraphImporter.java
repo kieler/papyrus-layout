@@ -299,16 +299,16 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
                             && isInArea(kedgelayout.getTargetPoint(), area)) {
                         
                         area.getMessages().add(smessage);
-                        area.addLifeline(smessage.getSource());
-                        area.addLifeline(smessage.getTarget());
+                        area.getLifelines().add(smessage.getSource());
+                        area.getLifelines().add(smessage.getTarget());
                         
                         for (SequenceArea subArea : area.getSubAreas()) {
                             if (isInArea(kedgelayout.getSourcePoint(), subArea)
                                     && isInArea(kedgelayout.getTargetPoint(), subArea)) {
                                 
                                 subArea.getMessages().add(smessage);
-                                subArea.addLifeline(smessage.getSource());
-                                subArea.addLifeline(smessage.getTarget());
+                                subArea.getLifelines().add(smessage.getSource());
+                                subArea.getLifelines().add(smessage.getTarget());
                             }
                         }
                     }
@@ -501,7 +501,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
         // Check which lifelines are involved
         for (SLifeline lifeline : sgraph.getLifelines()) {
             if (isLifelineContained(lifeline, area)) {
-                area.addLifeline(lifeline);
+                area.getLifelines().add(lifeline);
             }
         }
 
