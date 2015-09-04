@@ -309,16 +309,22 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             messageMap.put(kedge, smessage);
             
             // Check if the edge connects to executions
-            SequenceExecution sourceExecution = executionIdMap.get(
-                    kedgelayout.getProperty(SequenceDiagramProperties.SOURCE_EXECUTION_ID));
-            if (sourceExecution != null) {
-                sourceExecution.addMessage(smessage);
+            List<Integer> sourceExecutionIds =
+                    kedgelayout.getProperty(SequenceDiagramProperties.SOURCE_EXECUTION_IDS);
+            for (Integer execId : sourceExecutionIds) {
+                SequenceExecution sourceExecution = executionIdMap.get(execId);
+                if (sourceExecution != null) {
+                    sourceExecution.addMessage(smessage);
+                }
             }
             
-            SequenceExecution targetExecution = executionIdMap.get(
-                    kedgelayout.getProperty(SequenceDiagramProperties.TARGET_EXECUTION_ID));
-            if (targetExecution != null) {
-                targetExecution.addMessage(smessage);
+            List<Integer> targetExecutionIds =
+                    kedgelayout.getProperty(SequenceDiagramProperties.TARGET_EXECUTION_IDS);
+            for (Integer execId : targetExecutionIds) {
+                SequenceExecution targetExecution = executionIdMap.get(execId);
+                if (targetExecution != null) {
+                    targetExecution.addMessage(smessage);
+                }
             }
 
             // Append the message type of the edge to the message
@@ -421,11 +427,14 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
                 }
             }
 
-            // Check if the message connects to a target execution
-            SequenceExecution targetExecution = executionIdMap.get(
-                    kedgelayout.getProperty(SequenceDiagramProperties.SOURCE_EXECUTION_ID));
-            if (targetExecution != null) {
-                targetExecution.addMessage(smessage);
+            // Check if the message connects to a target executions
+            List<Integer> targetExecutionIds =
+                    kedgelayout.getProperty(SequenceDiagramProperties.TARGET_EXECUTION_IDS);
+            for (Integer execId : targetExecutionIds) {
+                SequenceExecution targetExecution = executionIdMap.get(execId);
+                if (targetExecution != null) {
+                    targetExecution.addMessage(smessage);
+                }
             }
         }
     }

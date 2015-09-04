@@ -137,8 +137,8 @@
             default="-1"
             description="ID of the execution a message starts at, if any."
             id="de.cau.cs.kieler.papyrus.sequence.executionId.source"
-            name="Source execution ID"
-            type="int">
+            name="Source execution IDs"
+            type="object">
       </layoutOption>
       <layoutOption
             advanced="true"
@@ -146,8 +146,8 @@
             default="-1"
             description="ID of the execution a message ends at, if any."
             id="de.cau.cs.kieler.papyrus.sequence.executionId.target"
-            name="Target execution ID"
-            type="int">
+            name="Target execution IDs"
+            type="object">
       </layoutOption>
       <layoutOption
             appliesTo="nodes"

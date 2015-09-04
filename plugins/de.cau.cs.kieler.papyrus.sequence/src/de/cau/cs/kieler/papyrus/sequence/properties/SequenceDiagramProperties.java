@@ -121,24 +121,26 @@ public final class SequenceDiagramProperties {
             "de.cau.cs.kieler.papyrus.sequence.executionType", SequenceExecutionType.EXECUTION);
     
     /**
-     * Element ID of the execution a message starts at, if any.
+     * Element IDs of the executions a message starts at, if any. This is a list because a message can
+     * be part of several nested executions. The most deeply nested execution will be the one the
+     * message will actually be visually attached to.
      * 
      * <p>
      * This is only used in KGraph mode.
      * </p>
      */
-    public static final IProperty<Integer> SOURCE_EXECUTION_ID = new Property<Integer>(
-            "de.cau.cs.kieler.papyrus.sequence.executionId.source", -1);
+    public static final IProperty<List<Integer>> SOURCE_EXECUTION_IDS = new Property<>(
+            "de.cau.cs.kieler.papyrus.sequence.executionId.source", Lists.newArrayList());
     
     /**
-     * Element ID of the execution a message ends at, if any.
+     * Element IDs of the executions a message ends at, if any.
      * 
      * <p>
      * This is only used in KGraph mode.
      * </p>
      */
-    public static final IProperty<Integer> TARGET_EXECUTION_ID = new Property<Integer>(
-            "de.cau.cs.kieler.papyrus.sequence.executionId.target", -1);
+    public static final IProperty<List<Integer>> TARGET_EXECUTION_IDS = new Property<>(
+            "de.cau.cs.kieler.papyrus.sequence.executionId.target", Lists.newArrayList());
     
     /** Property of a comment that indicates to what kind of element it is attached. */
     public static final IProperty<String> ATTACHED_ELEMENT_TYPE = new Property<String>(
