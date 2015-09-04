@@ -18,6 +18,7 @@ import java.util.List;
 
 import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
 import de.cau.cs.kieler.core.kgraph.KEdge;
+import de.cau.cs.kieler.core.kgraph.KLabel;
 import de.cau.cs.kieler.core.kgraph.KNode;
 import de.cau.cs.kieler.kiml.klayoutdata.KEdgeLayout;
 import de.cau.cs.kieler.kiml.klayoutdata.KShapeLayout;
@@ -506,6 +507,9 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
                     - SequenceLayoutConstants.TWENTY - containmentSpacing));
             areaLayout.setHeight((float) (area.getSize().y + context.areaHeader
                     + SequenceLayoutConstants.FOURTY + 2 * containmentSpacing));
+            
+            // The area might have a label that needs to be positioned as well
+            calculateAreaLabelPosition(context, area);
 
             // Handle interaction operands
             // TODO Review this
@@ -553,6 +557,7 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
             }
         }
     }
+
 
     /**
      * Searches all the contained edges and sets the area's position and size such that it is a
@@ -674,4 +679,26 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
         }
     }
 
+    /**
+     * Positions an area's label, if any.
+     * 
+     * @param area
+     *            the area whose label to position. The corresponding layout node needs to have its size
+     *            calculated already.
+     */
+    private void calculateAreaLabelPosition(final LayoutContext context, final SequenceArea area) {
+        KNode areaNode = area.getLayoutNode();
+        if (areaNode.getLabels().isEmpty()) {
+            return;
+        }
+        
+        KLabel areaLabel = areaNode.getLabels().get(0);
+        
+        KShapeLayout areaLayout = areaNode.getData(KShapeLayout.class);
+        KShapeLayout labelLayout = areaLabel.getData(KShapeLayout.class);
+        
+        labelLayout.setYpos(SequenceLayoutConstants.LABELSPACING);
+        labelLayout.setXpos(
+                areaLayout.getWidth() - labelLayout.getWidth() - SequenceLayoutConstants.LABELSPACING);
+    }
 }
