@@ -537,9 +537,11 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                 int slot = 0;
                 for (SequenceExecution otherExecution : executions) {
                     if (execution != otherExecution) {
+                        // The "less OR EQUAL" when calculating "bottomOverlaps" is significant here:
+                        // in KGraph mode, several executions can end at the same message
                         boolean topOverlaps = execution.getPosition().y > otherExecution.getPosition().y;
                         boolean bottomOverlaps = execution.getPosition().y + execution.getSize().y
-                                < otherExecution.getPosition().y + otherExecution.getSize().y;
+                                <= otherExecution.getPosition().y + otherExecution.getSize().y;
                         
                         if (topOverlaps && bottomOverlaps) {
                             slot++;
