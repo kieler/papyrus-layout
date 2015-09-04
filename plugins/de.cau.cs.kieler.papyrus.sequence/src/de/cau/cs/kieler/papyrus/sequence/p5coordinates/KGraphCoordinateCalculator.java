@@ -502,10 +502,10 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
             areaLayout.setWidth((float)
                     (area.getSize().x + context.lifelineSpacing + 2 * containmentSpacing));
 
-            areaLayout.setYpos((float)
-                    (area.getPosition().y - context.messageSpacing / 2 - containmentSpacing));
-            areaLayout.setHeight((float)
-                    (area.getSize().y + context.messageSpacing + 2 * containmentSpacing));
+            areaLayout.setYpos((float) (area.getPosition().y - context.areaHeader
+                    - SequenceLayoutConstants.TWENTY - containmentSpacing));
+            areaLayout.setHeight((float) (area.getSize().y + context.areaHeader
+                    + SequenceLayoutConstants.FOURTY + 2 * containmentSpacing));
 
             // Handle interaction operands
             // TODO Review this
