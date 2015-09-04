@@ -118,8 +118,6 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
 
         // Handle areas (interactions / combined fragments / interaction operands)
         List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramProperties.AREAS);
-        
-        checkAreaContainment(areas);
         calculateAreaPosition(context, areas);
 
         progressMonitor.done();
@@ -471,30 +469,6 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
     // Areas
 
     /**
-     * Check the hierarchy of areas. This is necessary to avoid overlapping borders.
-     * 
-     * @param areas
-     *            the list of areas
-     */
-    private void checkAreaContainment(final List<SequenceArea> areas) {
-        if (areas != null) {
-            for (SequenceArea area : areas) {
-                for (SequenceArea otherArea : areas) {
-                    if (area != otherArea && area.getMessages().containsAll(otherArea.getMessages())) {
-                        // Check if upper left corner is more upper and left than the other
-                        // area's corner
-                        if (area.getPosition().y < otherArea.getPosition().y
-                                && area.getPosition().x < otherArea.getPosition().x) {
-                            
-                            area.getContainedAreas().add(otherArea);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
      * Calculate the position of the areas (interactionUse, combined fragment).
      * 
      * @param context
@@ -503,74 +477,78 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
      *            the list of areas in the graph
      */
     private void calculateAreaPosition(final LayoutContext context, final List<SequenceArea> areas) {
-        if (areas != null) {
-            // Set size and position of area
-            for (SequenceArea area : areas) {
-                if (area.getMessages().size() > 0) {
-                    setAreaPositionByMessages(area);
-                } else {
-                    setAreaPositionByLifelinesAndMessage(context, area);
-                }
-                KNode areaNode = (KNode) area.getLayoutNode();
-                KShapeLayout areaLayout = areaNode.getData(KShapeLayout.class);
+        if (areas == null || areas.isEmpty()) {
+            return;
+        }
+        
+        // Set size and position of area
+        for (SequenceArea area : areas) {
+            if (area.getMessages().size() > 0) {
+                setAreaPositionByMessages(area);
+            } else {
+                setAreaPositionByLifelinesAndMessage(context, area);
+            }
+            
+            KNode areaNode = (KNode) area.getLayoutNode();
+            KShapeLayout areaLayout = areaNode.getData(KShapeLayout.class);
 
-                // Check if there are contained areas
-                int containmentDepth = checkHierarchy(area);
-                // If so, an offset has to be calculated in order not to have overlapping borders
-                int containmentSpacing = containmentDepth * context.containmentOffset;
+            // Check if there are contained areas
+            int containmentDepth = checkHierarchy(area);
+            // If so, an offset has to be calculated in order not to have overlapping borders
+            int containmentSpacing = containmentDepth * context.containmentOffset;
 
-                areaLayout.setXpos((float) (area.getPosition().x - SequenceLayoutConstants.TWENTY
-                        - context.lifelineSpacing / 2 - containmentSpacing));
-                areaLayout.setWidth((float) (area.getSize().x + SequenceLayoutConstants.FOURTY
-                        + context.lifelineSpacing + 2 * containmentSpacing));
+            areaLayout.setXpos((float)
+                    (area.getPosition().x - context.lifelineSpacing / 2 - containmentSpacing));
+            areaLayout.setWidth((float)
+                    (area.getSize().x + context.lifelineSpacing + 2 * containmentSpacing));
 
-                areaLayout.setYpos((float) (area.getPosition().y + context.lifelineHeader
-                        - context.messageSpacing / 2 - containmentSpacing));
-                areaLayout.setHeight((float) (area.getSize().y + context.messageSpacing 
-                        + 2 * containmentSpacing));
+            areaLayout.setYpos((float)
+                    (area.getPosition().y - context.messageSpacing / 2 - containmentSpacing));
+            areaLayout.setHeight((float)
+                    (area.getSize().y + context.messageSpacing + 2 * containmentSpacing));
 
-                // Handle interaction operands
-                if (area.getSubAreas().size() > 0) {
-                    // Reset area yPos and height if subAreas exists (to have a "header" that isn't
-                    // occupied by any subArea)
-                    areaLayout.setYpos((float) (area.getPosition().y - context.messageSpacing / 2));
-                    areaLayout.setHeight((float)
-                            (area.getSize().y + context.messageSpacing + context.lifelineHeader));
+            // Handle interaction operands
+            // TODO Review this
+            if (area.getSubAreas().size() > 0) {
+                // Reset area yPos and height if subAreas exists (to have a "header" that isn't
+                // occupied by any subArea)
+                areaLayout.setYpos((float) (area.getPosition().y - context.messageSpacing / 2));
+                areaLayout.setHeight((float)
+                        (area.getSize().y + context.messageSpacing + context.lifelineHeader));
 
-                    double lastPos = 0;
-                    KShapeLayout lastLayout = null;
-                    for (SequenceArea subArea : area.getSubAreas()) {
-                        KNode subAreaNode = (KNode) subArea.getLayoutNode();
-                        KShapeLayout subAreaLayout = subAreaNode.getData(KShapeLayout.class);
+                double lastPos = 0;
+                KShapeLayout lastLayout = null;
+                for (SequenceArea subArea : area.getSubAreas()) {
+                    KNode subAreaNode = (KNode) subArea.getLayoutNode();
+                    KShapeLayout subAreaLayout = subAreaNode.getData(KShapeLayout.class);
 
-                        subAreaLayout.setXpos(0);
-                        subAreaLayout.setWidth((float) (area.getSize().x
-                                + SequenceLayoutConstants.FOURTY + context.lifelineSpacing - 2));
-                        
-                        if (subArea.getMessages().size() > 0) {
-                            // Calculate and set y-position by the area's messages
-                            setAreaPositionByMessages(subArea);
-                            subAreaLayout.setYpos((float) (subArea.getPosition().y
-                                    - area.getPosition().y + context.lifelineHeader
-                                    - context.messageSpacing / 2));
-                        } else {
-                            // Calculate and set y-position by the available space
-                            subAreaLayout.setYpos((float) lastPos);
-                            // FIXME if subarea is empty, it appears first in the list
-                        }
-
-                        // Reset last subArea's height to fit
-                        if (lastLayout != null) {
-                            lastLayout.setHeight(subAreaLayout.getYpos() - lastLayout.getYpos());
-                        }
-                        lastPos = subAreaLayout.getYpos() + subAreaLayout.getHeight();
-                        lastLayout = subAreaLayout;
+                    subAreaLayout.setXpos(0);
+                    subAreaLayout.setWidth((float) (area.getSize().x
+                            + SequenceLayoutConstants.FOURTY + context.lifelineSpacing - 2));
+                    
+                    if (subArea.getMessages().size() > 0) {
+                        // Calculate and set y-position by the area's messages
+                        setAreaPositionByMessages(subArea);
+                        subAreaLayout.setYpos((float) (subArea.getPosition().y
+                                - area.getPosition().y + context.lifelineHeader
+                                - context.messageSpacing / 2));
+                    } else {
+                        // Calculate and set y-position by the available space
+                        subAreaLayout.setYpos((float) lastPos);
+                        // FIXME if subarea is empty, it appears first in the list
                     }
+
                     // Reset last subArea's height to fit
                     if (lastLayout != null) {
-                        lastLayout.setHeight((float)
-                                (areaLayout.getHeight() - lastLayout.getYpos() - context.areaHeader));
+                        lastLayout.setHeight(subAreaLayout.getYpos() - lastLayout.getYpos());
                     }
+                    lastPos = subAreaLayout.getYpos() + subAreaLayout.getHeight();
+                    lastLayout = subAreaLayout;
+                }
+                // Reset last subArea's height to fit
+                if (lastLayout != null) {
+                    lastLayout.setHeight((float)
+                            (areaLayout.getHeight() - lastLayout.getYpos() - context.areaHeader));
                 }
             }
         }

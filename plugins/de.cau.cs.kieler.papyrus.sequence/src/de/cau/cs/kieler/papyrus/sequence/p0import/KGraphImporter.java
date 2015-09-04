@@ -55,7 +55,6 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecutionType;
  */
 public final class KGraphImporter implements ISequenceLayoutProcessor {
     
-
     /**
      * {@inheritDoc}
      */
@@ -161,7 +160,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             KLayoutData layoutData = node.getData(KLayoutData.class);
             NodeType nodeType = layoutData.getProperty(SequenceDiagramProperties.NODE_TYPE);
             
-            if (nodeType == NodeType.COMBINED_FRAGMENT) {
+            if (nodeType == NodeType.COMBINED_FRAGMENT || nodeType == NodeType.INTERACTION_USE) {
                 SequenceArea area = new SequenceArea(node);
                 areas.add(area);
                 areaIdMap.put(layoutData.getProperty(SequenceDiagramProperties.ELEMENT_ID), area);
@@ -173,7 +172,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             KLayoutData layoutData = node.getData(KLayoutData.class);
             NodeType nodeType = layoutData.getProperty(SequenceDiagramProperties.NODE_TYPE);
             
-            if (nodeType == NodeType.COMBINED_FRAGMENT) {
+            if (nodeType == NodeType.COMBINED_FRAGMENT || nodeType == NodeType.INTERACTION_USE) {
                 int parentId = layoutData.getProperty(SequenceDiagramProperties.PARENT_AREA_ID);
                 
                 if (parentId != -1) {
