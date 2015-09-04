@@ -26,6 +26,7 @@ import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 import de.cau.cs.kieler.papyrus.sequence.graph.SComment;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraphElement;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
+import de.cau.cs.kieler.papyrus.sequence.properties.CoordinateSystem;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
@@ -46,13 +47,8 @@ public final class SpaceAllocator implements ISequenceLayoutProcessor {
     public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
         progressMonitor.begin("Space Allocation", 1);
         
-        // Allocate space for the header of combined fragments
-        allocateSpaceForCombinedFragmentHeaders(context);
-
-        // Allocate space for comments by introducing dummy nodes
+        allocateSpaceForAreaHeaders(context);
         allocateSpaceForComments(context);
-
-        // Allocate space for empty areas
         allocateSpaceForEmptyAreas(context);
         
         progressMonitor.done();
@@ -63,35 +59,44 @@ public final class SpaceAllocator implements ISequenceLayoutProcessor {
     // Space Allocation
 
     /**
-     * Allocate space for the header of combined fragments.
+     * Allocate space for the header of combined fragments and interaction uses.
      * 
      * @param context
      *            the layout context that contains all relevant information for the current layout run.
      */
-    private void allocateSpaceForCombinedFragmentHeaders(final LayoutContext context) {
+    private void allocateSpaceForAreaHeaders(final LayoutContext context) {
         // Add dummy nodes before the first messages of combined fragments to have enough space
         // above the topmost message of the area
         List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramProperties.AREAS);
-        if (areas != null) {
-            for (SequenceArea area : areas) {
-                if (area.getSubAreas().size() > 0) {
-                    // Find the uppermost message contained in the combined fragment
-                    double minYPos = Double.MAX_VALUE;
-                    SMessage uppermostMessage = null;
-                    for (Object messageObj : area.getMessages()) {
-                        SMessage message = (SMessage) messageObj;
-                        if (message.getSourceYPos() < minYPos) {
-                            minYPos = message.getSourceYPos();
-                            uppermostMessage = message;
-                        }
-                    }
-                    
-                    if (uppermostMessage != null) {
-                        LNode node = uppermostMessage.getProperty(
-                                SequenceDiagramProperties.LAYERED_NODE);
-                        createLGraphDummyNode(context.lgraph, node, true);
+        if (areas == null || areas.isEmpty()) {
+            return;
+        }
+        
+        for (SequenceArea area : areas) {
+            // Find the uppermost message contained in the combined fragment. In Papyrus mode, we do
+            // that using message y coordinates. In KGraph mode, we simply use the first message we
+            // can find
+            SMessage uppermostMessage = null;
+            
+            if (context.coordinateSystem == CoordinateSystem.PAPYRUS) {
+                double minYPos = Double.MAX_VALUE;
+                for (Object messageObj : area.getMessages()) {
+                    SMessage message = (SMessage) messageObj;
+                    if (message.getSourceYPos() < minYPos) {
+                        minYPos = message.getSourceYPos();
+                        uppermostMessage = message;
                     }
                 }
+            } else {
+                if (!area.getMessages().isEmpty()) {
+                    uppermostMessage = (SMessage) area.getMessages().iterator().next();
+                }
+            }
+            
+            // If we were able to find an uppermost message, insert a dummy node to reserve space
+            if (uppermostMessage != null) {
+                LNode node = uppermostMessage.getProperty(SequenceDiagramProperties.LAYERED_NODE);
+                createLGraphDummyNode(context.lgraph, node, true);
             }
         }
     }
