@@ -276,7 +276,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                     (lifeline.getPosition().x - context.lifelineSpacing / 2));
             edgeLayout.getSourcePoint().setY((float) message.getSourceYPos());
             
-            // A lost message is supposed to have a target dummy node in the KGraph; set its position
+            // A found message is supposed to have a source dummy node in the KGraph; set its position
             KNode dummy = edge.getSource();
             KShapeLayout dummyLayout = dummy.getData(KShapeLayout.class);
             dummyLayout.setXpos(edgeLayout.getSourcePoint().getX() - dummyLayout.getWidth());

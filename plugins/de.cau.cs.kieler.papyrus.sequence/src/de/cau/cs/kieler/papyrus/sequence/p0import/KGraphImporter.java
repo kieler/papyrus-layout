@@ -114,7 +114,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             
             if (nodeType == NodeType.LIFELINE) {
                 // Create SMessages for each of the outgoing edges
-                createMessages(sgraph, node);
+                createOutgoingMessages(sgraph, node);
 
                 // Handle found messages (incoming messages)
                 createIncomingMessages(sgraph, node);
@@ -269,7 +269,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
      * @param klifeline
      *            the KNode to search its outgoing edges
      */
-    private void createMessages(final SGraph sgraph, final KNode klifeline) {
+    private void createOutgoingMessages(final SGraph sgraph, final KNode klifeline) {
         for (KEdge kedge : klifeline.getOutgoingEdges()) {
             SLifeline sourceLL = lifelineMap.get(kedge.getSource());
             SLifeline targetLL = lifelineMap.get(kedge.getTarget());
@@ -367,7 +367,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
 
     /**
      * Walk through incoming edges of the given lifeline and check if there are found messages
-     * ormessages that come from the surrounding interaction. If so, create the corresponding
+     * or messages that come from the surrounding interaction. If so, create the corresponding
      * SMessage.
      * 
      * @param sgraph

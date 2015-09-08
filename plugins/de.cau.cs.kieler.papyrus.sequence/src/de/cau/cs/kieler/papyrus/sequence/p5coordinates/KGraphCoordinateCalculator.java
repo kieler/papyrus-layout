@@ -83,7 +83,7 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
                 - context.borderSpacing;
 
         // Position of the next lifeline (at first, of the first lifeline)
-        double xPos = context.borderSpacing;
+        double xPos = calculateFirstLifelinePosition(context);
         
         // Set position for lifelines/nodes
         for (SLifeline lifeline : context.lifelineOrder) {
@@ -342,6 +342,45 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
     
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Lifelines
+    
+    /**
+     * Calculate the x coordinate of the first non-dummy lifeline. This is usually equal to the border
+     * spacing, but may need to be larger if the lifeline has incoming found messages.
+     * 
+     * @param context
+     *            the layout context that contains all relevant information for the current layout
+     *            run.
+     * @return the first lifeline's x coordinate.
+     */
+    private double calculateFirstLifelinePosition(final LayoutContext context) {
+        double spacing = context.borderSpacing;
+        
+        // Find the first non-dummy lifeline
+        SLifeline firstLifeline = null;
+        for (SLifeline lifeline : context.lifelineOrder) {
+            if (!lifeline.isDummy()) {
+                firstLifeline = lifeline;
+                break;
+            }
+        }
+        
+        // The first lifeline (if any) may have incoming found messages that need additional space
+        if (firstLifeline != null) {
+            boolean hasFoundMessages = false;
+            for (SMessage message : firstLifeline.getIncomingMessages()) {
+                if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.FOUND) {
+                    hasFoundMessages = true;
+                    break;
+                }
+            }
+            
+            if (hasFoundMessages) {
+                spacing += context.lifelineSpacing;
+            }
+        }
+        
+        return spacing;
+    }
 
     /**
      * Calculate the spacing between the current lifeline and its successor. This is done by
@@ -359,8 +398,9 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
     private double calculateLifelineSpacing(final LayoutContext context, final double xPos,
             final SLifeline lifeline) {
         
-        // Initialize spacing with the normal lifeline spacing
-        double spacing = context.lifelineSpacing;
+        // Initialize spacing with the normal lifeline spacing or with half the normal spacing if the
+        // current lifeline is a dummy
+        double spacing = lifeline.isDummy() ? context.lifelineSpacing / 2 : context.lifelineSpacing;
 
         // Check, if there are labels longer than the available space
         for (SMessage message : lifeline.getIncomingMessages()) {
