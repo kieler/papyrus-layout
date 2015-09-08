@@ -19,6 +19,7 @@ import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
 import de.cau.cs.kieler.core.kgraph.KEdge;
 import de.cau.cs.kieler.core.kgraph.KLabel;
 import de.cau.cs.kieler.core.kgraph.KNode;
+import de.cau.cs.kieler.core.math.KVector;
 import de.cau.cs.kieler.kiml.klayoutdata.KEdgeLayout;
 import de.cau.cs.kieler.kiml.klayoutdata.KLayoutDataFactory;
 import de.cau.cs.kieler.kiml.klayoutdata.KPoint;
@@ -341,6 +342,9 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                 labelLayout.setXpos((float)
                         (xPos + SequenceLayoutConstants.LABELMARGIN / 2));
             }
+            
+            // Labels may cause the graph's width to get wider. Compensate!
+            ensureGraphIsWideEnough(context, labelLayout.getXpos() + labelLayout.getWidth());
         }
     }
 
@@ -487,6 +491,8 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             executionlayout.setYpos((float) (execution.getPosition().y - lifeline.getPosition().y));
             executionlayout.setWidth((float) execution.getSize().x);
             executionlayout.setHeight((float) execution.getSize().y);
+            
+            ensureGraphIsWideEnough(context, executionlayout.getXpos() + executionlayout.getWidth());
 
             // Walk through execution's messages and adjust their position
             for (Object messObj : execution.getMessages()) {
@@ -507,13 +513,13 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                         newXPos += execution.getSize().x;
                     }
                     double delta = newXPos - edgeLayout.getSourcePoint().getX();
-                    offsetX(edgeLayout.getSourcePoint(), (float) delta);
+                    offsetX(edgeLayout.getSourcePoint(), (float) delta, context);
                     
                     // If this is a self-loop, there are bend points and labels that need to be moved
                     // as well
                     if (smessage.getSource() == smessage.getTarget()) {
-                        offsetX(edgeLayout.getBendPoints(), (float) delta);
-                        offsetLabelsX(edge.getLabels(), (float) delta);
+                        offsetX(edgeLayout.getBendPoints(), (float) delta, context);
+                        offsetLabelsX(edge.getLabels(), (float) delta, context);
                         
                         // TODO If labels are positioned at the source, it may be a good idea to move
                         //      them here as well, not just self-loop labels.
@@ -525,7 +531,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                         newXPos += execution.getSize().x;
                     }
                     double delta = newXPos - edgeLayout.getTargetPoint().getX();
-                    offsetX(edgeLayout.getTargetPoint(), (float) delta);
+                    offsetX(edgeLayout.getTargetPoint(), (float) delta, context);
                 }
             }
         }
@@ -593,28 +599,36 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
     }
     
     /**
-     * Adds the given delta to the given point's X coordinate.
+     * Adds the given delta to the given point's X coordinate. Also ensures the graph is wide enough
+     * to accomodate the new point.
      * 
      * @param point
      *            the point to offset.
      * @param delta
      *            the amount to add to the X coordinate.
+     * @param context
+     *            the layout context that contains all relevant information for the current layout
+     *            run.
      */
-    private void offsetX(final KPoint point, final float delta) {
+    private void offsetX(final KPoint point, final float delta, final LayoutContext context) {
         point.setX(point.getX() + delta);
+        ensureGraphIsWideEnough(context, point.getX());
     }
     
     /**
-     * Calls {@link #offsetX(KPoint, double)} on every point in the given list.
+     * Calls {@link #offsetX(KPoint, double)} on every point in the given list. Also 
      * 
      * @param points
      *            the points to offset.
-     * @param deltathe
-     *            amount to add to the X coordinate.
+     * @param delta
+     *            the amount to add to the X coordinate.
+     * @param context
+     *            the layout context that contains all relevant information for the current layout
+     *            run.
      */
-    private void offsetX(final List<KPoint> points, final float delta) {
+    private void offsetX(final List<KPoint> points, final float delta, final LayoutContext context) {
         for (KPoint point : points) {
-            offsetX(point, delta);
+            offsetX(point, delta, context);
         }
     }
     
@@ -625,11 +639,18 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      *            the labels to offset.
      * @param delta
      *            the amount to add to the X coordinate.
+     * @param context
+     *            the layout context that contains all relevant information for the current layout
+     *            run.
      */
-    private void offsetLabelsX(final List<KLabel> labels, final float delta) {
+    private void offsetLabelsX(final List<KLabel> labels, final float delta,
+            final LayoutContext context) {
+        
         for (KLabel label : labels) {
             KShapeLayout shapeLayout = label.getData(KShapeLayout.class);
             shapeLayout.setXpos(shapeLayout.getXpos() + delta);
+            
+            ensureGraphIsWideEnough(context, shapeLayout.getXpos() + shapeLayout.getWidth());
         }
     }
     
@@ -683,6 +704,25 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                 edgelayout.getTargetPoint().setPos((float) edgeTargetXPos, (float) edgeTargetYPos);
             }
         }
+    }
+    
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // Utility Methods
+    
+    /**
+     * Ensures that the context's SGraph's width is wide enough to accomodate an element that
+     * extends to the given x coordinate.
+     * 
+     * @param context
+     *            the layout context.
+     * @param rightmostElement
+     *            x coordinate of the right border of the element that needs to fit inside the
+     *            graph.
+     */
+    private void ensureGraphIsWideEnough(final LayoutContext context, final double rightmostElement) {
+        KVector graphSize = context.sgraph.getSize();
+        graphSize.x = Math.max(graphSize.x, rightmostElement + context.borderSpacing);
     }
 
 }

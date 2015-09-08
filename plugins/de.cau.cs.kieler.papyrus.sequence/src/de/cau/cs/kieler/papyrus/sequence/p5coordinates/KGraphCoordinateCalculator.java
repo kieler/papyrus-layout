@@ -37,7 +37,7 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
 
 /**
- * Calculates coordinates for all objects in a sequence diagram. The coordinates are calculated such
+ * Calculates coordinates for many objects in a sequence diagram. The coordinates are calculated such
  * that the {@link de.cau.cs.kieler.papyrus.sequence.p6export.KGraphExporter} knows how to interpret
  * them.
  * 
