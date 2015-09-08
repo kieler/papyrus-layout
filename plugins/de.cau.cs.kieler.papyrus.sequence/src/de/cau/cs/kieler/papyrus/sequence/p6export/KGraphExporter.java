@@ -281,6 +281,9 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             KShapeLayout dummyLayout = dummy.getData(KShapeLayout.class);
             dummyLayout.setXpos(edgeLayout.getSourcePoint().getX() - dummyLayout.getWidth());
             dummyLayout.setYpos(edgeLayout.getSourcePoint().getY() - dummyLayout.getHeight() / 2);
+            
+            // Found messages now need to have their label placed
+            placeLabels(context, message, edge);
         }
         
         // Specify bend points for self loops
@@ -307,13 +310,19 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      *            the edge representing the message in the original graph
      */
     private void placeLabels(final LayoutContext context, final SMessage message, final KEdge edge) {
+        // If the message is a lost / found message, its direction will not depend on the
+        // target / source lifeline's index in the ordered lifeline list
+        MessageType messageType = message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+        
         for (KLabel label : edge.getLabels()) {
             KShapeLayout labelLayout = label.getData(KShapeLayout.class);
             
             SLifeline messageTarget = message.getTarget();
             SLifeline messageSource = message.getSource();
             
-            if (messageSource.getHorizontalSlot() < messageTarget.getHorizontalSlot()) {
+            if (messageType == MessageType.LOST) {
+                placeRightPointingMessageLabels(context, message, labelLayout);
+            } else if (messageSource.getHorizontalSlot() < messageTarget.getHorizontalSlot()) {
                 placeRightPointingMessageLabels(context, message, labelLayout);
             } else if (messageSource.getHorizontalSlot() > messageTarget.getHorizontalSlot()) {
                 placeLeftPointingMessageLabels(context, message, labelLayout);
