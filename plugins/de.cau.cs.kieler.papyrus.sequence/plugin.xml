@@ -165,6 +165,14 @@
       </layoutOption>
       <layoutOption
             appliesTo="nodes"
+            description="Element ID of the object a comment is attached to, if any."
+            id="de.cau.cs.kieler.papyrus.sequence.attachedToIds"
+            name="Attachted to Element IDs"
+            type="int"
+            default="-1">
+      </layoutOption>
+      <layoutOption
+            appliesTo="nodes"
             description="The node that is the destruction event to a lifeline."
             id="de.cau.cs.kieler.papyrus.sequence.destruction"
             name="Destruction node"

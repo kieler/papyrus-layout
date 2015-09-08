@@ -156,6 +156,16 @@ public final class SequenceDiagramProperties {
      */
     public static final IProperty<List<Object>> ATTACHED_TO = new Property<List<Object>>(
             "de.cau.cs.kieler.papyrus.sequence.attachedTo");
+    
+    /**
+     * Element ID of the object a comment is attached to, if any.
+     * 
+     * <p>
+     * This is only used in KGraph mode.
+     * </p>
+     */
+    public static final IProperty<Integer> ATTACHED_TO_ID = new Property<>(
+            "de.cau.cs.kieler.papyrus.sequence.attachedToId", -1);
 
     /**
      * The destruction event of a lifeline.
