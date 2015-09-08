@@ -497,14 +497,26 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                     if (!toLeft) {
                         newXPos += execution.getSize().x;
                     }
-                    edgeLayout.getSourcePoint().setX((float) newXPos);
+                    double delta = newXPos - edgeLayout.getSourcePoint().getX();
+                    offsetX(edgeLayout.getSourcePoint(), (float) delta);
+                    
+                    // If this is a self-loop, there are bend points and labels that need to be moved
+                    // as well
+                    if (smessage.getSource() == smessage.getTarget()) {
+                        offsetX(edgeLayout.getBendPoints(), (float) delta);
+                        offsetLabelsX(edge.getLabels(), (float) delta);
+                        
+                        // TODO If labels are positioned at the source, it may be a good idea to move
+                        //      them here as well, not just self-loop labels.
+                    }
                 }
                 
                 if (smessage.getTarget() == lifeline) {
                     if (toLeft) {
                         newXPos += execution.getSize().x;
                     }
-                    edgeLayout.getTargetPoint().setX((float) newXPos);
+                    double delta = newXPos - edgeLayout.getTargetPoint().getX();
+                    offsetX(edgeLayout.getTargetPoint(), (float) delta);
                 }
             }
         }
@@ -568,6 +580,47 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                     execution.getSize().y = SequenceLayoutConstants.MIN_EXECUTION_HEIGHT;
                 }
             }
+        }
+    }
+    
+    /**
+     * Adds the given delta to the given point's X coordinate.
+     * 
+     * @param point
+     *            the point to offset.
+     * @param delta
+     *            the amount to add to the X coordinate.
+     */
+    private void offsetX(final KPoint point, final float delta) {
+        point.setX(point.getX() + delta);
+    }
+    
+    /**
+     * Calls {@link #offsetX(KPoint, double)} on every point in the given list.
+     * 
+     * @param points
+     *            the points to offset.
+     * @param deltathe
+     *            amount to add to the X coordinate.
+     */
+    private void offsetX(final List<KPoint> points, final float delta) {
+        for (KPoint point : points) {
+            offsetX(point, delta);
+        }
+    }
+    
+    /**
+     * Adds the given delta to the X position of all labels in the given list.
+     * 
+     * @param labels
+     *            the labels to offset.
+     * @param delta
+     *            the amount to add to the X coordinate.
+     */
+    private void offsetLabelsX(final List<KLabel> labels, final float delta) {
+        for (KLabel label : labels) {
+            KShapeLayout shapeLayout = label.getData(KShapeLayout.class);
+            shapeLayout.setXpos(shapeLayout.getXpos() + delta);
         }
     }
     
