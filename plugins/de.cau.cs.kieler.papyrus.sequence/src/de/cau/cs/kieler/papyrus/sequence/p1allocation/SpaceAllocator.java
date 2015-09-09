@@ -21,6 +21,7 @@ import de.cau.cs.kieler.klay.layered.graph.LEdge;
 import de.cau.cs.kieler.klay.layered.graph.LGraph;
 import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.klay.layered.graph.LPort;
+import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
 import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
 import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 import de.cau.cs.kieler.papyrus.sequence.graph.SComment;
@@ -74,8 +75,10 @@ public final class SpaceAllocator implements ISequenceLayoutProcessor {
         
         for (SequenceArea area : areas) {
             // Find the uppermost message contained in the combined fragment. In Papyrus mode, we do
-            // that using message y coordinates. In KGraph mode, we simply use the first message we
-            // can find
+            // that using message y coordinates. In KGraph mode, there's not really a good solution
+            // for finding the best message (actually, I'm not even convinced that the solution in
+            // Papyrus mode always works). There, we simply try to select a source in the layered
+            // subgraph induced by the set of nodes whose messages are part of the fragment
             SMessage uppermostMessage = null;
             
             if (context.coordinateSystem == CoordinateSystem.PAPYRUS) {
@@ -88,8 +91,29 @@ public final class SpaceAllocator implements ISequenceLayoutProcessor {
                     }
                 }
             } else {
-                if (!area.getMessages().isEmpty()) {
-                    uppermostMessage = (SMessage) area.getMessages().iterator().next();
+                // Run through the messages and find a source in the layered subgraph induced by the
+                // nodes that are messages in this area
+                for (Object msgObj : area.getMessages()) {
+                    SMessage msg = (SMessage) msgObj;
+                    
+                    // Find out if any of the messages predecessors in the layered graph are part of
+                    // the fragment. If not, we have found our best guess for the uppermost message
+                    LNode msgNode = msg.getProperty(SequenceDiagramProperties.LAYERED_NODE);
+                    boolean isUppermost = true;
+                    for (LEdge incomingEdge : msgNode.getIncomingEdges()) {
+                        Object predecessor = incomingEdge.getSource().getNode().getProperty(
+                                InternalProperties.ORIGIN);
+                        
+                        if (area.getMessages().contains(predecessor)) {
+                            isUppermost = false;
+                            break;
+                        }
+                    }
+                    
+                    if (isUppermost) {
+                        uppermostMessage = msg;
+                        break;
+                    }
                 }
             }
             
