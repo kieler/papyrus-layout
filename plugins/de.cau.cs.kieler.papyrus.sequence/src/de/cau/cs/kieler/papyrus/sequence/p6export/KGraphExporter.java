@@ -63,24 +63,30 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             KShapeLayout nodeLayout = node.getData(KShapeLayout.class);
 
             // Handle messages of the lifeline and their labels
-            applyMessageCoordinates(context, lifeline);
+            double lowestMessageCoordinate = applyMessageCoordinates(context, lifeline);
 
             // Apply execution coordinates and adjust positions of messages attached to these executions
             applyExecutionCoordinates(context, lifeline);
+
+            // Place destruction if existing (this may change the lifeline's height, since the
+            // desctruction event will be placed directly below the last incident message)
+            KNode destruction = lifeline.getProperty(SequenceDiagramProperties.DESTRUCTION);
+            if (destruction != null) {
+                // Calculate the lifeline's new height
+                double heightDelta = lowestMessageCoordinate + context.messageSpacing
+                        - (lifeline.getPosition().y + lifeline.getSize().y);
+                lifeline.getSize().y += heightDelta;
+                
+                KShapeLayout destructLayout = destruction.getData(KShapeLayout.class);
+                double destructionXPos = lifeline.getSize().x / 2 - destructLayout.getWidth() / 2;
+                double destructionYPos = lifeline.getSize().y - destructLayout.getHeight();
+                destructLayout.setPos((float) destructionXPos, (float) destructionYPos);
+            }
 
             // Set position and height for the lifeline.
             nodeLayout.setYpos((float) lifeline.getPosition().y);
             nodeLayout.setXpos((float) lifeline.getPosition().x);
             nodeLayout.setHeight((float) lifeline.getSize().y);
-
-            // Place destruction if existing
-            KNode destruction = lifeline.getProperty(SequenceDiagramProperties.DESTRUCTION);
-            if (destruction != null) {
-                KShapeLayout destructLayout = destruction.getData(KShapeLayout.class);
-                double destructionXPos = nodeLayout.getWidth() / 2 - destructLayout.getWidth() / 2;
-                double destructionYPos = nodeLayout.getHeight() - destructLayout.getHeight();
-                destructLayout.setPos((float) destructionXPos, (float) destructionYPos);
-            }
         }
 
         // Place all comments
@@ -108,15 +114,24 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      *            the layout context that contains all relevant information for the current layout run.
      * @param lifeline
      *            the lifeline whose messages are handled
+     * @return y coordinate of the lowest message incident to the lifeline.
      */
-    private void applyMessageCoordinates(final LayoutContext context, final SLifeline lifeline) {
+    private double applyMessageCoordinates(final LayoutContext context, final SLifeline lifeline) {
+        double lowestMsgYCoord = 0;
+        
         for (SMessage message : lifeline.getOutgoingMessages()) {
             applyOutgoingMessageCoordinates(lifeline, message, context);
+            
+            lowestMsgYCoord = Math.max(lowestMsgYCoord, message.getSourceYPos());
         }
 
         for (SMessage message : lifeline.getIncomingMessages()) {
             applyIncomingMessageCoordinates(lifeline, message, context);
+            
+            lowestMsgYCoord = Math.max(lowestMsgYCoord, message.getTargetYPos());
         }
+        
+        return lowestMsgYCoord;
     }
 
     /**
