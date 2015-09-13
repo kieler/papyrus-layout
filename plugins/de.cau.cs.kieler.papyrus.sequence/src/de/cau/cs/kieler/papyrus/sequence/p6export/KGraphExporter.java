@@ -24,6 +24,7 @@ import de.cau.cs.kieler.kiml.klayoutdata.KEdgeLayout;
 import de.cau.cs.kieler.kiml.klayoutdata.KLayoutDataFactory;
 import de.cau.cs.kieler.kiml.klayoutdata.KPoint;
 import de.cau.cs.kieler.kiml.klayoutdata.KShapeLayout;
+import de.cau.cs.kieler.kiml.util.KimlUtil;
 import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
 import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
 import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
@@ -92,10 +93,14 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         // Place all comments
         placeComments(context.sgraph);
 
-        // Set position and size of surrounding interaction
+        // Set size and position of surrounding interaction
+        KimlUtil.resizeNode(context.kgraph,
+                (float) context.sgraph.getSize().x,
+                (float) context.sgraph.getSize().y,
+                false,
+                false);
+        
         KShapeLayout parentLayout = context.kgraph.getData(KShapeLayout.class);
-        parentLayout.setWidth((float) context.sgraph.getSize().x);
-        parentLayout.setHeight((float) context.sgraph.getSize().y);
         parentLayout.setPos((float) context.borderSpacing, (float) context.borderSpacing);
         
         progressMonitor.done();
