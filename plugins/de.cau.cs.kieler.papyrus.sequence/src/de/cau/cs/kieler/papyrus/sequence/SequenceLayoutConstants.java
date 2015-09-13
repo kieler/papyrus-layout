@@ -20,7 +20,11 @@ package de.cau.cs.kieler.papyrus.sequence;
  * @author cds
  */
 public final class SequenceLayoutConstants {
-
+    
+    // TODO All these constants should really disappear or at least be more sensibly named
+    
+    /** Constant that is needed to calculate some offsets. */
+    public static final int TEN = 10;
     /** Constant that is needed to calculate some offsets. */
     public static final int TWENTY = 20;
     /** Constant that is needed to calculate some offsets. */

@@ -546,7 +546,8 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
             areaLayout.setYpos((float) (area.getPosition().y - context.areaHeader
                     - SequenceLayoutConstants.TWENTY - containmentSpacing));
             areaLayout.setHeight((float) (area.getSize().y + context.areaHeader
-                    + SequenceLayoutConstants.FOURTY + 2 * containmentSpacing));
+                    + SequenceLayoutConstants.FOURTY + SequenceLayoutConstants.TEN
+                    + 2 * containmentSpacing));
             
             // The area might have a label that needs to be positioned as well
             calculateAreaLabelPosition(context, area);
