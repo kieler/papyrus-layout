@@ -15,6 +15,9 @@ package de.cau.cs.kieler.papyrus.sequence.p6export;
 
 import java.util.List;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
 import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
 import de.cau.cs.kieler.core.kgraph.KEdge;
 import de.cau.cs.kieler.core.kgraph.KLabel;
@@ -174,23 +177,28 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         if (executions != null) {
             for (SequenceExecution execution : executions) {
                 if (execution.getMessages().contains(message)) {
-                    // Adjust the execution's vertical extend
-                    double sourceYPos = message.getSourceYPos();
+                    // Adjust the execution's vertical extend. This must be done with consideration for
+                    // self loops: If an execution is created by a self-loop, it needs to start at the
+                    // loop's lower border. If it is ended by a self-loop, it needs to end at the upper
+                    // border. For regular messages, upper and lower border are the same.
+                    double topYPos = upperSequencePositionForMessage(message, true, context);
+                    double bottYPos = lowerSequencePositionForMessage(message, true, context);
+                    
                     if (execution.getPosition().y == 0) {
                         // If this is the first message to encounter this execution, initialize the
                         // execution's y coordinate and height
-                        execution.getPosition().y = sourceYPos;
+                        execution.getPosition().y = topYPos;
                         execution.getSize().y = 0;
                     } else {
                         // The execution already has a position and size; adjust.
-                        if (sourceYPos < execution.getPosition().y) {
-                            if (message.getSource() != message.getTarget()) {
-                                double delta = execution.getPosition().y - sourceYPos;
-                                execution.getPosition().y = sourceYPos;
-                                execution.getSize().y += delta;
-                            }
-                        } else if (sourceYPos > execution.getPosition().y + execution.getSize().y) {
-                            execution.getSize().y = sourceYPos - execution.getPosition().y;
+                        if (topYPos < execution.getPosition().y) {
+                            double delta = execution.getPosition().y - topYPos;
+                            execution.getPosition().y = topYPos;
+                            execution.getSize().y += delta;
+                        }
+                        
+                        if (bottYPos > execution.getPosition().y + execution.getSize().y) {
+                            execution.getSize().y = bottYPos - execution.getPosition().y;
                         }
                     }
                 }
@@ -270,21 +278,28 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         if (executions != null) {
             for (SequenceExecution execution : executions) {
                 if (execution.getMessages().contains(message)) {
-                    // Adjust the execution's vertical extend
-                    double targetYPos = message.getTargetYPos();
+                    // Adjust the execution's vertical extend. This must be done with consideration for
+                    // self loops: If an execution is created by a self-loop, it needs to start at the
+                    // loop's lower border. If it is ended by a self-loop, it needs to end at the upper
+                    // border. For regular messages, upper and lower border are the same.
+                    double topYPos = upperSequencePositionForMessage(message, false, context);
+                    double bottYPos = lowerSequencePositionForMessage(message, false, context);
+                    
                     if (execution.getPosition().y == 0) {
                         // If this is the first message to encounter this execution, initialize the
                         // execution's y coordinate and height
-                        execution.getPosition().y = targetYPos;
+                        execution.getPosition().y = bottYPos;
                         execution.getSize().y = 0;
                     } else {
                         // The execution already has a position and size; adjust.
-                        if (targetYPos < execution.getPosition().y) {
-                            double delta = execution.getPosition().y - targetYPos;
-                            execution.getPosition().y = targetYPos;
+                        if (topYPos < execution.getPosition().y) {
+                            double delta = execution.getPosition().y - topYPos;
+                            execution.getPosition().y = topYPos;
                             execution.getSize().y += delta;
-                        } else if (targetYPos > execution.getPosition().y + execution.getSize().y) {
-                            execution.getSize().y = targetYPos - execution.getPosition().y;
+                        }
+                        
+                        if (bottYPos > execution.getPosition().y + execution.getSize().y) {
+                            execution.getSize().y = bottYPos - execution.getPosition().y;
                         }
                     }
                 }
@@ -313,6 +328,26 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             bendPoint.setX((float) (llCenter + context.messageSpacing / 2));
             bendPoint.setY(edgeLayout.getTargetPoint().getY());
             edgeLayout.getBendPoints().add(bendPoint);
+        }
+    }
+    
+    private double upperSequencePositionForMessage(final SMessage message,
+            final boolean outgoing, final LayoutContext context) {
+        
+        if (message.getSource() != message.getTarget()) {
+            return outgoing ? message.getSourceYPos() : message.getTargetYPos();
+        } else {
+            return message.getSourceYPos() + context.messageSpacing / 2;
+        }
+    }
+    
+    private double lowerSequencePositionForMessage(final SMessage message, final boolean outgoing,
+            final LayoutContext context) {
+        
+        if (message.getSource() != message.getTarget()) {
+            return outgoing ? message.getSourceYPos() : message.getTargetYPos();
+        } else {
+            return message.getSourceYPos();
         }
     }
     
@@ -493,6 +528,9 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         
         // Set xPos, maxXPos and height / maxYPos
         arrangeExecutions(executions, lifeline);
+
+        // Self-messages need to be processed later, once all executions are placed
+        Multimap<SMessage, SequenceExecution> selfMessages = HashMultimap.create();
         
         // Walk through the lifeline's executions
         for (SequenceExecution execution : executions) {
@@ -518,9 +556,15 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             for (Object messObj : execution.getMessages()) {
                 SMessage smessage = (SMessage) messObj;
                 
-                // Check if the message points leftwards
-                boolean toLeft = smessage.getSource().getHorizontalSlot()
-                        > smessage.getTarget().getHorizontalSlot();
+                // Self-message are processed later
+                if (smessage.getSource() == smessage.getTarget()) {
+                    selfMessages.put(smessage, execution);
+                    continue;
+                }
+                
+                // Check if the message points rightwards
+                boolean toRight = smessage.getSource().getHorizontalSlot()
+                        < smessage.getTarget().getHorizontalSlot();
 
                 KEdge edge = (KEdge) smessage.getProperty(InternalProperties.ORIGIN);
                 KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
@@ -529,25 +573,17 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                 double newXPos = lifeline.getPosition().x + execution.getPosition().x;
                 
                 if (smessage.getSource() == lifeline) {
-                    if (!toLeft) {
+                    if (toRight) {
                         newXPos += execution.getSize().x;
                     }
                     double delta = newXPos - edgeLayout.getSourcePoint().getX();
                     offsetX(edgeLayout.getSourcePoint(), (float) delta, context);
                     
-                    // If this is a self-loop, there are bend points and labels that need to be moved
-                    // as well
-                    if (smessage.getSource() == smessage.getTarget()) {
-                        offsetX(edgeLayout.getBendPoints(), (float) delta, context);
-                        offsetLabelsX(edge.getLabels(), (float) delta, context);
-                        
-                        // TODO If labels are positioned at the source, it may be a good idea to move
-                        //      them here as well, not just self-loop labels.
-                    }
+                    // TODO Labels positioned at the source should be offset as well
                 }
                 
                 if (smessage.getTarget() == lifeline) {
-                    if (toLeft) {
+                    if (!toRight) {
                         newXPos += execution.getSize().x;
                     }
                     double delta = newXPos - edgeLayout.getTargetPoint().getX();
@@ -555,6 +591,8 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                 }
             }
         }
+        
+        applyExecutionCoordinatesToSelfMessages(lifeline, selfMessages, context);
     }
 
     /**
@@ -619,6 +657,71 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
     }
     
     /**
+     * Takes a bunch of self messages and offsets their source, target, and end points to accomodate
+     * for the executions they're incident to. Each message in the list is assumed to be a self
+     * message incident to at least one execution. All these executions as well as their lifeline
+     * are assumed to have already been placed.
+     * 
+     * @param lifeline
+     *            the lifeline whose self-messages we are processing.
+     * @param selfMsgs
+     *            the self messages to be offset. This is a multimap that maps each self-loop
+     *            message to those executions it is officially incident to.
+     * @param context
+     *            the layout context that contains all relevant information for the current layout
+     *            run.
+     */
+    private void applyExecutionCoordinatesToSelfMessages(final SLifeline lifeline,
+            final Multimap<SMessage, SequenceExecution> selfMsgs, final LayoutContext context) {
+        
+        double lifelineXCenter = lifeline.getSize().x / 2;
+        
+        for (final SMessage selfMsg : selfMsgs.keySet()) {
+            assert selfMsg.getSource() == lifeline : "Message source not expected lifeline";
+            assert selfMsg.getTarget() == lifeline : "Message target not expected lifeline";
+            
+            // Retrieve message layout info
+            KEdge selfMsgEdge = (KEdge) selfMsg.getProperty(InternalProperties.ORIGIN);
+            KEdgeLayout selfMsgEdgeLayout = selfMsgEdge.getData(KEdgeLayout.class);
+
+            KPoint msgSourcePoint = selfMsgEdgeLayout.getSourcePoint();
+            KPoint msgTargetPoint = selfMsgEdgeLayout.getTargetPoint();
+            
+            // We iterate over all connected executions and check for both the source and the target
+            // point if they are in the execution's vertical area. For each of the points, we remember
+            // the required offset and apply it. The two bend points are offset by the maximum.
+            double sourceOffset = 0;
+            double targetOffset = 0;
+            
+            for (SequenceExecution execution : selfMsgs.get(selfMsg)) {
+                // The execution's coordinates and the bend points share the same coordinate system
+                double execTopYPos = execution.getPosition().y;
+                double execBotYPos = execTopYPos + execution.getSize().y;
+                
+                // Check if the source point is in the execution's area
+                if (msgSourcePoint.getY() >= execTopYPos && msgSourcePoint.getY() <= execBotYPos) {
+                    sourceOffset = Math.max(sourceOffset,
+                            execution.getPosition().x + execution.getSize().x - lifelineXCenter);
+                }
+                
+                // Check if the target point is in the execution's area
+                if (msgTargetPoint.getY() >= execTopYPos && msgTargetPoint.getY() <= execBotYPos) {
+                    targetOffset = Math.max(targetOffset,
+                            execution.getPosition().x + execution.getSize().x - lifelineXCenter);
+                }
+            }
+            
+            // Apply offsets
+            offsetX(msgSourcePoint, (float) sourceOffset, context);
+            offsetX(msgTargetPoint, (float) targetOffset, context);
+            
+            float maxOffset = (float) Math.max(sourceOffset, targetOffset);
+            offsetX(selfMsgEdgeLayout.getBendPoints(), maxOffset, context);
+            offsetLabelsX(selfMsgEdge.getLabels(), maxOffset, context);
+        }
+    }
+    
+    /**
      * Adds the given delta to the given point's X coordinate. Also ensures the graph is wide enough
      * to accomodate the new point.
      * 
@@ -627,8 +730,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      * @param delta
      *            the amount to add to the X coordinate.
      * @param context
-     *            the layout context that contains all relevant information for the current layout
-     *            run.
+     *            the layout context that contains all relevant information for the current layout run.
      */
     private void offsetX(final KPoint point, final float delta, final LayoutContext context) {
         point.setX(point.getX() + delta);

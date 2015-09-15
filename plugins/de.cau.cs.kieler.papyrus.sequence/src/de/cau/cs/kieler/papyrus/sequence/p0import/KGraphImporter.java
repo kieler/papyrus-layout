@@ -311,6 +311,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             // Check if the edge connects to executions
             List<Integer> sourceExecutionIds =
                     kedgelayout.getProperty(SequenceDiagramProperties.SOURCE_EXECUTION_IDS);
+            smessage.setProperty(SequenceDiagramProperties.SOURCE_EXECUTION_IDS, sourceExecutionIds);
             for (Integer execId : sourceExecutionIds) {
                 SequenceExecution sourceExecution = executionIdMap.get(execId);
                 if (sourceExecution != null) {
@@ -320,6 +321,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             
             List<Integer> targetExecutionIds =
                     kedgelayout.getProperty(SequenceDiagramProperties.TARGET_EXECUTION_IDS);
+            smessage.setProperty(SequenceDiagramProperties.TARGET_EXECUTION_IDS, sourceExecutionIds);
             for (Integer execId : targetExecutionIds) {
                 SequenceExecution targetExecution = executionIdMap.get(execId);
                 if (targetExecution != null) {
@@ -430,6 +432,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             // Check if the message connects to a target executions
             List<Integer> targetExecutionIds =
                     kedgelayout.getProperty(SequenceDiagramProperties.TARGET_EXECUTION_IDS);
+            smessage.setProperty(SequenceDiagramProperties.TARGET_EXECUTION_IDS, targetExecutionIds);
             for (Integer execId : targetExecutionIds) {
                 SequenceExecution targetExecution = executionIdMap.get(execId);
                 if (targetExecution != null) {
