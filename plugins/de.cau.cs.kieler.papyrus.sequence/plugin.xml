@@ -134,6 +134,7 @@
       <layoutOption
             advanced="true"
             appliesTo="edges"
+            class="java.util.List"
             default="-1"
             description="ID of the execution a message starts at, if any."
             id="de.cau.cs.kieler.papyrus.sequence.executionId.source"
@@ -143,6 +144,7 @@
       <layoutOption
             advanced="true"
             appliesTo="edges"
+            class="java.util.List"
             default="-1"
             description="ID of the execution a message ends at, if any."
             id="de.cau.cs.kieler.papyrus.sequence.executionId.target"
