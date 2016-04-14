@@ -15,14 +15,15 @@ package de.cau.cs.kieler.papyrus.sequence.p6export;
 
 import java.util.List;
 
-import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
-import de.cau.cs.kieler.core.kgraph.KEdge;
-import de.cau.cs.kieler.core.kgraph.KLabel;
-import de.cau.cs.kieler.core.kgraph.KNode;
-import de.cau.cs.kieler.kiml.klayoutdata.KEdgeLayout;
-import de.cau.cs.kieler.kiml.klayoutdata.KPoint;
-import de.cau.cs.kieler.kiml.klayoutdata.KShapeLayout;
-import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
+import org.eclipse.elk.alg.layered.properties.InternalProperties;
+import org.eclipse.elk.core.klayoutdata.KEdgeLayout;
+import org.eclipse.elk.core.klayoutdata.KPoint;
+import org.eclipse.elk.core.klayoutdata.KShapeLayout;
+import org.eclipse.elk.core.util.IElkProgressMonitor;
+import org.eclipse.elk.graph.KEdge;
+import org.eclipse.elk.graph.KLabel;
+import org.eclipse.elk.graph.KNode;
+
 import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
 import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 import de.cau.cs.kieler.papyrus.sequence.SequenceLayoutConstants;
@@ -49,7 +50,7 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
      * {@inheritDoc}
      */
     @Override
-    public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
+    public void process(final LayoutContext context, final IElkProgressMonitor progressMonitor) {
         progressMonitor.begin("Applying Layout Results", 1);
         
         // The height of the diagram (the surrounding interaction)

@@ -13,7 +13,7 @@
  */
 package de.cau.cs.kieler.papyrus.sequence;
 
-import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
+import org.eclipse.elk.core.util.IElkProgressMonitor;
 
 /**
  * A layout processor processes a {@link LayoutContext}, performing layout related tasks on it. This
@@ -32,6 +32,6 @@ public interface ISequenceLayoutProcessor {
      * @param progressMonitor
      *            a progress monitor to track algorithm execution.
      */
-    void process(LayoutContext context, IKielerProgressMonitor progressMonitor);
+    void process(LayoutContext context, IElkProgressMonitor progressMonitor);
     
 }

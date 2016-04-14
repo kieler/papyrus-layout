@@ -16,22 +16,23 @@ package de.cau.cs.kieler.papyrus.sequence.p0import;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.elk.alg.layered.graph.LEdge;
+import org.eclipse.elk.alg.layered.graph.LGraph;
+import org.eclipse.elk.alg.layered.graph.LLabel;
+import org.eclipse.elk.alg.layered.graph.LNode;
+import org.eclipse.elk.alg.layered.graph.LPort;
+import org.eclipse.elk.alg.layered.properties.InternalProperties;
+import org.eclipse.elk.core.klayoutdata.KEdgeLayout;
+import org.eclipse.elk.core.klayoutdata.KLayoutData;
+import org.eclipse.elk.core.klayoutdata.KShapeLayout;
+import org.eclipse.elk.core.util.IElkProgressMonitor;
+import org.eclipse.elk.graph.KEdge;
+import org.eclipse.elk.graph.KLabel;
+import org.eclipse.elk.graph.KNode;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
-import de.cau.cs.kieler.core.kgraph.KEdge;
-import de.cau.cs.kieler.core.kgraph.KLabel;
-import de.cau.cs.kieler.core.kgraph.KNode;
-import de.cau.cs.kieler.kiml.klayoutdata.KEdgeLayout;
-import de.cau.cs.kieler.kiml.klayoutdata.KLayoutData;
-import de.cau.cs.kieler.kiml.klayoutdata.KShapeLayout;
-import de.cau.cs.kieler.klay.layered.graph.LEdge;
-import de.cau.cs.kieler.klay.layered.graph.LGraph;
-import de.cau.cs.kieler.klay.layered.graph.LLabel;
-import de.cau.cs.kieler.klay.layered.graph.LNode;
-import de.cau.cs.kieler.klay.layered.graph.LPort;
-import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
 import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
 import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 import de.cau.cs.kieler.papyrus.sequence.graph.SComment;
@@ -59,7 +60,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
      * {@inheritDoc}
      */
     @Override
-    public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
+    public void process(final LayoutContext context, final IElkProgressMonitor progressMonitor) {
         progressMonitor.begin("Graph import", 1);
         
         context.sgraph = importGraph(context.kgraph);

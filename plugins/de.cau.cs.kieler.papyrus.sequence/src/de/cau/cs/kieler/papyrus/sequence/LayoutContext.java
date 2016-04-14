@@ -15,9 +15,10 @@ package de.cau.cs.kieler.papyrus.sequence;
 
 import java.util.List;
 
-import de.cau.cs.kieler.core.kgraph.KNode;
-import de.cau.cs.kieler.kiml.klayoutdata.KLayoutData;
-import de.cau.cs.kieler.klay.layered.graph.LGraph;
+import org.eclipse.elk.alg.layered.graph.LGraph;
+import org.eclipse.elk.core.klayoutdata.KLayoutData;
+import org.eclipse.elk.graph.KNode;
+
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.LifelineSortingStrategy;

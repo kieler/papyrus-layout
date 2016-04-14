@@ -15,14 +15,15 @@ package de.cau.cs.kieler.papyrus.sequence.properties;
 
 import java.util.List;
 
+import org.eclipse.elk.alg.layered.graph.LNode;
+import org.eclipse.elk.core.options.CoreOptions;
+import org.eclipse.elk.graph.KEdge;
+import org.eclipse.elk.graph.KNode;
+import org.eclipse.elk.graph.properties.IProperty;
+import org.eclipse.elk.graph.properties.Property;
+
 import com.google.common.collect.Lists;
 
-import de.cau.cs.kieler.core.kgraph.KEdge;
-import de.cau.cs.kieler.core.kgraph.KNode;
-import de.cau.cs.kieler.core.properties.IProperty;
-import de.cau.cs.kieler.core.properties.Property;
-import de.cau.cs.kieler.kiml.options.LayoutOptions;
-import de.cau.cs.kieler.klay.layered.graph.LNode;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.LifelineSortingStrategy;
 
@@ -184,7 +185,7 @@ public final class SequenceDiagramProperties {
 
     /** Spacing to the border of the drawing. */
     public static final Property<Float> BORDER_SPACING = new Property<Float>(
-            LayoutOptions.BORDER_SPACING, 12.0f, 0.0f);
+            CoreOptions.SPACING_BORDER.getId(), 12.0f, 0.0f);
     
     /** The vertical space between two neighbored messages. This property may be set by the user. */
     public static final IProperty<Float> MESSAGE_SPACING = new Property<Float>(

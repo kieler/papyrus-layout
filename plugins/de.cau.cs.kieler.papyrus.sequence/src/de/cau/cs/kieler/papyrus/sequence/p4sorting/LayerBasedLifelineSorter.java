@@ -16,13 +16,14 @@ package de.cau.cs.kieler.papyrus.sequence.p4sorting;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.eclipse.elk.alg.layered.graph.LGraph;
+import org.eclipse.elk.alg.layered.graph.LNode;
+import org.eclipse.elk.alg.layered.graph.Layer;
+import org.eclipse.elk.alg.layered.properties.InternalProperties;
+import org.eclipse.elk.core.util.IElkProgressMonitor;
+
 import com.google.common.collect.Lists;
 
-import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
-import de.cau.cs.kieler.klay.layered.graph.LGraph;
-import de.cau.cs.kieler.klay.layered.graph.LNode;
-import de.cau.cs.kieler.klay.layered.graph.Layer;
-import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
 import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
 import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
@@ -49,7 +50,7 @@ public final class LayerBasedLifelineSorter implements ISequenceLayoutProcessor 
      * {@inheritDoc}
      */
     @Override
-    public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
+    public void process(final LayoutContext context, final IElkProgressMonitor progressMonitor) {
         progressMonitor.begin("Layer based lifeline sorting", 1);
 
         unprocessedLifelines.addAll(context.sgraph.getLifelines());

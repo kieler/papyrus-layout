@@ -15,20 +15,21 @@ package de.cau.cs.kieler.papyrus.sequence.p6export;
 
 import java.util.List;
 
+import org.eclipse.elk.alg.layered.properties.InternalProperties;
+import org.eclipse.elk.core.klayoutdata.KEdgeLayout;
+import org.eclipse.elk.core.klayoutdata.KLayoutDataFactory;
+import org.eclipse.elk.core.klayoutdata.KPoint;
+import org.eclipse.elk.core.klayoutdata.KShapeLayout;
+import org.eclipse.elk.core.math.KVector;
+import org.eclipse.elk.core.util.ElkUtil;
+import org.eclipse.elk.core.util.IElkProgressMonitor;
+import org.eclipse.elk.graph.KEdge;
+import org.eclipse.elk.graph.KLabel;
+import org.eclipse.elk.graph.KNode;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
-import de.cau.cs.kieler.core.kgraph.KEdge;
-import de.cau.cs.kieler.core.kgraph.KLabel;
-import de.cau.cs.kieler.core.kgraph.KNode;
-import de.cau.cs.kieler.core.math.KVector;
-import de.cau.cs.kieler.kiml.klayoutdata.KEdgeLayout;
-import de.cau.cs.kieler.kiml.klayoutdata.KLayoutDataFactory;
-import de.cau.cs.kieler.kiml.klayoutdata.KPoint;
-import de.cau.cs.kieler.kiml.klayoutdata.KShapeLayout;
-import de.cau.cs.kieler.kiml.util.KimlUtil;
-import de.cau.cs.kieler.klay.layered.properties.InternalProperties;
 import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
 import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 import de.cau.cs.kieler.papyrus.sequence.SequenceLayoutConstants;
@@ -53,7 +54,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      * {@inheritDoc}
      */
     @Override
-    public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
+    public void process(final LayoutContext context, final IElkProgressMonitor progressMonitor) {
         progressMonitor.begin("Applying Layout Results", 1);
         
         // Set position for lifelines/nodes
@@ -97,7 +98,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         placeComments(context.sgraph);
 
         // Set size and position of surrounding interaction
-        KimlUtil.resizeNode(context.kgraph,
+        ElkUtil.resizeNode(context.kgraph,
                 (float) context.sgraph.getSize().x,
                 (float) context.sgraph.getSize().y,
                 false,

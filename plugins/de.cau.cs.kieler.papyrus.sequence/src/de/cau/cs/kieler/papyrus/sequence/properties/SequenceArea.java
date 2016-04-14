@@ -16,11 +16,11 @@ package de.cau.cs.kieler.papyrus.sequence.properties;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.elk.core.math.KVector;
+import org.eclipse.elk.graph.KNode;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-
-import de.cau.cs.kieler.core.kgraph.KNode;
-import de.cau.cs.kieler.core.math.KVector;
 
 /**
  * Data structure for area-like elements in sequence diagrams. This class is not part of the core data

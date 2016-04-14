@@ -16,11 +16,11 @@ package de.cau.cs.kieler.papyrus.sequence.graph;
 import java.util.HashSet;
 import java.util.List;
 
+import org.eclipse.elk.core.math.KVector;
+
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-
-import de.cau.cs.kieler.core.math.KVector;
 
 /**
  * Lifeline representation for SGraphs. Lifelines can be compared to other lifelines on the basis of

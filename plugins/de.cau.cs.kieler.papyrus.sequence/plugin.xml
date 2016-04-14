@@ -2,7 +2,7 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
-         point="de.cau.cs.kieler.kiml.layoutProviders">
+         point="org.eclipse.elk.core.layoutProviders">
       <layoutType
             description="Layout type for UML Sequence Diagrams"
             id="de.cau.cs.kieler.papyrus.types.sequence"

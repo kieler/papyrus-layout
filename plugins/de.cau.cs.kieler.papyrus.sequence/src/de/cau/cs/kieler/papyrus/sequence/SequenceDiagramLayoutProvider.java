@@ -15,12 +15,13 @@ package de.cau.cs.kieler.papyrus.sequence;
 
 import java.util.List;
 
+import org.eclipse.elk.core.AbstractLayoutProvider;
+import org.eclipse.elk.core.UnsupportedGraphException;
+import org.eclipse.elk.core.util.IElkProgressMonitor;
+import org.eclipse.elk.graph.KNode;
+
 import com.google.common.collect.Lists;
 
-import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
-import de.cau.cs.kieler.core.kgraph.KNode;
-import de.cau.cs.kieler.kiml.AbstractLayoutProvider;
-import de.cau.cs.kieler.kiml.UnsupportedGraphException;
 import de.cau.cs.kieler.papyrus.sequence.p0import.KGraphImporter;
 import de.cau.cs.kieler.papyrus.sequence.p0import.PapyrusImporter;
 import de.cau.cs.kieler.papyrus.sequence.p1allocation.SpaceAllocator;
@@ -48,7 +49,7 @@ public final class SequenceDiagramLayoutProvider extends AbstractLayoutProvider 
     
 
     @Override
-    public void doLayout(final KNode parentNode, final IKielerProgressMonitor progressMonitor) {
+    public void layout(final KNode parentNode, final IElkProgressMonitor progressMonitor) {
         // Prevent the surrounding diagram from being laid out
         if (parentNode.getParent() == null) {
             throw new UnsupportedGraphException(

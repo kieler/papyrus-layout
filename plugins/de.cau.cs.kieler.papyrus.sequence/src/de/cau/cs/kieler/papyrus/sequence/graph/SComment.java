@@ -15,9 +15,9 @@ package de.cau.cs.kieler.papyrus.sequence.graph;
 
 import java.util.List;
 
-import com.google.common.collect.Lists;
+import org.eclipse.elk.core.math.KVector;
 
-import de.cau.cs.kieler.core.math.KVector;
+import com.google.common.collect.Lists;
 
 /**
  * Comment representation for SGraphs.

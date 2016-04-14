@@ -13,7 +13,7 @@
  */
 package de.cau.cs.kieler.papyrus.sequence.graph;
 
-import de.cau.cs.kieler.core.properties.MapPropertyHolder;
+import org.eclipse.elk.graph.properties.MapPropertyHolder;
 
 /**
  * Superclass for all {@link SGraph} elements. The extension of the {@link MapPropertyHolder}

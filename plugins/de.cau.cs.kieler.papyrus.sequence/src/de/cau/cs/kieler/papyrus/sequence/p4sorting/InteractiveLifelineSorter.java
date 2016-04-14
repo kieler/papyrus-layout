@@ -15,7 +15,8 @@ package de.cau.cs.kieler.papyrus.sequence.p4sorting;
 
 import java.util.List;
 
-import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
+import org.eclipse.elk.core.util.IElkProgressMonitor;
+
 import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
 import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
@@ -34,7 +35,7 @@ public final class InteractiveLifelineSorter implements ISequenceLayoutProcessor
      * {@inheritDoc}
      */
     @Override
-    public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
+    public void process(final LayoutContext context, final IElkProgressMonitor progressMonitor) {
         progressMonitor.begin("Interactive lifeline sorting", 1);
         
         // Sort the lifelines by their x coordinates

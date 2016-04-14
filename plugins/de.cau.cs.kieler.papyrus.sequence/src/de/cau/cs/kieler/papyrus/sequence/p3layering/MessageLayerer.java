@@ -13,8 +13,9 @@
  */
 package de.cau.cs.kieler.papyrus.sequence.p3layering;
 
-import de.cau.cs.kieler.core.alg.IKielerProgressMonitor;
-import de.cau.cs.kieler.klay.layered.p2layers.NetworkSimplexLayerer;
+import org.eclipse.elk.alg.layered.p2layers.NetworkSimplexLayerer;
+import org.eclipse.elk.core.util.IElkProgressMonitor;
+
 import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
 import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 
@@ -32,7 +33,7 @@ public final class MessageLayerer implements ISequenceLayoutProcessor {
      * {@inheritDoc}
      */
     @Override
-    public void process(final LayoutContext context, final IKielerProgressMonitor progressMonitor) {
+    public void process(final LayoutContext context, final IElkProgressMonitor progressMonitor) {
         NetworkSimplexLayerer layerer = new NetworkSimplexLayerer();
         layerer.process(context.lgraph, progressMonitor);
     }

@@ -15,10 +15,10 @@ package de.cau.cs.kieler.papyrus.sequence.properties;
 
 import java.util.List;
 
-import com.google.common.collect.Lists;
+import org.eclipse.elk.core.math.KVector;
+import org.eclipse.elk.graph.KNode;
 
-import de.cau.cs.kieler.core.kgraph.KNode;
-import de.cau.cs.kieler.core.math.KVector;
+import com.google.common.collect.Lists;
 
 /**
  * Data structure for execution specification elements in sequence diagrams. This class is not part
