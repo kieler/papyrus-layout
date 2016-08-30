@@ -32,7 +32,8 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
-import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramOptions;
+import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 
 /**
  * Lifeline sorting algorithm that tries to minimize the length of message. The algorithm is
@@ -140,7 +141,7 @@ public final class ShortMessageLifelineSorter implements ISequenceLayoutProcesso
         // Prepare this by filling a map of (message <-> number of its areas) pairs.
         HashMap<SMessage, Integer> areaMessages = new HashMap<SMessage, Integer>();
         if (context.groupAreasWhenSorting) {
-            List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramProperties.AREAS);
+            List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramOptions.AREAS);
             if (areas != null) {
                 for (SequenceArea area : areas) {
                     for (Object messageObject : area.getMessages()) {
@@ -189,8 +190,7 @@ public final class ShortMessageLifelineSorter implements ISequenceLayoutProcesso
                 // Give a "penalty" to the TL-value of the node if there are messages leading to the
                 // surrounding interaction. This is necessary, because these messages point to the
                 // right border of the diagram and are not considered in the normal algorithm.
-                MessageType messageType = message
-                        .getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+                MessageType messageType = message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
                 if (oppositeNode == null && messageType != MessageType.LOST) {
                     node.setTl(node.getTl() - 1);
                 }
@@ -202,8 +202,7 @@ public final class ShortMessageLifelineSorter implements ISequenceLayoutProcesso
             for (SMessage message : lifeline.getIncomingMessages()) {
                 SLifeline source = message.getSource();
                 EDLSNode oppositeNode = correspondences.get(source);
-                MessageType messageType = message
-                        .getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+                MessageType messageType = message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
                 if (oppositeNode == null && messageType != MessageType.FOUND) {
                     node.setTl(node.getTl() + 1);
                 }

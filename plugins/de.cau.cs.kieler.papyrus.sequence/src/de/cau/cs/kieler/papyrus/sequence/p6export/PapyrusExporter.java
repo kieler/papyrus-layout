@@ -33,7 +33,8 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
-import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramOptions;
+import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecutionType;
 
@@ -67,7 +68,7 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
             KNode node = (KNode) lifeline.getProperty(InternalProperties.ORIGIN);
             KShapeLayout nodeLayout = node.getData(KShapeLayout.class);
 
-            if (nodeLayout.getProperty(SequenceDiagramProperties.NODE_TYPE)
+            if (nodeLayout.getProperty(SequenceDiagramOptions.NODE_TYPE)
                     == NodeType.SURROUNDING_INTERACTION) {
                 
                 // This is the surrounding node
@@ -76,7 +77,7 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
 
             // Handle messages of the lifeline and their labels
             List<SequenceExecution> executions = lifeline.getProperty(
-                    SequenceDiagramProperties.EXECUTIONS);
+                    SequenceDiagramOptions.EXECUTIONS);
             applyMessageCoordinates(context, diagramHeight, lifeline, executions);
 
             // Apply execution coordinates and adjust positions of messages attached to these
@@ -89,7 +90,7 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
             nodeLayout.setHeight((float) lifeline.getSize().y);
 
             // Place destruction if existing
-            KNode destruction = lifeline.getProperty(SequenceDiagramProperties.DESTRUCTION);
+            KNode destruction = lifeline.getProperty(SequenceDiagramOptions.DESTRUCTION_NODE);
             if (destruction != null) {
                 KShapeLayout destructLayout = destruction.getData(KShapeLayout.class);
                 double destructionXPos = nodeLayout.getWidth() / 2 - destructLayout.getWidth() / 2;
@@ -137,14 +138,14 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
 
         // Resize node if there are any create or delete messages involved
         for (SMessage message : lifeline.getIncomingMessages()) {
-            if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.CREATE) {
+            if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) == MessageType.CREATE) {
                 // Set lifeline's yPos to the yPos of the create-message
                 lifeline.getPosition().y = message.getTargetYPos() + context.lifelineHeader / 2;
                 
                 // Modify height of lifeline in order to compensate yPos changes
                 lifeline.getSize().y += context.lifelineYPos - message.getTargetYPos()
                         - context.lifelineHeader / 2;
-            } else if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) 
+            } else if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) 
                     == MessageType.DELETE) {
                 
                 // Modify height of lifeline in order to end at the yPos of the delete-message
@@ -199,7 +200,7 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
                         (SequenceLayoutConstants.TWENTY + message.getTargetYPos() * reverseFactor));
 
                 // Lost-messages end between its source and the next lifeline
-                if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.LOST) {
+                if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) == MessageType.LOST) {
                     targetPoint.setX((float) (lifeline.getPosition().x + lifeline.getSize().x 
                             + context.lifelineSpacing / 2));
                 }
@@ -224,10 +225,10 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
             targetPoint.setX((float) (lifeline.getPosition().x + lifeline.getSize().x / 2));
             targetPoint.setY((float) (message.getTargetYPos() * factor));
 
-            if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.CREATE) {
+            if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) == MessageType.CREATE) {
                 // Reset x-position of create message because it leads to the header and not the line
                 targetPoint.setX((float) lifeline.getPosition().x);
-            } else if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) 
+            } else if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) 
                     == MessageType.DELETE) {
                 // Reset y-position of delete message to end at the end of the lifeline
                 targetPoint.setY((float) ((lifeline.getPosition().y + lifeline.getSize().y 
@@ -267,7 +268,7 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
                         (SequenceLayoutConstants.TWENTY + message.getSourceYPos() * reverseFactor));
 
                 // Found-messages start between its source and the previous lifeline
-                if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.FOUND) {
+                if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) == MessageType.FOUND) {
                     sourcePoint.setX((float) (lifeline.getPosition().x - context.lifelineSpacing / 2));
                 }
             }
@@ -332,7 +333,7 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
                             .getWidth() / 2));
                 }
                 // Create messages should not overlap the target's header
-                if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.CREATE) {
+                if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) == MessageType.CREATE) {
                     labelLayout.setXpos((float) (llCenter + SequenceLayoutConstants.LABELSPACING));
                 }
                 labelLayout.setYpos((float) ((message.getSourceYPos() - labelLayout.getHeight() - 2)
@@ -393,7 +394,7 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
      *            the lifeline, whose executions are placed
      */
     private void applyExecutionCoordinates(final LayoutContext context, final SLifeline lifeline) {
-        List<SequenceExecution> executions = lifeline.getProperty(SequenceDiagramProperties.EXECUTIONS);
+        List<SequenceExecution> executions = lifeline.getProperty(SequenceDiagramOptions.EXECUTIONS);
         if (executions == null) {
             return;
         }
@@ -406,7 +407,7 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
         KShapeLayout nodeLayout = node.getData(KShapeLayout.class);
 
         // Walk through the lifeline's executions
-        nodeLayout.setProperty(SequenceDiagramProperties.EXECUTIONS, executions);
+        nodeLayout.setProperty(SequenceDiagramOptions.EXECUTIONS, executions);
         for (SequenceExecution execution : executions) {
             Object executionObj = execution.getOrigin();
 
@@ -593,7 +594,7 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
                 // Set coordinates for the connection of the comment
                 double edgeSourceXPos, edgeSourceYPos, edgeTargetXPos, edgeTargetYPos;
                 String attachedElement = comment.getProperty(
-                        SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE);
+                        SequenceDiagramOptions.ATTACHED_ELEMENT_TYPE);
                 if (attachedElement.toLowerCase().startsWith("lifeline")
                         || attachedElement.toLowerCase().contains("execution")) {
                     
@@ -617,7 +618,7 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
 
                 // Apply connection coordinates to layout
                 KEdgeLayout edgelayout = comment.getProperty(
-                        SequenceDiagramProperties.COMMENT_CONNECTION).getData(KEdgeLayout.class);
+                        InternalSequenceProperties.COMMENT_CONNECTION).getData(KEdgeLayout.class);
                 edgelayout.getSourcePoint().setPos((float) edgeSourceXPos, (float) edgeSourceYPos);
                 edgelayout.getTargetPoint().setPos((float) edgeTargetXPos, (float) edgeTargetYPos);
             }

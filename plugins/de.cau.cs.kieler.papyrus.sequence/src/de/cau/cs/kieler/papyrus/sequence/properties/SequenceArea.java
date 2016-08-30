@@ -25,7 +25,7 @@ import com.google.common.collect.Sets;
 /**
  * Data structure for area-like elements in sequence diagrams. This class is not part of the core data
  * structure of this layout algorithm since it actually has to be attached to the graph in the
- * {@link SequenceDiagramProperties#AREAS} property. Thus, while also being used by the algorithm, this
+ * {@link InternalSequenceProperties#AREAS} property. Thus, while also being used by the algorithm, this
  * class has to be visible to the outside.
  * 
  * <p>

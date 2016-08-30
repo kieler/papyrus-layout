@@ -3,7 +3,7 @@
  *
  * http://www.informatik.uni-kiel.de/rtsys/kieler/
  * 
- * Copyright 2015 by
+ * Copyright 2015, 2016 by
  * + Christian-Albrechts-University of Kiel
  *   + Department of Computer Science
  *     + Real-Time and Embedded Systems Group
@@ -24,7 +24,7 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.LifelineSortingStrategy;
 import de.cau.cs.kieler.papyrus.sequence.properties.CoordinateSystem;
 import de.cau.cs.kieler.papyrus.sequence.properties.LabelAlignment;
-import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramOptions;
 
 /**
  * A simple data holder class used to pass data about the layout process around to the different phases
@@ -36,6 +36,7 @@ public final class LayoutContext {
     // CHECKSTYLEOFF VisibilityModifier
     
     // Layout Graphs
+    
     /** The original KGraph the layout algorithm was called with. */
     public KNode kgraph;
     /** The {@link SGraph} to be laid out. */
@@ -44,6 +45,7 @@ public final class LayoutContext {
     public LGraph lgraph;
     /** The order of lifelines as determined later in the algorithm. */
     public List<SLifeline> lifelineOrder;
+    
     
     // Layout Settings
     
@@ -54,15 +56,15 @@ public final class LayoutContext {
     /** Horizontal spacing between two neighbored lifelines. */
     public double lifelineSpacing;
     /** The vertical position of lifelines. */
-    public int lifelineYPos;
+    public double lifelineYPos;
     /** The height of the lifeline's header. */
-    public int lifelineHeader;
+    public double lifelineHeader;
     /** The height of the header of combined fragments. */
-    public int areaHeader;
+    public double areaHeader;
     /** The width of timing observations. */
-    public int timeObservationWidth;
+    public double timeObservationWidth;
     /** The offset between two nested areas. */
-    public int containmentOffset;
+    public double containmentOffset;
     /** The label alignment strategy. */
     public LabelAlignment labelAlignment;
     /** The lifeline sorting strategy. */
@@ -97,22 +99,22 @@ public final class LayoutContext {
         
         context.kgraph = parentNode;
         
-        context.borderSpacing = layoutData.getProperty(
-                SequenceDiagramProperties.BORDER_SPACING).doubleValue();
-        context.messageSpacing = layoutData.getProperty(
-                SequenceDiagramProperties.MESSAGE_SPACING).doubleValue();
-        context.lifelineSpacing = layoutData.getProperty(
-                SequenceDiagramProperties.LIFELINE_SPACING).doubleValue();
-        context.lifelineYPos = layoutData.getProperty(SequenceDiagramProperties.LIFELINE_Y_POS);
-        context.lifelineHeader = layoutData.getProperty(SequenceDiagramProperties.LIFELINE_HEADER);
-        context.areaHeader = layoutData.getProperty(SequenceDiagramProperties.AREA_HEADER);
+        context.borderSpacing = layoutData.getProperty(SequenceDiagramOptions.SPACING_BORDER);
+        context.messageSpacing = layoutData.getProperty(SequenceDiagramOptions.MESSAGE_SPACING);
+        context.lifelineSpacing = layoutData.getProperty(SequenceDiagramOptions.LIFELINE_SPACING);
+        context.lifelineYPos = layoutData.getProperty(SequenceDiagramOptions.LIFELINE_Y_POS);
+        context.lifelineHeader = layoutData.getProperty(
+                SequenceDiagramOptions.LIFELINE_HEADER_HEIGHT);
+        context.areaHeader = layoutData.getProperty(SequenceDiagramOptions.AREA_HEADER_HEIGHT);
         context.timeObservationWidth = layoutData.getProperty(
-                SequenceDiagramProperties.TIME_OBSERVATION_WIDTH);
-        context.containmentOffset = layoutData.getProperty(SequenceDiagramProperties.CONTAINMENT_OFFSET);
-        context.labelAlignment = layoutData.getProperty(SequenceDiagramProperties.LABEL_ALIGNMENT);
-        context.sortingStrategy = layoutData.getProperty(SequenceDiagramProperties.LIFELINE_SORTING);
-        context.groupAreasWhenSorting = layoutData.getProperty(SequenceDiagramProperties.GROUP_AREAS);
-        context.coordinateSystem = layoutData.getProperty(SequenceDiagramProperties.COORDINATE_SYSTEM);
+                SequenceDiagramOptions.TIME_OBSERVATION_WIDTH);
+        context.containmentOffset = layoutData.getProperty(
+                SequenceDiagramOptions.CONTAINMENT_OFFSET);
+        context.labelAlignment = layoutData.getProperty(SequenceDiagramOptions.LABEL_ALIGNMENT);
+        context.sortingStrategy = layoutData.getProperty(
+                SequenceDiagramOptions.LIFELINE_SORTING_STRATEGY);
+        context.groupAreasWhenSorting = layoutData.getProperty(SequenceDiagramOptions.GROUP_AREAS);
+        context.coordinateSystem = layoutData.getProperty(SequenceDiagramOptions.COORDINATE_SYSTEM);
         
         return context;
     }

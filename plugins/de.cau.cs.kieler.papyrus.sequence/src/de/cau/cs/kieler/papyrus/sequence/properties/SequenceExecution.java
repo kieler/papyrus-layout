@@ -23,7 +23,7 @@ import com.google.common.collect.Lists;
 /**
  * Data structure for execution specification elements in sequence diagrams. This class is not part
  * of the core data structure of this layout algorithm since it actually has to be attached to the
- * graph in the {@link SequenceDiagramProperties#EXECUTIONS} property. Thus, while also being used
+ * graph in the {@link InternalSequenceProperties#EXECUTIONS} property. Thus, while also being used
  * by the algorithm, this class has to be visible to the outside.
  * 
  * TODO: Add a generic type to replace Object in the code?

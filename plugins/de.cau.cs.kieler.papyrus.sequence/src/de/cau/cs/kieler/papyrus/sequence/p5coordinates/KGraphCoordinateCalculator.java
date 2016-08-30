@@ -36,7 +36,8 @@ import de.cau.cs.kieler.papyrus.sequence.p6export.KGraphExporter;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
-import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramOptions;
+import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 
 /**
  * Calculates coordinates for many objects in a sequence diagram. The coordinates are calculated such
@@ -120,7 +121,7 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
         arrangeUnconnectedComments(context);
 
         // Handle areas (interactions / combined fragments / interaction operands)
-        List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramProperties.AREAS);
+        List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramOptions.AREAS);
         calculateAreaPosition(context, areas);
 
         progressMonitor.done();
@@ -152,7 +153,7 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
                 
                 // Check if the node was split (in that case, each parts of the split node have their
                 // corresponding lifeline set)
-                SLifeline lifeline = node.getProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE);
+                SLifeline lifeline = node.getProperty(InternalSequenceProperties.BELONGS_TO_LIFELINE);
                 if (lifeline != null) {
                     if (message.getTarget() == lifeline) {
                         message.setTargetYPos(layerpos);
@@ -370,7 +371,7 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
         if (firstLifeline != null) {
             boolean hasFoundMessages = false;
             for (SMessage message : firstLifeline.getIncomingMessages()) {
-                if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.FOUND) {
+                if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) == MessageType.FOUND) {
                     hasFoundMessages = true;
                     break;
                 }
@@ -419,7 +420,7 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
             }
             
             // Labels of create messages should not overlap the target's header
-            if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.CREATE) {
+            if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) == MessageType.CREATE) {
                 if (message.getLabelWidth() + SequenceLayoutConstants.LABELMARGIN
                         > spacing + lifeline.getSize().x / 2) {
                     
@@ -479,7 +480,7 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
                     // Handle conflicts (reset yPos if necessary)
                     SComment upper = comment;
                     SComment lower = hash.get(message);
-                    NodeType nodeType = comment.getProperty(SequenceDiagramProperties.NODE_TYPE);
+                    NodeType nodeType = comment.getProperty(SequenceDiagramOptions.NODE_TYPE);
                     
                     // If comment is Observation, place it nearer to the message
                     if (nodeType == NodeType.DURATION_OBSERVATION
@@ -538,7 +539,7 @@ public class KGraphCoordinateCalculator implements ISequenceLayoutProcessor {
             // Check if there are contained areas
             int containmentDepth = checkHierarchy(area);
             // If so, an offset has to be calculated in order not to have overlapping borders
-            int containmentSpacing = containmentDepth * context.containmentOffset;
+            int containmentSpacing = (int) (containmentDepth * context.containmentOffset);
 
             areaLayout.setXpos((float)
                     (area.getPosition().x - context.lifelineSpacing / 2 - containmentSpacing));

@@ -35,7 +35,8 @@ import de.cau.cs.kieler.papyrus.sequence.p6export.PapyrusExporter;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
-import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramOptions;
+import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 
 /**
  * Calculates coordinates for all objects in a sequence diagram. The coordinates are calculated such
@@ -104,7 +105,7 @@ public class PapyrusCoordinateCalculator implements ISequenceLayoutProcessor {
         arrangeUnconnectedComments(context);
 
         // Handle areas (interactions / combined fragments / interaction operands)
-        List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramProperties.AREAS);
+        List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramOptions.AREAS);
         // Check containments (hierarchy) of areas
         checkAreaContainment(areas);
         // Calculate the areas positions
@@ -139,7 +140,7 @@ public class PapyrusCoordinateCalculator implements ISequenceLayoutProcessor {
                     continue;
                 }
 
-                SLifeline lifeline = node.getProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE);
+                SLifeline lifeline = node.getProperty(InternalSequenceProperties.BELONGS_TO_LIFELINE);
                 
                 // This property is set only for split messages
                 if (lifeline != null) {
@@ -372,7 +373,7 @@ public class PapyrusCoordinateCalculator implements ISequenceLayoutProcessor {
                         - lifeline.getSize().x;
             }
             // Labels of create messages should not overlap the target's header
-            if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.CREATE) {
+            if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) == MessageType.CREATE) {
                 if (message.getLabelWidth() + SequenceLayoutConstants.LABELMARGIN
                         > spacing + lifeline.getSize().x / 2) {
                     
@@ -431,7 +432,7 @@ public class PapyrusCoordinateCalculator implements ISequenceLayoutProcessor {
                     // Handle conflicts (reset yPos if necessary)
                     SComment upper = comment;
                     SComment lower = hash.get(message);
-                    NodeType nodeType = comment.getProperty(SequenceDiagramProperties.NODE_TYPE);
+                    NodeType nodeType = comment.getProperty(SequenceDiagramOptions.NODE_TYPE);
                     
                     // If comment is Observation, place it nearer to the message
                     if (nodeType == NodeType.DURATION_OBSERVATION
@@ -509,7 +510,7 @@ public class PapyrusCoordinateCalculator implements ISequenceLayoutProcessor {
                 // Check if there are contained areas
                 int containmentDepth = checkHierarchy(area);
                 // If so, an offset has to be calculated in order not to have overlapping borders
-                int containmentSpacing = containmentDepth * context.containmentOffset;
+                int containmentSpacing = (int) (containmentDepth * context.containmentOffset);
 
                 areaLayout.setXpos((float) (area.getPosition().x - SequenceLayoutConstants.TWENTY
                         - context.lifelineSpacing / 2 - containmentSpacing));

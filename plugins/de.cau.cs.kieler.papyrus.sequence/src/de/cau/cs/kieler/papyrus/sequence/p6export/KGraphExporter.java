@@ -39,7 +39,8 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 import de.cau.cs.kieler.papyrus.sequence.properties.LabelAlignment;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
-import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramOptions;
+import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecutionType;
 
@@ -75,7 +76,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
 
             // Place destruction if existing (this may change the lifeline's height, since the
             // desctruction event will be placed directly below the last incident message)
-            KNode destruction = lifeline.getProperty(SequenceDiagramProperties.DESTRUCTION);
+            KNode destruction = lifeline.getProperty(SequenceDiagramOptions.DESTRUCTION_NODE);
             if (destruction != null) {
                 // Calculate the lifeline's new height
                 double heightDelta = lowestMessageCoordinate + context.messageSpacing
@@ -158,7 +159,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
         KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
 
-        MessageType messageType = message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+        MessageType messageType = message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
         
         // Compute the horizontal center of the lifeline to be used later
         double llCenter = lifeline.getPosition().x + lifeline.getSize().x / 2;
@@ -174,7 +175,8 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         sourcePoint.setX((float) llCenter);
         
         // Check if the message connects to executions
-        List<SequenceExecution> executions = lifeline.getProperty(SequenceDiagramProperties.EXECUTIONS);
+        List<SequenceExecution> executions = lifeline.getProperty(
+                SequenceDiagramOptions.EXECUTIONS);
         if (executions != null) {
             for (SequenceExecution execution : executions) {
                 if (execution.getMessages().contains(message)) {
@@ -246,7 +248,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
         KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
 
-        MessageType messageType = message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+        MessageType messageType = message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
         
         // Compute the horizontal center of the lifeline to be used later
         double llCenter = lifeline.getPosition().x + lifeline.getSize().x / 2;
@@ -275,7 +277,8 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         }
 
         // Check if the message connects to executions
-        List<SequenceExecution> executions = lifeline.getProperty(SequenceDiagramProperties.EXECUTIONS);
+        List<SequenceExecution> executions = lifeline.getProperty(
+                SequenceDiagramOptions.EXECUTIONS);
         if (executions != null) {
             for (SequenceExecution execution : executions) {
                 if (execution.getMessages().contains(message)) {
@@ -369,7 +372,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
     private void placeLabels(final LayoutContext context, final SMessage message, final KEdge edge) {
         // If the message is a lost / found message, its direction will not depend on the
         // target / source lifeline's index in the ordered lifeline list
-        MessageType messageType = message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+        MessageType messageType = message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
         
         for (KLabel label : edge.getLabels()) {
             KShapeLayout labelLayout = label.getData(KShapeLayout.class);
@@ -432,7 +435,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             
             // This is a lost message; fall back to source placement
             alignment = LabelAlignment.SOURCE;
-        } else if (message.getProperty(SequenceDiagramProperties.MESSAGE_TYPE) == MessageType.CREATE) {
+        } else if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) == MessageType.CREATE) {
             // Create messages always use SOURCE placement to avoid overlapping the target lifeline
             // header
             alignment = LabelAlignment.SOURCE;
@@ -522,7 +525,8 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      *            the lifeline whose executions are to be placed.
      */
     private void applyExecutionCoordinates(final LayoutContext context, final SLifeline lifeline) {
-        List<SequenceExecution> executions = lifeline.getProperty(SequenceDiagramProperties.EXECUTIONS);
+        List<SequenceExecution> executions = lifeline.getProperty(
+                SequenceDiagramOptions.EXECUTIONS);
         if (executions == null || executions.isEmpty()) {
             return;
         }
@@ -798,7 +802,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                 // Set coordinates for the connection of the comment
                 double edgeSourceXPos, edgeSourceYPos, edgeTargetXPos, edgeTargetYPos;
                 String attachedElement = comment.getProperty(
-                        SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE);
+                        SequenceDiagramOptions.ATTACHED_ELEMENT_TYPE);
                 if (attachedElement.toLowerCase().startsWith("lifeline")
                         || attachedElement.toLowerCase().contains("execution")) {
                     
@@ -822,7 +826,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
 
                 // Apply connection coordinates to layout
                 KEdgeLayout edgelayout = comment.getProperty(
-                        SequenceDiagramProperties.COMMENT_CONNECTION).getData(KEdgeLayout.class);
+                        InternalSequenceProperties.COMMENT_CONNECTION).getData(KEdgeLayout.class);
                 edgelayout.getSourcePoint().setPos((float) edgeSourceXPos, (float) edgeSourceYPos);
                 edgelayout.getTargetPoint().setPos((float) edgeTargetXPos, (float) edgeTargetYPos);
             }

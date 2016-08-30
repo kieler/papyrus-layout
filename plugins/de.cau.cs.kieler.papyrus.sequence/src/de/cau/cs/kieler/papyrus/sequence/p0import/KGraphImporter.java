@@ -3,7 +3,7 @@
  *
  * http://www.informatik.uni-kiel.de/rtsys/kieler/
  * 
- * Copyright 2012 by
+ * Copyright 2012, 2016 by
  * + Christian-Albrechts-University of Kiel
  *   + Department of Computer Science
  *     + Real-Time and Embedded Systems Group
@@ -40,10 +40,11 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraphElement;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
+import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
-import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramOptions;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecutionType;
 
@@ -101,7 +102,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
         // Create lifelines
         for (KNode node : topNode.getChildren()) {
             NodeType nodeType = node.getData(KShapeLayout.class).getProperty(
-                    SequenceDiagramProperties.NODE_TYPE);
+                    SequenceDiagramOptions.NODE_TYPE);
             
             if (nodeType == NodeType.LIFELINE) {
                 createLifeline(sgraph, node);
@@ -111,7 +112,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
         // Walk through lifelines (create their messages) and comments
         for (KNode node : topNode.getChildren()) {
             NodeType nodeType = node.getData(KShapeLayout.class).getProperty(
-                    SequenceDiagramProperties.NODE_TYPE);
+                    SequenceDiagramOptions.NODE_TYPE);
             
             if (nodeType == NodeType.LIFELINE) {
                 // Create SMessages for each of the outgoing edges
@@ -159,27 +160,27 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
         // Find nodes that represent areas
         for (KNode node : topNode.getChildren()) {
             KLayoutData layoutData = node.getData(KLayoutData.class);
-            NodeType nodeType = layoutData.getProperty(SequenceDiagramProperties.NODE_TYPE);
+            NodeType nodeType = layoutData.getProperty(SequenceDiagramOptions.NODE_TYPE);
             
             if (nodeType == NodeType.COMBINED_FRAGMENT || nodeType == NodeType.INTERACTION_USE) {
                 SequenceArea area = new SequenceArea(node);
                 areas.add(area);
-                areaIdMap.put(layoutData.getProperty(SequenceDiagramProperties.ELEMENT_ID), area);
+                areaIdMap.put(layoutData.getProperty(SequenceDiagramOptions.ELEMENT_ID), area);
             }
         }
         
         // Now that all areas have been created, find nodes that represent nested areas
         for (KNode node : topNode.getChildren()) {
             KLayoutData layoutData = node.getData(KLayoutData.class);
-            NodeType nodeType = layoutData.getProperty(SequenceDiagramProperties.NODE_TYPE);
+            NodeType nodeType = layoutData.getProperty(SequenceDiagramOptions.NODE_TYPE);
             
             if (nodeType == NodeType.COMBINED_FRAGMENT || nodeType == NodeType.INTERACTION_USE) {
-                int parentId = layoutData.getProperty(SequenceDiagramProperties.PARENT_AREA_ID);
+                int parentId = layoutData.getProperty(SequenceDiagramOptions.PARENT_AREA_ID);
                 
                 if (parentId != -1) {
                     SequenceArea parentArea = areaIdMap.get(parentId);
                     SequenceArea childArea = areaIdMap.get(
-                            layoutData.getProperty(SequenceDiagramProperties.ELEMENT_ID));
+                            layoutData.getProperty(SequenceDiagramOptions.ELEMENT_ID));
                     
                     if (parentArea != null && childArea != null) {
                         parentArea.getContainedAreas().add(childArea);
@@ -190,7 +191,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
         }
         
         // Remember the areas
-        sgraph.setProperty(SequenceDiagramProperties.AREAS, areas);
+        sgraph.setProperty(SequenceDiagramOptions.AREAS, areas);
     }
 
 
@@ -209,7 +210,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
     private void createLifeline(final SGraph sgraph, final KNode klifeline) {
         KShapeLayout klayout = klifeline.getData(KShapeLayout.class);
         
-        assert klayout.getProperty(SequenceDiagramProperties.NODE_TYPE) == NodeType.LIFELINE;
+        assert klayout.getProperty(SequenceDiagramOptions.NODE_TYPE) == NodeType.LIFELINE;
         
         // Node is lifeline
         SLifeline slifeline = new SLifeline();
@@ -232,7 +233,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
         
         for (KNode kchild : klifeline.getChildren()) {
             KShapeLayout kchildLayout = kchild.getData(KShapeLayout.class);
-            NodeType kchildNodeType = kchildLayout.getProperty(SequenceDiagramProperties.NODE_TYPE);
+            NodeType kchildNodeType = kchildLayout.getProperty(SequenceDiagramOptions.NODE_TYPE);
             
             if (kchildNodeType.isExecutionType()) {
                 // Create a new sequence execution for this thing
@@ -240,16 +241,16 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
                 execution.setType(SequenceExecutionType.fromNodeType(kchildNodeType));
                 executions.add(execution);
                 executionIdMap.put(
-                        kchildLayout.getProperty(SequenceDiagramProperties.ELEMENT_ID), execution);
+                        kchildLayout.getProperty(SequenceDiagramOptions.ELEMENT_ID), execution);
             } else if (kchildNodeType == NodeType.DESTRUCTION_EVENT) {
-                slifeline.setProperty(SequenceDiagramProperties.DESTRUCTION, kchild);
+                slifeline.setProperty(SequenceDiagramOptions.DESTRUCTION_NODE, kchild);
             }
         }
         
-        slifeline.setProperty(SequenceDiagramProperties.EXECUTIONS, executions);
+        slifeline.setProperty(SequenceDiagramOptions.EXECUTIONS, executions);
         
         // Check if the lifeline has any empty areas
-        List<Integer> areaIds = klayout.getProperty(SequenceDiagramProperties.AREA_IDS);
+        List<Integer> areaIds = klayout.getProperty(SequenceDiagramOptions.AREA_IDS);
         for (Integer areaId : areaIds) {
             SequenceArea area = areaIdMap.get(areaId);
             if (area != null) {
@@ -311,8 +312,8 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             
             // Check if the edge connects to executions
             List<Integer> sourceExecutionIds =
-                    kedgelayout.getProperty(SequenceDiagramProperties.SOURCE_EXECUTION_IDS);
-            smessage.setProperty(SequenceDiagramProperties.SOURCE_EXECUTION_IDS, sourceExecutionIds);
+                    kedgelayout.getProperty(SequenceDiagramOptions.SOURCE_EXECUTION_IDS);
+            smessage.setProperty(SequenceDiagramOptions.SOURCE_EXECUTION_IDS, sourceExecutionIds);
             for (Integer execId : sourceExecutionIds) {
                 SequenceExecution sourceExecution = executionIdMap.get(execId);
                 if (sourceExecution != null) {
@@ -321,8 +322,8 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             }
             
             List<Integer> targetExecutionIds =
-                    kedgelayout.getProperty(SequenceDiagramProperties.TARGET_EXECUTION_IDS);
-            smessage.setProperty(SequenceDiagramProperties.TARGET_EXECUTION_IDS, sourceExecutionIds);
+                    kedgelayout.getProperty(SequenceDiagramOptions.TARGET_EXECUTION_IDS);
+            smessage.setProperty(SequenceDiagramOptions.TARGET_EXECUTION_IDS, sourceExecutionIds);
             for (Integer execId : targetExecutionIds) {
                 SequenceExecution targetExecution = executionIdMap.get(execId);
                 if (targetExecution != null) {
@@ -331,14 +332,14 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             }
 
             // Append the message type of the edge to the message
-            MessageType messageType = kedgelayout.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+            MessageType messageType = kedgelayout.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
             if (messageType == MessageType.ASYNCHRONOUS
                     || messageType == MessageType.CREATE
                     || messageType == MessageType.DELETE
                     || messageType == MessageType.SYNCHRONOUS
                     || messageType == MessageType.LOST) {
                 
-                smessage.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, messageType);
+                smessage.setProperty(SequenceDiagramOptions.MESSAGE_TYPE, messageType);
             }
 
             // Outgoing messages to the surrounding interaction are drawn to the right and therefore
@@ -348,7 +349,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             }
 
             // Check if message is in any area
-            for (Integer areaId : kedgelayout.getProperty(SequenceDiagramProperties.AREA_IDS)) {
+            for (Integer areaId : kedgelayout.getProperty(SequenceDiagramOptions.AREA_IDS)) {
                 SequenceArea area = areaIdMap.get(areaId);
                 if (area != null) {
                     area.getMessages().add(smessage);
@@ -360,7 +361,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             
             // Check if this message has an empty area that is to be placed directly above it
             int upperEmptyAreaId = kedgelayout.getProperty(
-                    SequenceDiagramProperties.UPPER_EMPTY_AREA_ID);
+                    SequenceDiagramOptions.UPPER_EMPTY_AREA_ID);
             SequenceArea upperArea = areaIdMap.get(upperEmptyAreaId);
             if (upperArea != null) {
                 upperArea.setNextMessage(smessage);
@@ -413,9 +414,9 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
             messageMap.put(kedge, smessage);
 
             // Append the message type of the edge to the message
-            MessageType messageType = kedgelayout.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+            MessageType messageType = kedgelayout.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
             if (messageType == MessageType.FOUND) {
-                smessage.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, MessageType.FOUND);
+                smessage.setProperty(SequenceDiagramOptions.MESSAGE_TYPE, MessageType.FOUND);
             } else {
                 // Since incoming messages come from the left side of the surrounding
                 // interaction, give its dummy lifeline position -1
@@ -426,14 +427,14 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
                         || messageType == MessageType.DELETE
                         || messageType == MessageType.SYNCHRONOUS) {
                     
-                    smessage.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, messageType);
+                    smessage.setProperty(SequenceDiagramOptions.MESSAGE_TYPE, messageType);
                 }
             }
 
             // Check if the message connects to a target executions
             List<Integer> targetExecutionIds =
-                    kedgelayout.getProperty(SequenceDiagramProperties.TARGET_EXECUTION_IDS);
-            smessage.setProperty(SequenceDiagramProperties.TARGET_EXECUTION_IDS, targetExecutionIds);
+                    kedgelayout.getProperty(SequenceDiagramOptions.TARGET_EXECUTION_IDS);
+            smessage.setProperty(SequenceDiagramOptions.TARGET_EXECUTION_IDS, targetExecutionIds);
             for (Integer execId : targetExecutionIds) {
                 SequenceExecution targetExecution = executionIdMap.get(execId);
                 if (targetExecution != null) {
@@ -459,23 +460,24 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
         KShapeLayout commentLayout = node.getData(KShapeLayout.class);
 
         // Get the node's type
-        NodeType nodeType = commentLayout.getProperty(SequenceDiagramProperties.NODE_TYPE);
+        NodeType nodeType = commentLayout.getProperty(SequenceDiagramOptions.NODE_TYPE);
 
         // Create comment object
         SComment comment = new SComment();
         comment.setProperty(InternalProperties.ORIGIN, node);
-        comment.setProperty(SequenceDiagramProperties.NODE_TYPE, nodeType);
-        comment.setProperty(SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE,
-                commentLayout.getProperty(SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE));
+        comment.setProperty(SequenceDiagramOptions.NODE_TYPE, nodeType);
+        comment.setProperty(SequenceDiagramOptions.ATTACHED_ELEMENT_TYPE,
+                commentLayout.getProperty(SequenceDiagramOptions.ATTACHED_ELEMENT_TYPE));
         
         // Attach connected edge to comment
         if (!node.getOutgoingEdges().isEmpty()) {
-            comment.setProperty(SequenceDiagramProperties.COMMENT_CONNECTION,
+            comment.setProperty(InternalSequenceProperties.COMMENT_CONNECTION,
                     node.getOutgoingEdges().get(0));
         }
 
         // Copy all the entries of the list of attached elements to the comment object
-        List<Object> attachedTo = commentLayout.getProperty(SequenceDiagramProperties.ATTACHED_TO);
+        List<Object> attachedTo = commentLayout.getProperty(
+                SequenceDiagramOptions.ATTACHED_OBJECTS);
         if (attachedTo != null) {
             List<SGraphElement> attTo = comment.getAttachedTo();
             for (Object att : attachedTo) {
@@ -496,7 +498,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
         // Handle time observations
         if (nodeType == NodeType.TIME_OBSERVATION) {
             comment.getSize().x = 
-                    sgraph.getProperty(SequenceDiagramProperties.TIME_OBSERVATION_WIDTH).doubleValue();
+                    sgraph.getProperty(SequenceDiagramOptions.TIME_OBSERVATION_WIDTH);
 
             // Find lifeline that is next to the time observation
             SLifeline nextLifeline = null;
@@ -564,7 +566,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
                 LNode node = new LNode(lgraph);
                 node.getLabels().add(new LLabel("Node" + i++));
                 node.setProperty(InternalProperties.ORIGIN, message);
-                message.setProperty(SequenceDiagramProperties.LAYERED_NODE, node);
+                message.setProperty(InternalSequenceProperties.LAYERED_NODE, node);
                 lgraph.getLayerlessNodes().add(node);
             }
             // Handle found messages (they have no source lifeline)
@@ -573,7 +575,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
                     LNode node = new LNode(lgraph);
                     node.getLabels().add(new LLabel("Node" + i++));
                     node.setProperty(InternalProperties.ORIGIN, message);
-                    message.setProperty(SequenceDiagramProperties.LAYERED_NODE, node);
+                    message.setProperty(InternalSequenceProperties.LAYERED_NODE, node);
                     lgraph.getLayerlessNodes().add(node);
                 }
             }
@@ -587,9 +589,9 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
                 // Add an edge from the node belonging to message j-1 to the node belonging to
                 // message j
                 LNode sourceNode = messages.get(j - 1).getProperty(
-                        SequenceDiagramProperties.LAYERED_NODE);
+                        InternalSequenceProperties.LAYERED_NODE);
                 LNode targetNode = messages.get(j).getProperty(
-                        SequenceDiagramProperties.LAYERED_NODE);
+                        InternalSequenceProperties.LAYERED_NODE);
                 
                 if (sourceNode != targetNode) {
                     LPort sourcePort = new LPort();
@@ -603,7 +605,7 @@ public final class KGraphImporter implements ISequenceLayoutProcessor {
                     edge.setSource(sourcePort);
                     edge.setTarget(targetPort);
                     
-                    edge.setProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE, lifeline);
+                    edge.setProperty(InternalSequenceProperties.BELONGS_TO_LIFELINE, lifeline);
                 }
             }
         }

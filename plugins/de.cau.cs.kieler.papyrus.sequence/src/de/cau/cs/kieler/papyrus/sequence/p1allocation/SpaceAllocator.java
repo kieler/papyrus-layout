@@ -30,7 +30,8 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SGraphElement;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 import de.cau.cs.kieler.papyrus.sequence.properties.CoordinateSystem;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
-import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramOptions;
+import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 
 /**
  * Allocates vertical space for various objects by introducing dummy nodes in the LGraph. Space is
@@ -69,7 +70,7 @@ public final class SpaceAllocator implements ISequenceLayoutProcessor {
     private void allocateSpaceForAreaHeaders(final LayoutContext context) {
         // Add dummy nodes before the first messages of combined fragments to have enough space
         // above the topmost message of the area
-        List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramProperties.AREAS);
+        List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramOptions.AREAS);
         if (areas == null || areas.isEmpty()) {
             return;
         }
@@ -99,7 +100,7 @@ public final class SpaceAllocator implements ISequenceLayoutProcessor {
                     
                     // Find out if any of the messages predecessors in the layered graph are part of
                     // the fragment. If not, we have found our best guess for the uppermost message
-                    LNode msgNode = msg.getProperty(SequenceDiagramProperties.LAYERED_NODE);
+                    LNode msgNode = msg.getProperty(InternalSequenceProperties.LAYERED_NODE);
                     boolean isUppermost = true;
                     for (LEdge incomingEdge : msgNode.getIncomingEdges()) {
                         Object predecessor = incomingEdge.getSource().getNode().getProperty(
@@ -120,7 +121,7 @@ public final class SpaceAllocator implements ISequenceLayoutProcessor {
             
             // If we were able to find an uppermost message, insert a dummy node to reserve space
             if (uppermostMessage != null) {
-                LNode node = uppermostMessage.getProperty(SequenceDiagramProperties.LAYERED_NODE);
+                LNode node = uppermostMessage.getProperty(InternalSequenceProperties.LAYERED_NODE);
                 createLGraphDummyNode(context.lgraph, node, true);
             }
         }
@@ -148,7 +149,7 @@ public final class SpaceAllocator implements ISequenceLayoutProcessor {
                 int dummys = (int) Math.ceil(height / context.messageSpacing);
                 
                 // Add dummy nodes in the layered graph
-                LNode lnode = attachedMess.getProperty(SequenceDiagramProperties.LAYERED_NODE);
+                LNode lnode = attachedMess.getProperty(InternalSequenceProperties.LAYERED_NODE);
                 if (lnode != null) {
                     for (int i = 0; i < dummys; i++) {
                         createLGraphDummyNode(context.lgraph, lnode, true);
@@ -167,14 +168,14 @@ public final class SpaceAllocator implements ISequenceLayoutProcessor {
      *            the layout context that contains all relevant information for the current layout run.
      */
     private void allocateSpaceForEmptyAreas(final LayoutContext context) {
-        List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramProperties.AREAS);
+        List<SequenceArea> areas = context.sgraph.getProperty(SequenceDiagramOptions.AREAS);
         if (areas != null) {
             for (SequenceArea area : areas) {
                 if (area.getMessages().size() == 0) {
                     Object nextMess = area.getNextMessage();
                     if (nextMess != null) {
                         LNode node = ((SMessage) nextMess)
-                                .getProperty(SequenceDiagramProperties.LAYERED_NODE);
+                                .getProperty(InternalSequenceProperties.LAYERED_NODE);
                         if (node != null) {
                             // Create two dummy nodes before node to have enough space for the empty
                             // area

@@ -32,7 +32,7 @@ import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
 import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
-import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
+import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 
 /**
  * Heuristic implementation of cycle breaking. Breaks the cycles in the layered graph of the layout
@@ -110,7 +110,7 @@ public final class SCycleBreaker implements ISequenceLayoutProcessor {
         Iterator<LEdge> oEdges = node.getConnectedEdges().iterator();
         while (oEdges.hasNext()) {
             LEdge edge = oEdges.next();
-            SLifeline belongsTo = edge.getProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE);
+            SLifeline belongsTo = edge.getProperty(InternalSequenceProperties.BELONGS_TO_LIFELINE);
             if (belongsTo == targetLL) {
                 // if edge belongs to targetLifeline, rebase it to newNode
                 if (edge.getSource().getNode() == node) {
@@ -121,8 +121,8 @@ public final class SCycleBreaker implements ISequenceLayoutProcessor {
             }
             // if edge belongs to sourceLifeline, leave it as it was
         }
-        node.setProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE, sourceLL);
-        newNode.setProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE, targetLL);
+        node.setProperty(InternalSequenceProperties.BELONGS_TO_LIFELINE, sourceLL);
+        newNode.setProperty(InternalSequenceProperties.BELONGS_TO_LIFELINE, targetLL);
         newNode.setProperty(InternalProperties.ORIGIN, message);
     }
 

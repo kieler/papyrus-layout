@@ -43,7 +43,8 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
-import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramProperties;
+import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramOptions;
+import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
 
 /**
@@ -90,7 +91,7 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
         
         // Get the list of areas
         List<SequenceArea> areas = topNode.getData(KShapeLayout.class).getProperty(
-                SequenceDiagramProperties.AREAS);
+                SequenceDiagramOptions.AREAS);
 
         // Create lifeline objects
         for (KNode node : topNode.getChildren()) {
@@ -100,7 +101,7 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
         // Walk through lifelines (create their messages) and comments
         for (KNode node : topNode.getChildren()) {
             NodeType nodeType = node.getData(KShapeLayout.class).getProperty(
-                    SequenceDiagramProperties.NODE_TYPE);
+                    SequenceDiagramOptions.NODE_TYPE);
             if (nodeType == NodeType.LIFELINE) {
                 // Node is a lifeline
 
@@ -129,7 +130,7 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
         }
 
         // Copy the areas property to the SGraph
-        sgraph.setProperty(SequenceDiagramProperties.AREAS, areas);
+        sgraph.setProperty(SequenceDiagramOptions.AREAS, areas);
 
         // Reset graph size to zero before layouting
         sgraph.getSize().x = 0;
@@ -156,23 +157,24 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
         KShapeLayout commentLayout = node.getData(KShapeLayout.class);
 
         // Get the node's type
-        NodeType nodeType = commentLayout.getProperty(SequenceDiagramProperties.NODE_TYPE);
+        NodeType nodeType = commentLayout.getProperty(SequenceDiagramOptions.NODE_TYPE);
 
         // Create comment object
         SComment comment = new SComment();
         comment.setProperty(InternalProperties.ORIGIN, node);
-        comment.setProperty(SequenceDiagramProperties.NODE_TYPE, nodeType);
-        comment.setProperty(SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE,
-                commentLayout.getProperty(SequenceDiagramProperties.ATTACHED_ELEMENT_TYPE));
+        comment.setProperty(SequenceDiagramOptions.NODE_TYPE, nodeType);
+        comment.setProperty(SequenceDiagramOptions.ATTACHED_ELEMENT_TYPE,
+                commentLayout.getProperty(SequenceDiagramOptions.ATTACHED_ELEMENT_TYPE));
         
         // Attach connected edge to comment
         if (!node.getOutgoingEdges().isEmpty()) {
-            comment.setProperty(SequenceDiagramProperties.COMMENT_CONNECTION,
+            comment.setProperty(InternalSequenceProperties.COMMENT_CONNECTION,
                     node.getOutgoingEdges().get(0));
         }
 
         // Copy all the entries of the list of attached elements to the comment object
-        List<Object> attachedTo = commentLayout.getProperty(SequenceDiagramProperties.ATTACHED_TO);
+        List<Object> attachedTo = commentLayout.getProperty(
+                SequenceDiagramOptions.ATTACHED_OBJECTS);
         if (attachedTo != null) {
             List<SGraphElement> attTo = comment.getAttachedTo();
             for (Object att : attachedTo) {
@@ -193,7 +195,7 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
         // Handle time observations
         if (nodeType == NodeType.TIME_OBSERVATION) {
             comment.getSize().x = 
-                    sgraph.getProperty(SequenceDiagramProperties.TIME_OBSERVATION_WIDTH).doubleValue();
+                    sgraph.getProperty(SequenceDiagramOptions.TIME_OBSERVATION_WIDTH);
 
             // Find lifeline that is next to the time observation
             SLifeline nextLifeline = null;
@@ -348,9 +350,9 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
             // Replace KEdge by its SMessage if it appears in one of the lifeline's executions. It
             // is better to do it this way than running through the list of executions since that
             // would lead to concurrent modification exceptions.
-            if (sourceLL.getProperty(SequenceDiagramProperties.EXECUTIONS) != null) {
+            if (sourceLL.getProperty(SequenceDiagramOptions.EXECUTIONS) != null) {
                 for (SequenceExecution execution : sourceLL.getProperty(
-                        SequenceDiagramProperties.EXECUTIONS)) {
+                        SequenceDiagramOptions.EXECUTIONS)) {
                     
                     if (execution.getMessages().remove(edge)) {
                         execution.addMessage(message);
@@ -358,9 +360,9 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
                 }
             }
             
-            if (targetLL.getProperty(SequenceDiagramProperties.EXECUTIONS) != null) {
+            if (targetLL.getProperty(SequenceDiagramOptions.EXECUTIONS) != null) {
                 for (SequenceExecution execution : targetLL.getProperty(
-                        SequenceDiagramProperties.EXECUTIONS)) {
+                        SequenceDiagramOptions.EXECUTIONS)) {
                     
                     if (execution.getMessages().remove(edge)) {
                         execution.addMessage(message);
@@ -369,14 +371,14 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
             }
 
             // Append the message type of the edge to the message
-            MessageType messageType = layout.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+            MessageType messageType = layout.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
             if (messageType == MessageType.ASYNCHRONOUS
                     || messageType == MessageType.CREATE
                     || messageType == MessageType.DELETE
                     || messageType == MessageType.SYNCHRONOUS
                     || messageType == MessageType.LOST) {
                 
-                message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, messageType);
+                message.setProperty(SequenceDiagramOptions.MESSAGE_TYPE, messageType);
             }
 
             // Outgoing messages to the surrounding interaction are drawn to the right and therefore
@@ -453,9 +455,9 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
                 edgeMap.put(edge, message);
 
                 // Append the message type of the edge to the message
-                MessageType messageType = layout.getProperty(SequenceDiagramProperties.MESSAGE_TYPE);
+                MessageType messageType = layout.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
                 if (messageType == MessageType.FOUND) {
-                    message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, MessageType.FOUND);
+                    message.setProperty(SequenceDiagramOptions.MESSAGE_TYPE, MessageType.FOUND);
                 } else {
                     // Since incoming messages come from the left side of the surrounding
                     // interaction, give its dummy lifeline position -1
@@ -466,15 +468,15 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
                             || messageType == MessageType.DELETE
                             || messageType == MessageType.SYNCHRONOUS) {
                         
-                        message.setProperty(SequenceDiagramProperties.MESSAGE_TYPE, messageType);
+                        message.setProperty(SequenceDiagramOptions.MESSAGE_TYPE, messageType);
                     }
                 }
 
                 // replace KEdge by its SMessage if it appears in one of the lifeline's
                 // executions
-                if (sourceLL.getProperty(SequenceDiagramProperties.EXECUTIONS) != null) {
+                if (sourceLL.getProperty(SequenceDiagramOptions.EXECUTIONS) != null) {
                     for (SequenceExecution execution : sourceLL.getProperty(
-                            SequenceDiagramProperties.EXECUTIONS)) {
+                            SequenceDiagramOptions.EXECUTIONS)) {
                         
                         if (execution.getMessages().remove(edge)) {
                             execution.addMessage(message);
@@ -482,9 +484,9 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
                     }
                 }
                 
-                if (targetLL.getProperty(SequenceDiagramProperties.EXECUTIONS) != null) {
+                if (targetLL.getProperty(SequenceDiagramOptions.EXECUTIONS) != null) {
                     for (SequenceExecution execution : targetLL.getProperty(
-                            SequenceDiagramProperties.EXECUTIONS)) {
+                            SequenceDiagramOptions.EXECUTIONS)) {
                         
                         if (execution.getMessages().remove(edge)) {
                             execution.addMessage(message);
@@ -509,7 +511,7 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
             final KNode node) {
         
         KShapeLayout layout = node.getData(KShapeLayout.class);
-        if (layout.getProperty(SequenceDiagramProperties.NODE_TYPE) == NodeType.LIFELINE) {
+        if (layout.getProperty(SequenceDiagramOptions.NODE_TYPE) == NodeType.LIFELINE) {
             // Node is lifeline
             SLifeline lifeline = new SLifeline();
             if (node.getLabels().size() > 0) {
@@ -527,15 +529,15 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
 
             // Copy executions to lifeline
             List<SequenceExecution> executions = layout.getProperty(
-                    SequenceDiagramProperties.EXECUTIONS);
-            lifeline.setProperty(SequenceDiagramProperties.EXECUTIONS, executions);
+                    SequenceDiagramOptions.EXECUTIONS);
+            lifeline.setProperty(SequenceDiagramOptions.EXECUTIONS, executions);
 
             lifeline.setComments(new LinkedList<SComment>());
 
             // If the DESTRUCTION property is set, simply copy it over
-            KNode destructionNode = layout.getProperty(SequenceDiagramProperties.DESTRUCTION);
+            KNode destructionNode = layout.getProperty(SequenceDiagramOptions.DESTRUCTION_NODE);
             if (destructionNode != null) {
-                lifeline.setProperty(SequenceDiagramProperties.DESTRUCTION, destructionNode);
+                lifeline.setProperty(SequenceDiagramOptions.DESTRUCTION_NODE, destructionNode);
             }
         }
     }
@@ -610,7 +612,7 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
                 LNode node = new LNode(lgraph);
                 node.getLabels().add(new LLabel("Node" + i++));
                 node.setProperty(InternalProperties.ORIGIN, message);
-                message.setProperty(SequenceDiagramProperties.LAYERED_NODE, node);
+                message.setProperty(InternalSequenceProperties.LAYERED_NODE, node);
                 lgraph.getLayerlessNodes().add(node);
             }
             // Handle found messages (they have no source lifeline)
@@ -619,7 +621,7 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
                     LNode node = new LNode(lgraph);
                     node.getLabels().add(new LLabel("Node" + i++));
                     node.setProperty(InternalProperties.ORIGIN, message);
-                    message.setProperty(SequenceDiagramProperties.LAYERED_NODE, node);
+                    message.setProperty(InternalSequenceProperties.LAYERED_NODE, node);
                     lgraph.getLayerlessNodes().add(node);
                 }
             }
@@ -633,9 +635,9 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
                 // Add an edge from the node belonging to message j-1 to the node belonging to
                 // message j
                 LNode sourceNode = messages.get(j - 1).getProperty(
-                        SequenceDiagramProperties.LAYERED_NODE);
+                        InternalSequenceProperties.LAYERED_NODE);
                 LNode targetNode = messages.get(j).getProperty(
-                        SequenceDiagramProperties.LAYERED_NODE);
+                        InternalSequenceProperties.LAYERED_NODE);
                 
                 if (sourceNode != targetNode) {
                     LPort sourcePort = new LPort();
@@ -649,7 +651,7 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
                     edge.setSource(sourcePort);
                     edge.setTarget(targetPort);
                     
-                    edge.setProperty(SequenceDiagramProperties.BELONGS_TO_LIFELINE, lifeline);
+                    edge.setProperty(InternalSequenceProperties.BELONGS_TO_LIFELINE, lifeline);
                 }
             }
         }
