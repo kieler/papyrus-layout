@@ -5,3 +5,7 @@ bin/
 .svn/
 xtend-gen/
 target/
+.java._trace
+/**/src-gen/**/*Options.java
+/**/src-gen/**/*MetaDataProvider.java
+*._trace
