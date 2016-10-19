@@ -139,6 +139,7 @@ programmatic option sourceExecutionIds : List<Integer> {
                 part of several nested executions. The most deeply nested execution will be the one the message will
                 actually be visually attached to. Only used in KGraph mode."
     targets edges
+    default = Lists.newArrayList
 }
 
 programmatic option targetExecutionIds : List<Integer> {
@@ -147,6 +148,7 @@ programmatic option targetExecutionIds : List<Integer> {
                 part of several nested executions. The most deeply nested execution will be the one the message will
                 actually be visually attached to. Only used in KGraph mode."
     targets edges
+    default = Lists.newArrayList
 }
 
 programmatic option attachedElementType : String {
