@@ -16,13 +16,13 @@ package de.cau.cs.kieler.papyrus.sequence.p6export;
 import java.util.List;
 
 import org.eclipse.elk.alg.layered.properties.InternalProperties;
-import org.eclipse.elk.core.klayoutdata.KEdgeLayout;
-import org.eclipse.elk.core.klayoutdata.KPoint;
-import org.eclipse.elk.core.klayoutdata.KShapeLayout;
 import org.eclipse.elk.core.util.IElkProgressMonitor;
-import org.eclipse.elk.graph.KEdge;
-import org.eclipse.elk.graph.KLabel;
-import org.eclipse.elk.graph.KNode;
+import org.eclipse.elk.graph.ElkBendPoint;
+import org.eclipse.elk.graph.ElkEdge;
+import org.eclipse.elk.graph.ElkEdgeSection;
+import org.eclipse.elk.graph.ElkLabel;
+import org.eclipse.elk.graph.ElkNode;
+import org.eclipse.elk.graph.util.ElkGraphUtil;
 
 import de.cau.cs.kieler.papyrus.sequence.ISequenceLayoutProcessor;
 import de.cau.cs.kieler.papyrus.sequence.LayoutContext;
@@ -31,10 +31,10 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SComment;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
+import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramOptions;
-import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecutionType;
 
@@ -65,10 +65,9 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
                 continue;
             }
 
-            KNode node = (KNode) lifeline.getProperty(InternalProperties.ORIGIN);
-            KShapeLayout nodeLayout = node.getData(KShapeLayout.class);
+            ElkNode node = (ElkNode) lifeline.getProperty(InternalProperties.ORIGIN);
 
-            if (nodeLayout.getProperty(SequenceDiagramOptions.NODE_TYPE)
+            if (node.getProperty(SequenceDiagramOptions.NODE_TYPE)
                     == NodeType.SURROUNDING_INTERACTION) {
                 
                 // This is the surrounding node
@@ -85,17 +84,15 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
             applyExecutionCoordinates(context, lifeline);
 
             // Set position and height for the lifeline.
-            nodeLayout.setYpos((float) lifeline.getPosition().y);
-            nodeLayout.setXpos((float) lifeline.getPosition().x);
-            nodeLayout.setHeight((float) lifeline.getSize().y);
+            node.setY(lifeline.getPosition().y);
+            node.setX(lifeline.getPosition().x);
+            node.setHeight(lifeline.getSize().y);
 
             // Place destruction if existing
-            KNode destruction = lifeline.getProperty(SequenceDiagramOptions.DESTRUCTION_NODE);
+            ElkNode destruction = lifeline.getProperty(SequenceDiagramOptions.DESTRUCTION_NODE);
             if (destruction != null) {
-                KShapeLayout destructLayout = destruction.getData(KShapeLayout.class);
-                double destructionXPos = nodeLayout.getWidth() / 2 - destructLayout.getWidth() / 2;
-                double destructionYPos = nodeLayout.getHeight() - destructLayout.getHeight();
-                destructLayout.setPos((float) destructionXPos, (float) destructionYPos);
+                destruction.setX(node.getWidth() / 2 - destruction.getWidth() / 2);
+                destruction.setY(node.getHeight() - destruction.getHeight());
             }
         }
 
@@ -103,10 +100,9 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
         placeComments(context.sgraph);
 
         // Set position and size of surrounding interaction
-        KShapeLayout parentLayout = context.kgraph.getData(KShapeLayout.class);
-        parentLayout.setWidth((float) context.sgraph.getSize().x);
-        parentLayout.setHeight((float) diagramHeight);
-        parentLayout.setPos((float) context.borderSpacing, (float) context.borderSpacing);
+        context.elkgraph.setWidth(context.sgraph.getSize().x);
+        context.elkgraph.setHeight(diagramHeight);
+        context.elkgraph.setLocation(context.borderSpacing, context.borderSpacing);
         
         progressMonitor.done();
     }
@@ -159,11 +155,10 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
 
         // Handle outgoing messages
         for (SMessage message : lifeline.getOutgoingMessages()) {
-            KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
-            KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
-            KPoint sourcePoint = edgeLayout.getSourcePoint();
-            sourcePoint.setY((float) (message.getSourceYPos() * factor));
-            sourcePoint.setX((float) (lifeline.getPosition().x + lifeline.getSize().x / 2));
+            ElkEdge edge = (ElkEdge) message.getProperty(InternalProperties.ORIGIN);
+            ElkEdgeSection section = ElkGraphUtil.firstEdgeSection(edge, false, false);
+            section.setStartY(message.getSourceYPos() * factor);
+            section.setStartX(lifeline.getPosition().x + lifeline.getSize().x / 2);
 
             // Set execution coordinates according to connected messages coordinates
             if (executions != null) {
@@ -193,24 +188,23 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
 
             // Handle messages that lead to something else than a lifeline
             if (message.getTarget().isDummy()) {
-                KPoint targetPoint = edgeLayout.getTargetPoint();
                 double reverseFactor = lifeline.getSize().y
                         / (diagramHeight + SequenceLayoutConstants.FOURTY);
-                targetPoint.setY((float)
-                        (SequenceLayoutConstants.TWENTY + message.getTargetYPos() * reverseFactor));
+                section.setEndY(
+                        SequenceLayoutConstants.TWENTY + message.getTargetYPos() * reverseFactor);
 
                 // Lost-messages end between its source and the next lifeline
                 if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) == MessageType.LOST) {
-                    targetPoint.setX((float) (lifeline.getPosition().x + lifeline.getSize().x 
-                            + context.lifelineSpacing / 2));
+                    section.setEndX(lifeline.getPosition().x + lifeline.getSize().x 
+                            + context.lifelineSpacing / 2);
                 }
             }
 
             if (message.getSource() == message.getTarget()) {
                 // Specify bendpoints for selfloops
-                List<KPoint> bendPoints = edgeLayout.getBendPoints();
-                bendPoints.get(0).setX((float) (llCenter + context.messageSpacing / 2));
-                bendPoints.get(0).setY(edgeLayout.getSourcePoint().getY());
+                List<ElkBendPoint> bendPoints = section.getBendPoints();
+                bendPoints.get(0).setX(llCenter + context.messageSpacing / 2);
+                bendPoints.get(0).setY(section.getStartY());
             }
 
             // Walk through the labels and adjust their position
@@ -219,20 +213,19 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
 
         // Handle incoming messages
         for (SMessage message : lifeline.getIncomingMessages()) {
-            KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
-            KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
-            KPoint targetPoint = edgeLayout.getTargetPoint();
-            targetPoint.setX((float) (lifeline.getPosition().x + lifeline.getSize().x / 2));
-            targetPoint.setY((float) (message.getTargetYPos() * factor));
+            ElkEdge edge = (ElkEdge) message.getProperty(InternalProperties.ORIGIN);
+            ElkEdgeSection section = ElkGraphUtil.firstEdgeSection(edge, false, false);
+            section.setEndX(lifeline.getPosition().x + lifeline.getSize().x / 2);
+            section.setEndY(message.getTargetYPos() * factor);
 
             if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) == MessageType.CREATE) {
                 // Reset x-position of create message because it leads to the header and not the line
-                targetPoint.setX((float) lifeline.getPosition().x);
+                section.setEndX(lifeline.getPosition().x);
             } else if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) 
                     == MessageType.DELETE) {
                 // Reset y-position of delete message to end at the end of the lifeline
-                targetPoint.setY((float) ((lifeline.getPosition().y + lifeline.getSize().y 
-                        - context.lifelineHeader) * factor));
+                section.setEndY((lifeline.getPosition().y + lifeline.getSize().y 
+                        - context.lifelineHeader) * factor);
             }
 
             // Reset execution coordinates if the message is contained in an execution
@@ -261,23 +254,22 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
 
             // Handle messages that come from something else than a lifeline
             if (message.getSource().isDummy()) {
-                KPoint sourcePoint = edgeLayout.getSourcePoint();
                 double reverseFactor = lifeline.getSize().y
                         / (diagramHeight + SequenceLayoutConstants.FOURTY);
-                sourcePoint.setY((float)
-                        (SequenceLayoutConstants.TWENTY + message.getSourceYPos() * reverseFactor));
+                section.setStartY(
+                        SequenceLayoutConstants.TWENTY + message.getSourceYPos() * reverseFactor);
 
                 // Found-messages start between its source and the previous lifeline
                 if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) == MessageType.FOUND) {
-                    sourcePoint.setX((float) (lifeline.getPosition().x - context.lifelineSpacing / 2));
+                    section.setStartX(lifeline.getPosition().x - context.lifelineSpacing / 2);
                 }
             }
 
             if (message.getSource() == message.getTarget()) {
                 // Specify bendpoints for selfloops
-                List<KPoint> bendPoints = edgeLayout.getBendPoints();
-                bendPoints.get(1).setX((float) (llCenter + context.messageSpacing / 2));
-                bendPoints.get(1).setY(edgeLayout.getTargetPoint().getY());
+                List<ElkBendPoint> bendPoints = section.getBendPoints();
+                bendPoints.get(1).setX(llCenter + context.messageSpacing / 2);
+                bendPoints.get(1).setY(section.getEndY());
             }
         }
     }
@@ -299,11 +291,9 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
      *            the edge representation of the message
      */
     private void placeLabels(final LayoutContext context, final SLifeline lifeline,
-            final double factor, final double llCenter, final SMessage message, final KEdge edge) {
+            final double factor, final double llCenter, final SMessage message, final ElkEdge edge) {
         
-        for (KLabel label : edge.getLabels()) {
-            KShapeLayout labelLayout = label.getData(KShapeLayout.class);
-
+        for (ElkLabel label : edge.getLabels()) {
             // The index of the current lifeline in the ordered list of lifelines
             int lifelineIndex = context.lifelineOrder.indexOf(lifeline);
 
@@ -318,26 +308,24 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
                         // lifeline
                         SLifeline nextLL = context.lifelineOrder.get(lifelineIndex + 1);
                         double center = (llCenter + nextLL.getPosition().x + nextLL.getSize().x / 2) / 2;
-                        labelLayout.setXpos((float) (center - labelLayout.getWidth() / 2));
+                        label.setX(center - label.getWidth() / 2);
                         break;
                     }
                 case SOURCE:
                     // Place labels near the source lifeline
-                    labelLayout.setXpos((float) llCenter + SequenceLayoutConstants.LABELSPACING);
+                    label.setX(llCenter + SequenceLayoutConstants.LABELSPACING);
                     break;
                 case CENTER:
                     // Place labels in the center of the message
                     double targetCenter = message.getTarget().getPosition().x
                             + message.getTarget().getSize().x / 2;
-                    labelLayout.setXpos((float) ((llCenter + targetCenter) / 2 - labelLayout
-                            .getWidth() / 2));
+                    label.setX((llCenter + targetCenter) / 2 - label.getWidth() / 2);
                 }
                 // Create messages should not overlap the target's header
                 if (message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE) == MessageType.CREATE) {
-                    labelLayout.setXpos((float) (llCenter + SequenceLayoutConstants.LABELSPACING));
+                    label.setX(llCenter + SequenceLayoutConstants.LABELSPACING);
                 }
-                labelLayout.setYpos((float) ((message.getSourceYPos() - labelLayout.getHeight() - 2)
-                        * factor));
+                label.setY((message.getSourceYPos() - label.getHeight() - 2) * factor);
             } else if (message.getTarget().getHorizontalSlot() < lifeline.getHorizontalSlot()) {
                 // Message leads leftwards
                 switch (context.labelAlignment) {
@@ -349,38 +337,34 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
                         // lifeline
                         SLifeline lastLL = context.lifelineOrder.get(lifelineIndex - 1);
                         double center = (llCenter + lastLL.getPosition().x + lastLL.getSize().x / 2) / 2;
-                        labelLayout.setXpos((float) (center - labelLayout.getWidth() / 2));
+                        label.setX(center - label.getWidth() / 2);
                         break;
                     }
                 case SOURCE:
                     // Place labels near the source lifeline
-                    labelLayout.setXpos((float)
-                            (llCenter - labelLayout.getWidth() - SequenceLayoutConstants.LABELSPACING));
+                    label.setX(llCenter - label.getWidth() - SequenceLayoutConstants.LABELSPACING);
                     break;
                 case CENTER:
                     // Place labels in the center of the message
                     double targetCenter = message.getTarget().getPosition().x
                             + message.getTarget().getSize().x / 2;
-                    labelLayout.setXpos((float) ((llCenter + targetCenter) / 2 - labelLayout
-                            .getWidth() / 2));
+                    label.setX((llCenter + targetCenter) / 2 - label.getWidth() / 2);
                 }
-                labelLayout.setYpos((float) ((message.getSourceYPos() + 2) * factor));
+                label.setY((message.getSourceYPos() + 2) * factor);
             } else {
                 // Message is selfloop
                 
                 // Place labels right of the selfloop
-                KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
+                ElkEdgeSection section = ElkGraphUtil.firstEdgeSection(edge, false, false);
                 double xPos;
-                if (edgeLayout.getBendPoints().size() > 0) {
-                    KPoint firstBend = edgeLayout.getBendPoints().get(0);
-                    xPos = firstBend.getX();
+                if (section.getBendPoints().size() > 0) {
+                    xPos = section.getBendPoints().get(0).getX();
                 } else {
-                    xPos = edgeLayout.getSourcePoint().getX();
+                    xPos = section.getStartX();
                 }
-                labelLayout.setYpos((float)
-                        ((message.getSourceYPos() + SequenceLayoutConstants.LABELSPACING) * factor));
-                labelLayout.setXpos((float)
-                        (xPos + SequenceLayoutConstants.LABELMARGIN / 2));
+                label.setY(
+                        (message.getSourceYPos() + SequenceLayoutConstants.LABELSPACING) * factor);
+                label.setX(xPos + SequenceLayoutConstants.LABELMARGIN / 2);
             }
         }
     }
@@ -403,15 +387,14 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
         arrangeExecutions(executions, lifeline.getSize().x);
 
         // Get the layout data of the execution
-        KNode node = (KNode) lifeline.getProperty(InternalProperties.ORIGIN);
-        KShapeLayout nodeLayout = node.getData(KShapeLayout.class);
+        ElkNode node = (ElkNode) lifeline.getProperty(InternalProperties.ORIGIN);
 
         // Walk through the lifeline's executions
-        nodeLayout.setProperty(SequenceDiagramOptions.EXECUTIONS, executions);
+        node.setProperty(SequenceDiagramOptions.EXECUTIONS, executions);
         for (SequenceExecution execution : executions) {
             Object executionObj = execution.getOrigin();
 
-            if (executionObj instanceof KNode) {
+            if (executionObj instanceof ElkNode) {
                 if (execution.getType() == SequenceExecutionType.DURATION
                         || execution.getType() == SequenceExecutionType.TIME_CONSTRAINT) {
                     
@@ -419,12 +402,11 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
                 }
 
                 // Apply calculated coordinates to the execution
-                KNode executionNode = (KNode) executionObj;
-                KShapeLayout shapelayout = executionNode.getData(KShapeLayout.class);
-                shapelayout.setXpos((float) execution.getPosition().x);
-                shapelayout.setYpos((float) (execution.getPosition().y - context.lifelineYPos));
-                shapelayout.setWidth((float) execution.getSize().x);
-                shapelayout.setHeight((float) execution.getSize().y);
+                ElkNode executionNode = (ElkNode) executionObj;
+                executionNode.setX(execution.getPosition().x);
+                executionNode.setY(execution.getPosition().y - context.lifelineYPos);
+                executionNode.setWidth(execution.getSize().x);
+                executionNode.setHeight(execution.getSize().y);
 
                 // Determine max and min y-pos of messages
                 double minYPos = lifeline.getSize().y;
@@ -470,42 +452,42 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
                             toLeft = true;
                         }
 
-                        KEdge edge = (KEdge) mess.getProperty(InternalProperties.ORIGIN);
-                        KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
+                        ElkEdge edge = (ElkEdge) mess.getProperty(InternalProperties.ORIGIN);
+                        ElkEdgeSection section = ElkGraphUtil.firstEdgeSection(edge, false, false);
                         double newXPos = lifeline.getPosition().x + execution.getPosition().x;
                         if (mess.getSource() == mess.getTarget()) {
                             // Selfloop: insert bend points
-                            edgeLayout.getBendPoints().get(0).setY(edgeLayout.getSourcePoint().getY());
-                            edgeLayout.getBendPoints().get(1).setY(edgeLayout.getTargetPoint().getY());
-                            edgeLayout.getTargetPoint().setX((float) (newXPos + execution.getSize().x));
-                            edgeLayout.getTargetPoint().setY(0);
+                            section.getBendPoints().get(0).setY(section.getStartY());
+                            section.getBendPoints().get(1).setY(section.getEndY());
+                            section.setEndX(newXPos + execution.getSize().x);
+                            section.setEndY(0);
                         } else if (mess.getSource() == lifeline) {
                             if (!toLeft) {
                                 newXPos += execution.getSize().x;
                             }
-                            edgeLayout.getSourcePoint().setX((float) newXPos);
+                            section.setStartX(newXPos);
 
                             // Calculate the message's height relative to the execution
                             double relHeight = mess.getSourceYPos() - minYPos;
                             if (relHeight == 0) {
-                                edgeLayout.getSourcePoint().setY(0);
+                                section.setStartY(0);
                             } else {
-                                edgeLayout.getSourcePoint().setY(
-                                        (float) (context.lifelineHeader + relHeight * executionFactor));
+                                section.setStartY(
+                                        context.lifelineHeader + relHeight * executionFactor);
                             }
                         } else {
                             if (toLeft) {
                                 newXPos += execution.getSize().x;
                             }
-                            edgeLayout.getTargetPoint().setX((float) newXPos);
+                            section.setEndX(newXPos);
 
                             // Calculate the message's height relative to the execution
                             double relHeight = mess.getTargetYPos() - minYPos;
                             if (relHeight == 0) {
-                                edgeLayout.getTargetPoint().setY(0);
+                                section.setEndY(0);
                             } else {
-                                edgeLayout.getTargetPoint().setY(
-                                        (float) (context.lifelineHeader + relHeight * executionFactor));
+                                section.setEndY(
+                                        context.lifelineHeader + relHeight * executionFactor);
                             }
                         }
                     }
@@ -531,9 +513,9 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
             execution.getPosition().x = (parentWidth - executionWidth) / 2;
             // Give executions without messages their original height and yPos
             if (execution.getMessages().size() == 0) {
-                KShapeLayout shapelayout = execution.getOrigin().getData(KShapeLayout.class);
-                execution.getPosition().y = shapelayout.getYpos();
-                execution.getSize().y = shapelayout.getHeight();
+                ElkNode node = execution.getOrigin();
+                execution.getPosition().y = node.getY();
+                execution.getSize().y = node.getHeight();
             }
         }
 
@@ -585,9 +567,8 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
      */
     private void placeComments(final SGraph graph) {
         for (SComment comment : graph.getComments()) {
-            Object origin = comment.getProperty(InternalProperties.ORIGIN);
-            KShapeLayout commentLayout = ((KNode) origin).getData(KShapeLayout.class);
-            commentLayout.setPos((float) comment.getPosition().x, (float) comment.getPosition().y);
+            ElkNode node = (ElkNode) comment.getProperty(InternalProperties.ORIGIN);
+            node.setLocation(comment.getPosition().x, comment.getPosition().y);
             if (comment.getMessage() != null) {
                 // Connected comments
 
@@ -608,19 +589,19 @@ public final class PapyrusExporter implements ISequenceLayoutProcessor {
                     // Connections to messages are drawn vertically
                     edgeSourceXPos = comment.getPosition().x + comment.getSize().x / 2;
                     edgeTargetXPos = edgeSourceXPos;
-                    KEdge edge = (KEdge) comment.getMessage().getProperty(InternalProperties.ORIGIN);
-                    KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
-                    KPoint targetPoint = edgeLayout.getTargetPoint();
-                    KPoint sourcePoint = edgeLayout.getSourcePoint();
+                    ElkEdge edge =
+                            (ElkEdge) comment.getMessage().getProperty(InternalProperties.ORIGIN);
+                    ElkEdgeSection section = ElkGraphUtil.firstEdgeSection(edge, false, false);
                     edgeSourceYPos = comment.getPosition().y + comment.getSize().y;
-                    edgeTargetYPos = (targetPoint.getY() + sourcePoint.getY()) / 2;
+                    edgeTargetYPos = (section.getEndY() + section.getStartY()) / 2;
                 }
 
                 // Apply connection coordinates to layout
-                KEdgeLayout edgelayout = comment.getProperty(
-                        InternalSequenceProperties.COMMENT_CONNECTION).getData(KEdgeLayout.class);
-                edgelayout.getSourcePoint().setPos((float) edgeSourceXPos, (float) edgeSourceYPos);
-                edgelayout.getTargetPoint().setPos((float) edgeTargetXPos, (float) edgeTargetYPos);
+                ElkEdge edge = comment.getProperty(
+                        InternalSequenceProperties.COMMENT_CONNECTION);
+                ElkEdgeSection section = ElkGraphUtil.firstEdgeSection(edge, false, false);
+                section.setStartLocation(edgeSourceXPos, edgeSourceYPos);
+                section.setEndLocation(edgeTargetXPos, edgeTargetYPos);
             }
         }
     }

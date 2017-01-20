@@ -14,7 +14,7 @@
 package de.cau.cs.kieler.papyrus.sequence.properties;
 
 import org.eclipse.elk.alg.layered.graph.LNode;
-import org.eclipse.elk.graph.KEdge;
+import org.eclipse.elk.graph.ElkEdge;
 import org.eclipse.elk.graph.properties.IProperty;
 import org.eclipse.elk.graph.properties.Property;
 
@@ -34,7 +34,7 @@ public final class InternalSequenceProperties {
             "de.cau.cs.kieler.papyrus.sequence.layeredNode");
 
     /** The KEdge that connects the comment to another element of the diagram. */
-    public static final IProperty<KEdge> COMMENT_CONNECTION = new Property<KEdge>(
+    public static final IProperty<ElkEdge> COMMENT_CONNECTION = new Property<ElkEdge>(
             "de.cau.cs.kieler.papyrus.sequence.commentConnection");
 
 

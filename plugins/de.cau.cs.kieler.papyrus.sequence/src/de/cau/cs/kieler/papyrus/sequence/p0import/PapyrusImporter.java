@@ -23,13 +23,12 @@ import org.eclipse.elk.alg.layered.graph.LLabel;
 import org.eclipse.elk.alg.layered.graph.LNode;
 import org.eclipse.elk.alg.layered.graph.LPort;
 import org.eclipse.elk.alg.layered.properties.InternalProperties;
-import org.eclipse.elk.core.klayoutdata.KEdgeLayout;
-import org.eclipse.elk.core.klayoutdata.KPoint;
-import org.eclipse.elk.core.klayoutdata.KShapeLayout;
 import org.eclipse.elk.core.util.IElkProgressMonitor;
-import org.eclipse.elk.graph.KEdge;
-import org.eclipse.elk.graph.KLabel;
-import org.eclipse.elk.graph.KNode;
+import org.eclipse.elk.graph.ElkEdge;
+import org.eclipse.elk.graph.ElkEdgeSection;
+import org.eclipse.elk.graph.ElkLabel;
+import org.eclipse.elk.graph.ElkNode;
+import org.eclipse.elk.graph.util.ElkGraphUtil;
 
 import com.google.common.collect.Maps;
 
@@ -40,11 +39,11 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraphElement;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
+import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.NodeType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceArea;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramOptions;
-import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
 
 /**
@@ -63,7 +62,7 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
     public void process(final LayoutContext context, final IElkProgressMonitor progressMonitor) {
         progressMonitor.begin("Graph import", 1);
         
-        context.sgraph = importGraph(context.kgraph);
+        context.sgraph = importGraph(context.elkgraph);
         context.lgraph = createLayeredGraph(context.sgraph);
         
         progressMonitor.done();
@@ -74,34 +73,32 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
     // SGraph Creation
     
     /**
-     * Builds a PGraph out of a given KGraph by associating every KNode to a PLifeline and every
+     * Builds a PGraph out of a given KGraph by associating every ElkNode to a PLifeline and every
      * KEdge to a PMessage.
      * 
      * @param topNode
      *            the KGraphElement, that holds the nodes
      * @return the built SGraph
      */
-    private SGraph importGraph(final KNode topNode) {
+    private SGraph importGraph(final ElkNode topNode) {
         // Create a graph object
         SGraph sgraph = new SGraph();
         
         // Initialize node-lifeline and edge-message maps
-        HashMap<KNode, SLifeline> nodeMap = Maps.newHashMap();
-        HashMap<KEdge, SMessage> edgeMap = Maps.newHashMap();
+        HashMap<ElkNode, SLifeline> nodeMap = Maps.newHashMap();
+        HashMap<ElkEdge, SMessage> edgeMap = Maps.newHashMap();
         
         // Get the list of areas
-        List<SequenceArea> areas = topNode.getData(KShapeLayout.class).getProperty(
-                SequenceDiagramOptions.AREAS);
+        List<SequenceArea> areas = topNode.getProperty(SequenceDiagramOptions.AREAS);
 
         // Create lifeline objects
-        for (KNode node : topNode.getChildren()) {
+        for (ElkNode node : topNode.getChildren()) {
             createLifeline(sgraph, nodeMap, node);
         }
 
         // Walk through lifelines (create their messages) and comments
-        for (KNode node : topNode.getChildren()) {
-            NodeType nodeType = node.getData(KShapeLayout.class).getProperty(
-                    SequenceDiagramOptions.NODE_TYPE);
+        for (ElkNode node : topNode.getChildren()) {
+            NodeType nodeType = node.getProperty(SequenceDiagramOptions.NODE_TYPE);
             if (nodeType == NodeType.LIFELINE) {
                 // Node is a lifeline
 
@@ -151,20 +148,18 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
      * @param node
      *            the node to create a comment object from
      */
-    private void createCommentLikeNode(final SGraph sgraph, final HashMap<KNode, SLifeline> nodeMap,
-            final HashMap<KEdge, SMessage> edgeMap, final KNode node) {
-
-        KShapeLayout commentLayout = node.getData(KShapeLayout.class);
+    private void createCommentLikeNode(final SGraph sgraph, final HashMap<ElkNode, SLifeline> nodeMap,
+            final HashMap<ElkEdge, SMessage> edgeMap, final ElkNode node) {
 
         // Get the node's type
-        NodeType nodeType = commentLayout.getProperty(SequenceDiagramOptions.NODE_TYPE);
+        NodeType nodeType = node.getProperty(SequenceDiagramOptions.NODE_TYPE);
 
         // Create comment object
         SComment comment = new SComment();
         comment.setProperty(InternalProperties.ORIGIN, node);
         comment.setProperty(SequenceDiagramOptions.NODE_TYPE, nodeType);
         comment.setProperty(SequenceDiagramOptions.ATTACHED_ELEMENT_TYPE,
-                commentLayout.getProperty(SequenceDiagramOptions.ATTACHED_ELEMENT_TYPE));
+                node.getProperty(SequenceDiagramOptions.ATTACHED_ELEMENT_TYPE));
         
         // Attach connected edge to comment
         if (!node.getOutgoingEdges().isEmpty()) {
@@ -173,24 +168,24 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
         }
 
         // Copy all the entries of the list of attached elements to the comment object
-        List<Object> attachedTo = commentLayout.getProperty(
+        List<Object> attachedTo = node.getProperty(
                 SequenceDiagramOptions.ATTACHED_OBJECTS);
         if (attachedTo != null) {
             List<SGraphElement> attTo = comment.getAttachedTo();
             for (Object att : attachedTo) {
-                if (att instanceof KNode) {
+                if (att instanceof ElkNode) {
                     attTo.add(nodeMap.get(att));
-                } else if (att instanceof KEdge) {
+                } else if (att instanceof ElkEdge) {
                     attTo.add(edgeMap.get(att));
                 }
             }
         }
 
         // Copy layout information
-        comment.getPosition().x = commentLayout.getXpos();
-        comment.getPosition().y = commentLayout.getYpos();
-        comment.getSize().x = commentLayout.getWidth();
-        comment.getSize().y = commentLayout.getHeight();
+        comment.getPosition().x = node.getX();
+        comment.getPosition().y = node.getY();
+        comment.getSize().x = node.getWidth();
+        comment.getSize().y = node.getHeight();
 
         // Handle time observations
         if (nodeType == NodeType.TIME_OBSERVATION) {
@@ -202,7 +197,7 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
             double smallestDistance = Double.MAX_VALUE;
             for (SLifeline lifeline : sgraph.getLifelines()) {
                 double distance = Math.abs((lifeline.getPosition().x + lifeline.getSize().x / 2)
-                        - (commentLayout.getXpos() + commentLayout.getWidth() / 2));
+                        - (node.getX() + node.getWidth() / 2));
                 if (distance < smallestDistance) {
                     smallestDistance = distance;
                     nextLifeline = lifeline;
@@ -213,15 +208,15 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
             SMessage nextMessage = null;
             smallestDistance = Double.MAX_VALUE;
             for (SMessage message : nextLifeline.getMessages()) {
-                KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
-                KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
+                ElkEdge edge = (ElkEdge) message.getProperty(InternalProperties.ORIGIN);
+                ElkEdgeSection edgeSection = ElkGraphUtil.firstEdgeSection(edge, false, false);
                 double distance;
                 if (message.getSource() == nextLifeline) {
-                    distance = Math.abs((edgeLayout.getSourcePoint().getY())
-                            - (commentLayout.getYpos() + commentLayout.getHeight() / 2));
+                    distance = Math.abs((edgeSection.getStartY())
+                            - (node.getY() + node.getHeight() / 2));
                 } else {
-                    distance = Math.abs((edgeLayout.getTargetPoint().getY())
-                            - (commentLayout.getYpos() + commentLayout.getHeight() / 2));
+                    distance = Math.abs((edgeSection.getEndY())
+                            - (node.getY() + node.getHeight() / 2));
                 }
                 
                 if (distance < smallestDistance) {
@@ -263,10 +258,10 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
             SLifeline lifeline = (SLifeline) lifelineObj;
             for (SMessage message : lifeline.getIncomingMessages()) {
                 Object originObj = message.getProperty(InternalProperties.ORIGIN);
-                if (originObj instanceof KEdge) {
-                    KEdge edge = (KEdge) originObj;
-                    KEdgeLayout layout = edge.getData(KEdgeLayout.class);
-                    double yPos = layout.getTargetPoint().getY();
+                if (originObj instanceof ElkEdge) {
+                    ElkEdge edge = (ElkEdge) originObj;
+                    ElkEdgeSection section = ElkGraphUtil.firstEdgeSection(edge, false, false);
+                    double yPos = section.getEndY();
                     if (yPos > lowerEnd && yPos < uppermostPosition) {
                         nextMessage = message;
                         uppermostPosition = yPos;
@@ -275,10 +270,10 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
             }
             for (SMessage message : lifeline.getOutgoingMessages()) {
                 Object originObj = message.getProperty(InternalProperties.ORIGIN);
-                if (originObj instanceof KEdge) {
-                    KEdge edge = (KEdge) originObj;
-                    KEdgeLayout layout = edge.getData(KEdgeLayout.class);
-                    double yPos = layout.getSourcePoint().getY();
+                if (originObj instanceof ElkEdge) {
+                    ElkEdge edge = (ElkEdge) originObj;
+                    ElkEdgeSection section = ElkGraphUtil.firstEdgeSection(edge, false, false);
+                    double yPos = section.getStartY();
                     if (yPos > lowerEnd && yPos < uppermostPosition) {
                         nextMessage = message;
                         uppermostPosition = yPos;
@@ -303,14 +298,14 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
      * @param areas
      *            the list of areas
      * @param node
-     *            the KNode to search its outgoing edges
+     *            the ElkNode to search its outgoing edges
      */
-    private void createMessages(final SGraph sgraph, final HashMap<KNode, SLifeline> nodeMap,
-            final HashMap<KEdge, SMessage> edgeMap, final List<SequenceArea> areas, final KNode node) {
+    private void createMessages(final SGraph sgraph, final HashMap<ElkNode, SLifeline> nodeMap,
+            final HashMap<ElkEdge, SMessage> edgeMap, final List<SequenceArea> areas, final ElkNode node) {
         
-        for (KEdge edge : node.getOutgoingEdges()) {
-            SLifeline sourceLL = nodeMap.get(edge.getSource());
-            SLifeline targetLL = nodeMap.get(edge.getTarget());
+        for (ElkEdge edge : node.getOutgoingEdges()) {
+            SLifeline sourceLL = nodeMap.get(edge.getSources().get(0));
+            SLifeline targetLL = nodeMap.get(edge.getTargets().get(0));
 
             // Lost-messages and messages to the surrounding interaction don't have a lifeline, so
             // create dummy lifeline
@@ -326,16 +321,15 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
             message.setProperty(InternalProperties.ORIGIN, edge);
             message.setComments(new LinkedList<SComment>());
 
-            KEdgeLayout layout = edge.getData(KEdgeLayout.class);
-            message.setSourceYPos(layout.getSourcePoint().getY());
-            message.setTargetYPos(layout.getTargetPoint().getY());
+            ElkEdgeSection section = ElkGraphUtil.firstEdgeSection(edge, false, false);
+            message.setSourceYPos(section.getStartY());
+            message.setTargetYPos(section.getEndY());
 
             // Read size of the attached label
             double maxLabelLength = 0;
-            for (KLabel label : edge.getLabels()) {
-                KShapeLayout labelLayout = label.getData(KShapeLayout.class);
-                if (labelLayout.getWidth() > maxLabelLength) {
-                    maxLabelLength = labelLayout.getWidth();
+            for (ElkLabel label : edge.getLabels()) {
+                if (label.getWidth() > maxLabelLength) {
+                    maxLabelLength = label.getWidth();
                 }
             }
             message.setLabelWidth(maxLabelLength);
@@ -371,7 +365,7 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
             }
 
             // Append the message type of the edge to the message
-            MessageType messageType = layout.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
+            MessageType messageType = edge.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
             if (messageType == MessageType.ASYNCHRONOUS
                     || messageType == MessageType.CREATE
                     || messageType == MessageType.DELETE
@@ -390,16 +384,16 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
             // check if message is in any area
             if (areas != null) {
                 for (SequenceArea area : areas) {
-                    if (isInArea(layout.getSourcePoint(), area)
-                            && isInArea(layout.getTargetPoint(), area)) {
+                    if (isInArea(section.getStartX(), section.getStartY(), area)
+                            && isInArea(section.getEndX(), section.getEndY(),  area)) {
                         
                         area.getMessages().add(message);
                         area.getLifelines().add(message.getSource());
                         area.getLifelines().add(message.getTarget());
                         
                         for (SequenceArea subArea : area.getSubAreas()) {
-                            if (isInArea(layout.getSourcePoint(), subArea)
-                                    && isInArea(layout.getTargetPoint(), subArea)) {
+                            if (isInArea(section.getStartX(), section.getStartY(), subArea)
+                                    && isInArea(section.getEndX(), section.getEndY(), subArea)) {
                                 
                                 subArea.getMessages().add(message);
                                 subArea.getLifelines().add(message.getSource());
@@ -423,15 +417,15 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
      * @param edgeMap
      *            the map of edge-message connections
      * @param node
-     *            the KNode to search its incoming edges.
+     *            the ElkNode to search its incoming edges.
      */
-    private void createIncomingMessages(final SGraph sgraph, final HashMap<KNode, SLifeline> nodeMap,
-            final HashMap<KEdge, SMessage> edgeMap, final KNode node) {
+    private void createIncomingMessages(final SGraph sgraph, final HashMap<ElkNode, SLifeline> nodeMap,
+            final HashMap<ElkEdge, SMessage> edgeMap, final ElkNode node) {
         
-        for (KEdge edge : node.getIncomingEdges()) {
-            KEdgeLayout layout = edge.getData(KEdgeLayout.class);
+        for (ElkEdge edge : node.getIncomingEdges()) {
+            ElkEdgeSection section = ElkGraphUtil.firstEdgeSection(edge, false, false);
 
-            SLifeline sourceLL = nodeMap.get(edge.getSource());
+            SLifeline sourceLL = nodeMap.get(edge.getSources().get(0));
             if (sourceLL == null) {
                 // TODO consider connections to comments and constraints!
                 // Create dummy lifeline as source since the message has no source lifeline
@@ -439,13 +433,13 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
                 dummy.setDummy(true);
                 dummy.setGraph(sgraph);
                 sourceLL = dummy;
-                SLifeline targetLL = nodeMap.get(edge.getTarget());
+                SLifeline targetLL = nodeMap.get(edge.getTargets().get(0));
 
                 // Create message object
                 SMessage message = new SMessage(sourceLL, targetLL);
                 message.setProperty(InternalProperties.ORIGIN, edge);
                 message.setComments(new LinkedList<SComment>());
-                message.setTargetYPos(layout.getTargetPoint().getY());
+                message.setTargetYPos(section.getEndY());
 
                 // Add the message to the source and target lifeline's list of messages
                 sourceLL.addMessage(message);
@@ -455,7 +449,7 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
                 edgeMap.put(edge, message);
 
                 // Append the message type of the edge to the message
-                MessageType messageType = layout.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
+                MessageType messageType = edge.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
                 if (messageType == MessageType.FOUND) {
                     message.setProperty(SequenceDiagramOptions.MESSAGE_TYPE, MessageType.FOUND);
                 } else {
@@ -498,20 +492,19 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
     }
 
     /**
-     * Creates the SLifeline for the KNode and copies its properties.
+     * Creates the SLifeline for the ElkNode and copies its properties.
      * 
      * @param sgraph
      *            the Sequence Graph
      * @param nodeMap
      *            the map of node-lifeline connections
      * @param node
-     *            the KNode to create a lifeline for
+     *            the ElkNode to create a lifeline for
      */
-    private void createLifeline(final SGraph sgraph, final HashMap<KNode, SLifeline> nodeMap,
-            final KNode node) {
+    private void createLifeline(final SGraph sgraph, final HashMap<ElkNode, SLifeline> nodeMap,
+            final ElkNode node) {
         
-        KShapeLayout layout = node.getData(KShapeLayout.class);
-        if (layout.getProperty(SequenceDiagramOptions.NODE_TYPE) == NodeType.LIFELINE) {
+        if (node.getProperty(SequenceDiagramOptions.NODE_TYPE) == NodeType.LIFELINE) {
             // Node is lifeline
             SLifeline lifeline = new SLifeline();
             if (node.getLabels().size() > 0) {
@@ -522,20 +515,20 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
             sgraph.addLifeline(lifeline);
 
             // Copy layout information to lifeline
-            lifeline.getPosition().x = layout.getXpos();
-            lifeline.getPosition().y = layout.getYpos();
-            lifeline.getSize().x = layout.getWidth();
-            lifeline.getSize().y = layout.getHeight();
+            lifeline.getPosition().x = node.getX();
+            lifeline.getPosition().y = node.getY();
+            lifeline.getSize().x = node.getWidth();
+            lifeline.getSize().y = node.getHeight();
 
             // Copy executions to lifeline
-            List<SequenceExecution> executions = layout.getProperty(
+            List<SequenceExecution> executions = node.getProperty(
                     SequenceDiagramOptions.EXECUTIONS);
             lifeline.setProperty(SequenceDiagramOptions.EXECUTIONS, executions);
 
             lifeline.setComments(new LinkedList<SComment>());
 
             // If the DESTRUCTION property is set, simply copy it over
-            KNode destructionNode = layout.getProperty(SequenceDiagramOptions.DESTRUCTION_NODE);
+            ElkNode destructionNode = node.getProperty(SequenceDiagramOptions.DESTRUCTION_NODE);
             if (destructionNode != null) {
                 lifeline.setProperty(SequenceDiagramOptions.DESTRUCTION_NODE, destructionNode);
             }
@@ -568,20 +561,20 @@ public final class PapyrusImporter implements ISequenceLayoutProcessor {
      *            the SequenceArea
      * @return true if the point is inside the area
      */
-    private boolean isInArea(final KPoint point, final SequenceArea area) {
-        if (point.getX() < area.getPosition().x) {
+    private boolean isInArea(final double x, final double y, final SequenceArea area) {
+        if (x < area.getPosition().x) {
             return false;
         }
         
-        if (point.getX() > area.getPosition().x + area.getSize().x) {
+        if (x > area.getPosition().x + area.getSize().x) {
             return false;
         }
         
-        if (point.getY() < area.getPosition().y) {
+        if (y < area.getPosition().y) {
             return false;
         }
         
-        if (point.getY() > area.getPosition().y + area.getSize().y) {
+        if (y > area.getPosition().y + area.getSize().y) {
             return false;
         }
         

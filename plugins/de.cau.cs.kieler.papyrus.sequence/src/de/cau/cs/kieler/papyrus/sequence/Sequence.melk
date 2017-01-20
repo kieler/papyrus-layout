@@ -16,7 +16,7 @@ package de.cau.cs.kieler.papyrus.sequence
 import de.cau.cs.kieler.papyrus.sequence.SequenceDiagramLayoutProvider
 import java.util.List
 import com.google.common.collect.Lists
-import org.eclipse.elk.graph.KNode
+import org.eclipse.elk.graph.ElkNode
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.LifelineSortingStrategy
 
 /**
@@ -40,7 +40,7 @@ algorithm sequence(SequenceDiagramLayoutProvider) {
         "A layout algorithm especially targeted at UML sequence diagrams."
     metadataClass properties.SequenceDiagramOptions
     category sequenceDiagrams
-    supports org.eclipse.elk.spacing.border = 12
+    supports org.eclipse.elk.spacing.componentComponent = 12
     supports elementId
     supports nodeType
     supports messageType
@@ -170,56 +170,56 @@ programmatic option attachedObjectId : int {
     targets nodes
 }
 
-programmatic option destructionNode : KNode {
+programmatic option destructionNode : ElkNode {
     label "Desctruction Node"
     description "The node that represents the destruction event of a lifeline, if any. Only used in Papyrus mode. In
                 KGraph mode, the algorithm automatically finds the destruction event node, if there is one."
     targets nodes
 }
 
-option messageSpacing : float {
+option messageSpacing : double {
     label "Message Spacing"
     description "The vertical spacing between two adjacent messages."
     targets parents
     default = 50
 }
 
-option lifelineSpacing : float {
+option lifelineSpacing : double {
     label "Lifeline Spacing"
     description "The horizontal spacing between two adjacent lifelines."
     targets parents
     default = 50
 }
 
-programmatic option lifelineYPos : float {
+programmatic option lifelineYPos : double {
     label "Vertical Lifeline Position"
     description "The vertical position of lifelines, if they do start at the top."
     targets parents
     default = 10
 }
 
-programmatic option lifelineHeaderHeight : float {
+programmatic option lifelineHeaderHeight : double {
     label "Lifeline Header Height"
     description "The height of the lifelien header."
     targets parents
     default = 30
 }
 
-programmatic option areaHeaderHeight : float {
+programmatic option areaHeaderHeight : double {
     label "Area Header Height"
     description "The height of combined fragment headers."
     targets parents
     default = 25
 }
 
-programmatic option timeObservationWidth : float {
+programmatic option timeObservationWidth : double {
     label "Time Observation Width"
     description "The width of time observations."
     targets parents
     default = 20
 }
 
-programmatic option containmentOffset : float {
+programmatic option containmentOffset : double {
     label "Containment Offset"
     description "The offset between two nested areas."
     targets parents

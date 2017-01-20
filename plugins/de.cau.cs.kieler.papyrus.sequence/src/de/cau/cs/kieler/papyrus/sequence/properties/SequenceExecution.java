@@ -16,7 +16,7 @@ package de.cau.cs.kieler.papyrus.sequence.properties;
 import java.util.List;
 
 import org.eclipse.elk.core.math.KVector;
-import org.eclipse.elk.graph.KNode;
+import org.eclipse.elk.graph.ElkNode;
 
 import com.google.common.collect.Lists;
 
@@ -34,8 +34,8 @@ import com.google.common.collect.Lists;
  */
 public final class SequenceExecution {
     
-    /** The originating KNode of the execution. */
-    private KNode origin;
+    /** The originating ElkNode of the execution. */
+    private ElkNode origin;
     /** The type of the execution. */
     private SequenceExecutionType type = null;
     /** The list of connected messages. */
@@ -48,12 +48,12 @@ public final class SequenceExecution {
     
     /**
      * Constructor that initializes the execution. The origin can be used to map the sequence execution
-     * to an original KNode that the size and position will eventually be transferred to.
+     * to an original ElkNode that the size and position will eventually be transferred to.
      * 
      * @param origin
      *            the origin this object is created for
      */
-    public SequenceExecution(final KNode origin) {
+    public SequenceExecution(final ElkNode origin) {
         this.origin = origin;
     }
 
@@ -115,11 +115,11 @@ public final class SequenceExecution {
     }
 
     /**
-     * Get the origin KNode of the execution.
+     * Get the origin ElkNode of the execution.
      * 
      * @return the origin
      */
-    public KNode getOrigin() {
+    public ElkNode getOrigin() {
         return origin;
     }
 

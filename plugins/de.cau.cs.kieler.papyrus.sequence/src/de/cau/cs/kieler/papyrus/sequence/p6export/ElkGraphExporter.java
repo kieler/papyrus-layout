@@ -16,16 +16,15 @@ package de.cau.cs.kieler.papyrus.sequence.p6export;
 import java.util.List;
 
 import org.eclipse.elk.alg.layered.properties.InternalProperties;
-import org.eclipse.elk.core.klayoutdata.KEdgeLayout;
-import org.eclipse.elk.core.klayoutdata.KLayoutDataFactory;
-import org.eclipse.elk.core.klayoutdata.KPoint;
-import org.eclipse.elk.core.klayoutdata.KShapeLayout;
 import org.eclipse.elk.core.math.KVector;
 import org.eclipse.elk.core.util.ElkUtil;
 import org.eclipse.elk.core.util.IElkProgressMonitor;
-import org.eclipse.elk.graph.KEdge;
-import org.eclipse.elk.graph.KLabel;
-import org.eclipse.elk.graph.KNode;
+import org.eclipse.elk.graph.ElkBendPoint;
+import org.eclipse.elk.graph.ElkEdge;
+import org.eclipse.elk.graph.ElkEdgeSection;
+import org.eclipse.elk.graph.ElkLabel;
+import org.eclipse.elk.graph.ElkNode;
+import org.eclipse.elk.graph.util.ElkGraphUtil;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -37,10 +36,10 @@ import de.cau.cs.kieler.papyrus.sequence.graph.SComment;
 import de.cau.cs.kieler.papyrus.sequence.graph.SGraph;
 import de.cau.cs.kieler.papyrus.sequence.graph.SLifeline;
 import de.cau.cs.kieler.papyrus.sequence.graph.SMessage;
+import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.LabelAlignment;
 import de.cau.cs.kieler.papyrus.sequence.properties.MessageType;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceDiagramOptions;
-import de.cau.cs.kieler.papyrus.sequence.properties.InternalSequenceProperties;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecution;
 import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecutionType;
 
@@ -49,7 +48,7 @@ import de.cau.cs.kieler.papyrus.sequence.properties.SequenceExecutionType;
  * 
  * @author cds
  */
-public final class KGraphExporter implements ISequenceLayoutProcessor {
+public final class ElkGraphExporter implements ISequenceLayoutProcessor {
 
     /**
      * {@inheritDoc}
@@ -65,8 +64,7 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                 continue;
             }
 
-            KNode node = (KNode) lifeline.getProperty(InternalProperties.ORIGIN);
-            KShapeLayout nodeLayout = node.getData(KShapeLayout.class);
+            ElkNode node = (ElkNode) lifeline.getProperty(InternalProperties.ORIGIN);
 
             // Handle messages of the lifeline and their labels
             double lowestMessageCoordinate = applyMessageCoordinates(context, lifeline);
@@ -76,37 +74,33 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
 
             // Place destruction if existing (this may change the lifeline's height, since the
             // desctruction event will be placed directly below the last incident message)
-            KNode destruction = lifeline.getProperty(SequenceDiagramOptions.DESTRUCTION_NODE);
+            ElkNode destruction = lifeline.getProperty(SequenceDiagramOptions.DESTRUCTION_NODE);
             if (destruction != null) {
                 // Calculate the lifeline's new height
                 double heightDelta = lowestMessageCoordinate + context.messageSpacing
                         - (lifeline.getPosition().y + lifeline.getSize().y);
                 lifeline.getSize().y += heightDelta;
                 
-                KShapeLayout destructLayout = destruction.getData(KShapeLayout.class);
-                double destructionXPos = lifeline.getSize().x / 2 - destructLayout.getWidth() / 2;
-                double destructionYPos = lifeline.getSize().y - destructLayout.getHeight();
-                destructLayout.setPos((float) destructionXPos, (float) destructionYPos);
+                destruction.setX(lifeline.getSize().x / 2 - destruction.getWidth() / 2);
+                destruction.setY(lifeline.getSize().y - destruction.getHeight());
             }
 
             // Set position and height for the lifeline.
-            nodeLayout.setYpos((float) lifeline.getPosition().y);
-            nodeLayout.setXpos((float) lifeline.getPosition().x);
-            nodeLayout.setHeight((float) lifeline.getSize().y);
+            node.setY(lifeline.getPosition().y);
+            node.setX(lifeline.getPosition().x);
+            node.setHeight(lifeline.getSize().y);
         }
 
         // Place all comments
         placeComments(context.sgraph);
 
         // Set size and position of surrounding interaction
-        ElkUtil.resizeNode(context.kgraph,
-                (float) context.sgraph.getSize().x,
-                (float) context.sgraph.getSize().y,
-                false,
-                false);
+        ElkUtil.resizeNode(context.elkgraph,
+                context.sgraph.getSize().x, context.sgraph.getSize().y,
+                false, false);
         
-        KShapeLayout parentLayout = context.kgraph.getData(KShapeLayout.class);
-        parentLayout.setPos((float) context.borderSpacing, (float) context.borderSpacing);
+        context.elkgraph.setX(context.borderSpacing);
+        context.elkgraph.setY(context.borderSpacing);
         
         progressMonitor.done();
     }
@@ -156,23 +150,20 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         
         assert lifeline == message.getSource();
         
-        KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
-        KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
+        ElkEdge edge = (ElkEdge) message.getProperty(InternalProperties.ORIGIN);
+        // Clear the bend points of all edges (this is safe to do here since we will only be adding
+        // bend points for self loops, which we encounter first as outgoing messages, so we're not
+        // clearing bend points set by the incoming message handling)
+        ElkEdgeSection edgeSection = ElkGraphUtil.firstEdgeSection(edge, true, true);
 
         MessageType messageType = message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
         
         // Compute the horizontal center of the lifeline to be used later
         double llCenter = lifeline.getPosition().x + lifeline.getSize().x / 2;
         
-        // Clear the bend points of all edges (this is safe to do here since we will only be adding
-        // bend points for self loops, which we encounter first as outgoing messages, so we're not
-        // clearing bend points set by the incoming message handling)
-        edgeLayout.getBendPoints().clear();
-        
         // Apply source point position
-        KPoint sourcePoint = edgeLayout.getSourcePoint();
-        sourcePoint.setY((float) message.getSourceYPos());
-        sourcePoint.setX((float) llCenter);
+        edgeSection.setStartY(message.getSourceYPos());
+        edgeSection.setStartY(llCenter);
         
         // Check if the message connects to executions
         List<SequenceExecution> executions = lifeline.getProperty(
@@ -210,23 +201,21 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
 
         // Lost messages end between their source and the next lifeline
         if (messageType == MessageType.LOST) {
-            edgeLayout.getTargetPoint().setX((float)
-                    (lifeline.getPosition().x + lifeline.getSize().x + context.lifelineSpacing / 2));
-            edgeLayout.getTargetPoint().setY((float) message.getTargetYPos());
+            edgeSection.setEndX(
+                    lifeline.getPosition().x + lifeline.getSize().x + context.lifelineSpacing / 2);
+            edgeSection.setEndY(message.getTargetYPos());
             
             // A lost message is supposed to have a target dummy node in the KGraph; set its position
-            KNode dummy = edge.getTarget();
-            KShapeLayout dummyLayout = dummy.getData(KShapeLayout.class);
-            dummyLayout.setXpos(edgeLayout.getTargetPoint().getX());
-            dummyLayout.setYpos(edgeLayout.getTargetPoint().getY() - dummyLayout.getHeight() / 2);
+            ElkNode dummy = ElkGraphUtil.connectableShapeToNode(edge.getTargets().get(0));
+            dummy.setX(edgeSection.getEndX());
+            dummy.setY(edgeSection.getEndY() - dummy.getHeight() / 2);
         }
         
         // Specify bend points for self loops
         if (message.getSource() == message.getTarget()) {
-            KPoint bendPoint = KLayoutDataFactory.eINSTANCE.createKPoint();
-            bendPoint.setX((float) (llCenter + context.messageSpacing / 2));
-            bendPoint.setY(edgeLayout.getSourcePoint().getY());
-            edgeLayout.getBendPoints().add(bendPoint);
+            ElkBendPoint bendPoint = ElkGraphUtil.createBendPoint(edgeSection); 
+            bendPoint.setX(llCenter + context.messageSpacing / 2);
+            bendPoint.setY(edgeSection.getStartY());
         }
 
         // Walk through the labels and adjust their position
@@ -245,8 +234,8 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         
         assert lifeline == message.getTarget();
         
-        KEdge edge = (KEdge) message.getProperty(InternalProperties.ORIGIN);
-        KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
+        ElkEdge edge = (ElkEdge) message.getProperty(InternalProperties.ORIGIN);
+        ElkEdgeSection edgeSection = ElkGraphUtil.firstEdgeSection(edge, false, false);
 
         MessageType messageType = message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
         
@@ -254,9 +243,8 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         double llCenter = lifeline.getPosition().x + lifeline.getSize().x / 2;
         
         // Apply target point position
-        KPoint targetPoint = edgeLayout.getTargetPoint();
-        targetPoint.setY((float) message.getTargetYPos());
-        targetPoint.setX((float) llCenter);
+        edgeSection.setEndY(message.getTargetYPos());
+        edgeSection.setEndX(llCenter);
         
         if (messageType == MessageType.CREATE) {
             // Set lifeline's yPos to the yPos of the create-message and modify lifeline height
@@ -268,11 +256,11 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             lifeline.getSize().y -= delta;
             
             // Reset x-position of create message because it leads to the header and not the line
-            targetPoint.setX((float) lifeline.getPosition().x);
+            edgeSection.setEndX(lifeline.getPosition().x);
         } else if (messageType == MessageType.DELETE) {
             // If the lifeline extends beyond the message target position, shorten the lifeline
-            if (lifeline.getPosition().y + lifeline.getSize().y > targetPoint.getY()) {
-                lifeline.getSize().y = targetPoint.getY() - lifeline.getPosition().y;
+            if (lifeline.getPosition().y + lifeline.getSize().y > edgeSection.getEndY()) {
+                lifeline.getSize().y = edgeSection.getEndY() - lifeline.getPosition().y;
             }
         }
 
@@ -312,15 +300,13 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
 
         // Found messages start between their target and the previous lifeline
         if (messageType == MessageType.FOUND) {
-            edgeLayout.getSourcePoint().setX((float)
-                    (lifeline.getPosition().x - context.lifelineSpacing / 2));
-            edgeLayout.getSourcePoint().setY((float) message.getSourceYPos());
+            edgeSection.setStartX(lifeline.getPosition().x - context.lifelineSpacing / 2);
+            edgeSection.setStartY(message.getSourceYPos());
             
             // A found message is supposed to have a source dummy node in the KGraph; set its position
-            KNode dummy = edge.getSource();
-            KShapeLayout dummyLayout = dummy.getData(KShapeLayout.class);
-            dummyLayout.setXpos(edgeLayout.getSourcePoint().getX() - dummyLayout.getWidth());
-            dummyLayout.setYpos(edgeLayout.getSourcePoint().getY() - dummyLayout.getHeight() / 2);
+            ElkNode dummy = ElkGraphUtil.connectableShapeToNode(edge.getSources().get(0));
+            dummy.setX(edgeSection.getStartX() - dummy.getWidth());
+            dummy.setY(edgeSection.getStartY() - dummy.getHeight() / 2);
             
             // Found messages now need to have their label placed
             placeLabels(context, message, edge);
@@ -328,10 +314,9 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
         
         // Specify bend points for self loops
         if (message.getSource() == message.getTarget()) {
-            KPoint bendPoint = KLayoutDataFactory.eINSTANCE.createKPoint();
-            bendPoint.setX((float) (llCenter + context.messageSpacing / 2));
-            bendPoint.setY(edgeLayout.getTargetPoint().getY());
-            edgeLayout.getBendPoints().add(bendPoint);
+            ElkBendPoint bendPoint = ElkGraphUtil.createBendPoint(edgeSection);
+            bendPoint.setX(llCenter + context.messageSpacing / 2);
+            bendPoint.setY(edgeSection.getEndY());
         }
     }
     
@@ -369,41 +354,37 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      * @param edge
      *            the edge representing the message in the original graph
      */
-    private void placeLabels(final LayoutContext context, final SMessage message, final KEdge edge) {
+    private void placeLabels(final LayoutContext context, final SMessage message, final ElkEdge edge) {
         // If the message is a lost / found message, its direction will not depend on the
         // target / source lifeline's index in the ordered lifeline list
         MessageType messageType = message.getProperty(SequenceDiagramOptions.MESSAGE_TYPE);
         
-        for (KLabel label : edge.getLabels()) {
-            KShapeLayout labelLayout = label.getData(KShapeLayout.class);
-            
+        for (ElkLabel label : edge.getLabels()) {
             SLifeline messageTarget = message.getTarget();
             SLifeline messageSource = message.getSource();
             
             if (messageType == MessageType.LOST) {
-                placeRightPointingMessageLabels(context, message, labelLayout);
+                placeRightPointingMessageLabels(context, message, label);
             } else if (messageSource.getHorizontalSlot() < messageTarget.getHorizontalSlot()) {
-                placeRightPointingMessageLabels(context, message, labelLayout);
+                placeRightPointingMessageLabels(context, message, label);
             } else if (messageSource.getHorizontalSlot() > messageTarget.getHorizontalSlot()) {
-                placeLeftPointingMessageLabels(context, message, labelLayout);
+                placeLeftPointingMessageLabels(context, message, label);
             } else {
                 // The message is a self loop, so place labels to its right
-                KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
+                ElkEdgeSection edgeSection = ElkGraphUtil.firstEdgeSection(edge, false, false);
                 double xPos;
-                if (edgeLayout.getBendPoints().size() > 0) {
-                    KPoint firstBend = edgeLayout.getBendPoints().get(0);
+                if (edgeSection.getBendPoints().size() > 0) {
+                    ElkBendPoint firstBend = edgeSection.getBendPoints().get(0);
                     xPos = firstBend.getX();
                 } else {
-                    xPos = edgeLayout.getSourcePoint().getX();
+                    xPos = edgeSection.getStartX();
                 }
-                labelLayout.setYpos((float)
-                        (message.getSourceYPos() + SequenceLayoutConstants.LABELSPACING));
-                labelLayout.setXpos((float)
-                        (xPos + SequenceLayoutConstants.LABELMARGIN / 2));
+                label.setY(message.getSourceYPos() + SequenceLayoutConstants.LABELSPACING);
+                label.setX(xPos + SequenceLayoutConstants.LABELMARGIN / 2);
             }
             
             // Labels may cause the graph's width to get wider. Compensate!
-            ensureGraphIsWideEnough(context, labelLayout.getXpos() + labelLayout.getWidth());
+            ensureGraphIsWideEnough(context, label.getX() + label.getWidth());
         }
     }
 
@@ -415,17 +396,17 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      *            the layout context that contains all relevant information for the current layout run.
      * @param message
      *            the message whose label to place
-     * @param labelLayout
-     *            layout of the label to be placed where the layout information will be stored
+     * @param label
+     *            the label to be placed where the layout information will be stored
      */
     private void placeRightPointingMessageLabels(final LayoutContext context, final SMessage message,
-            final KShapeLayout labelLayout) {
+            final ElkLabel label) {
         
         SLifeline srcLifeline = message.getSource();
         double llCenter = srcLifeline.getPosition().x + srcLifeline.getSize().x / 2;
         
         // Labels are placed above messages pointing rightwards
-        labelLayout.setYpos((float) (message.getSourceYPos() - labelLayout.getHeight() - 2));
+        label.setY(message.getSourceYPos() - label.getHeight() - 2);
         
         // For the horizontal alignment, we need to check which alignment strategy to use
         LabelAlignment alignment = context.labelAlignment;
@@ -447,17 +428,17 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             // Place label centered between the source lifeline and the next lifeline
             SLifeline nextLL = context.lifelineOrder.get(srcLifeline.getHorizontalSlot() + 1);
             double center = (llCenter + nextLL.getPosition().x + nextLL.getSize().x / 2) / 2;
-            labelLayout.setXpos((float) (center - labelLayout.getWidth() / 2));
+            label.setX(center - label.getWidth() / 2);
             break;
         case SOURCE:
             // Place label near the source lifeline
-            labelLayout.setXpos((float) llCenter + SequenceLayoutConstants.LABELSPACING);
+            label.setX(llCenter + SequenceLayoutConstants.LABELSPACING);
             break;
         case CENTER:
             // Place label at the center of the message
             double targetCenter = message.getTarget().getPosition().x
                     + message.getTarget().getSize().x / 2;
-            labelLayout.setXpos((float) ((llCenter + targetCenter) / 2 - labelLayout.getWidth() / 2));
+            label.setX((llCenter + targetCenter) / 2 - label.getWidth() / 2);
             break;
         }
     }
@@ -470,17 +451,17 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      *            the layout context that contains all relevant information for the current layout run.
      * @param message
      *            the message whose label to place
-     * @param labelLayout
-     *            layout of the label to be placed where the layout information will be stored
+     * @param label
+     *            the label to be placed where the layout information will be stored
      */
     private void placeLeftPointingMessageLabels(final LayoutContext context, final SMessage message,
-            final KShapeLayout labelLayout) {
+            final ElkLabel label) {
 
         SLifeline srcLifeline = message.getSource();
         double llCenter = srcLifeline.getPosition().x + srcLifeline.getSize().x / 2;
 
         // Labels are placed below messages pointing leftwards
-        labelLayout.setYpos((float) (message.getSourceYPos() + 2));
+        label.setY(message.getSourceYPos() + 2);
         
         // For the horizontal alignment, we need to check which alignment strategy to use
         LabelAlignment alignment = context.labelAlignment;
@@ -496,18 +477,17 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             // Place label centered between the source lifeline and the previous lifeline
             SLifeline lastLL = context.lifelineOrder.get(srcLifeline.getHorizontalSlot() - 1);
             double center = (llCenter + lastLL.getPosition().x + lastLL.getSize().x / 2) / 2;
-            labelLayout.setXpos((float) (center - labelLayout.getWidth() / 2));
+            label.setX(center - label.getWidth() / 2);
             break;
         case SOURCE:
             // Place label near the source lifeline
-            labelLayout.setXpos((float)
-                    (llCenter - labelLayout.getWidth() - SequenceLayoutConstants.LABELSPACING));
+            label.setX(llCenter - label.getWidth() - SequenceLayoutConstants.LABELSPACING);
             break;
         case CENTER:
             // Place label at the center of the message
-            double targetCenter = message.getTarget().getPosition().x
-                    + message.getTarget().getSize().x / 2;
-            labelLayout.setXpos((float) ((llCenter + targetCenter) / 2 - labelLayout.getWidth() / 2));
+            double targetCenter =
+                    message.getTarget().getPosition().x + message.getTarget().getSize().x / 2;
+            label.setX((llCenter + targetCenter) / 2 - label.getWidth() / 2);
             break;
         }
     }
@@ -547,15 +527,14 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             }
 
             // Apply calculated coordinates to the execution
-            KNode executionNode = (KNode) execution.getOrigin();
+            ElkNode executionNode = (ElkNode) execution.getOrigin();
             
-            KShapeLayout executionlayout = executionNode.getData(KShapeLayout.class);
-            executionlayout.setXpos((float) execution.getPosition().x);
-            executionlayout.setYpos((float) (execution.getPosition().y - lifeline.getPosition().y));
-            executionlayout.setWidth((float) execution.getSize().x);
-            executionlayout.setHeight((float) execution.getSize().y);
+            executionNode.setX(execution.getPosition().x);
+            executionNode.setY(execution.getPosition().y - lifeline.getPosition().y);
+            executionNode.setWidth(execution.getSize().x);
+            executionNode.setHeight(execution.getSize().y);
             
-            ensureGraphIsWideEnough(context, executionlayout.getXpos() + executionlayout.getWidth());
+            ensureGraphIsWideEnough(context, executionNode.getX() + executionNode.getWidth());
 
             // Walk through execution's messages and adjust their position
             for (Object messObj : execution.getMessages()) {
@@ -571,8 +550,8 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                 boolean toRight = smessage.getSource().getHorizontalSlot()
                         < smessage.getTarget().getHorizontalSlot();
 
-                KEdge edge = (KEdge) smessage.getProperty(InternalProperties.ORIGIN);
-                KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
+                ElkEdge edge = (ElkEdge) smessage.getProperty(InternalProperties.ORIGIN);
+                ElkEdgeSection edgeSection = ElkGraphUtil.firstEdgeSection(edge, false, false);
                 
                 // x coordinate for messages attached to the left side of the execution
                 double newXPos = lifeline.getPosition().x + execution.getPosition().x;
@@ -581,8 +560,8 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                     if (toRight) {
                         newXPos += execution.getSize().x;
                     }
-                    double delta = newXPos - edgeLayout.getSourcePoint().getX();
-                    offsetX(edgeLayout.getSourcePoint(), (float) delta, context);
+                    double delta = newXPos - edgeSection.getStartX();
+                    offsetStartX(edgeSection, delta, context);
                     
                     // TODO Labels positioned at the source should be offset as well
                 }
@@ -591,8 +570,8 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                     if (!toRight) {
                         newXPos += execution.getSize().x;
                     }
-                    double delta = newXPos - edgeLayout.getTargetPoint().getX();
-                    offsetX(edgeLayout.getTargetPoint(), (float) delta, context);
+                    double delta = newXPos - edgeSection.getEndX();
+                    offsetEndX(edgeSection, delta, context);
                 }
             }
         }
@@ -686,12 +665,10 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
             assert selfMsg.getTarget() == lifeline : "Message target not expected lifeline";
             
             // Retrieve message layout info
-            KEdge selfMsgEdge = (KEdge) selfMsg.getProperty(InternalProperties.ORIGIN);
-            KEdgeLayout selfMsgEdgeLayout = selfMsgEdge.getData(KEdgeLayout.class);
+            ElkEdge selfMsgEdge = (ElkEdge) selfMsg.getProperty(InternalProperties.ORIGIN);
+            ElkEdgeSection selfMsgEdgeSection =
+                    ElkGraphUtil.firstEdgeSection(selfMsgEdge, false, false);
 
-            KPoint msgSourcePoint = selfMsgEdgeLayout.getSourcePoint();
-            KPoint msgTargetPoint = selfMsgEdgeLayout.getTargetPoint();
-            
             // We iterate over all connected executions and check for both the source and the target
             // point if they are in the execution's vertical area. For each of the points, we remember
             // the required offset and apply it. The two bend points are offset by the maximum.
@@ -704,61 +681,86 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                 double execBotYPos = execTopYPos + execution.getSize().y;
                 
                 // Check if the source point is in the execution's area
-                if (msgSourcePoint.getY() >= execTopYPos && msgSourcePoint.getY() <= execBotYPos) {
+                if (selfMsgEdgeSection.getStartY() >= execTopYPos
+                        && selfMsgEdgeSection.getStartY() <= execBotYPos) {
                     sourceOffset = Math.max(sourceOffset,
                             execution.getPosition().x + execution.getSize().x - lifelineXCenter);
                 }
                 
                 // Check if the target point is in the execution's area
-                if (msgTargetPoint.getY() >= execTopYPos && msgTargetPoint.getY() <= execBotYPos) {
+                if (selfMsgEdgeSection.getEndY() >= execTopYPos
+                        && selfMsgEdgeSection.getEndY() <= execBotYPos) {
                     targetOffset = Math.max(targetOffset,
                             execution.getPosition().x + execution.getSize().x - lifelineXCenter);
                 }
             }
             
             // Apply offsets
-            offsetX(msgSourcePoint, (float) sourceOffset, context);
-            offsetX(msgTargetPoint, (float) targetOffset, context);
+            offsetStartX(selfMsgEdgeSection, sourceOffset, context);
+            offsetEndX(selfMsgEdgeSection, targetOffset, context);
             
-            float maxOffset = (float) Math.max(sourceOffset, targetOffset);
-            offsetX(selfMsgEdgeLayout.getBendPoints(), maxOffset, context);
+            double maxOffset = Math.max(sourceOffset, targetOffset);
+            offsetBendpointsX(selfMsgEdgeSection, maxOffset, context);
             offsetLabelsX(selfMsgEdge.getLabels(), maxOffset, context);
         }
     }
     
     /**
-     * Adds the given delta to the given point's X coordinate. Also ensures the graph is wide enough
-     * to accomodate the new point.
+     * Adds the given delta to the given sections's start X coordinate. Also ensures the graph is
+     * wide enough to accomodate the new point.
      * 
-     * @param point
-     *            the point to offset.
-     * @param delta
-     *            the amount to add to the X coordinate.
-     * @param context
-     *            the layout context that contains all relevant information for the current layout run.
-     */
-    private void offsetX(final KPoint point, final float delta, final LayoutContext context) {
-        point.setX(point.getX() + delta);
-        ensureGraphIsWideEnough(context, point.getX());
-    }
-    
-    /**
-     * Calls {@link #offsetX(KPoint, double)} on every point in the given list. Also 
-     * 
-     * @param points
-     *            the points to offset.
+     * @param edgeSection
+     *            the edgeSection to modify.
      * @param delta
      *            the amount to add to the X coordinate.
      * @param context
      *            the layout context that contains all relevant information for the current layout
      *            run.
      */
-    private void offsetX(final List<KPoint> points, final float delta, final LayoutContext context) {
-        for (KPoint point : points) {
-            offsetX(point, delta, context);
+    private void offsetStartX(final ElkEdgeSection edgeSection, final double delta,
+            final LayoutContext context) {
+        edgeSection.setStartX(edgeSection.getStartX() + delta);
+        ensureGraphIsWideEnough(context, edgeSection.getStartX());
+    }
+
+    /**
+     * Adds the given delta to the given sections's end X coordinate. Also ensures the graph is wide
+     * enough to accomodate the new point.
+     * 
+     * @param edgeSection
+     *            the edgeSection to modify.
+     * @param delta
+     *            the amount to add to the X coordinate.
+     * @param context
+     *            the layout context that contains all relevant information for the current layout
+     *            run.
+     */
+    private void offsetEndX(final ElkEdgeSection edgeSection, final double delta,
+            final LayoutContext context) {
+        edgeSection.setEndX(edgeSection.getEndX() + delta);
+        ensureGraphIsWideEnough(context, edgeSection.getEndX());
+    }
+
+    /**
+     * Adds the given delta to the given sections's bend point X coordinates. Also ensures the graph
+     * is wide enough to accomodate the new point.
+     * 
+     * @param edgeSection
+     *            the edgeSection to modify.
+     * @param delta
+     *            the amount to add to the X coordinate.
+     * @param context
+     *            the layout context that contains all relevant information for the current layout
+     *            run.
+     */
+    private void offsetBendpointsX(final ElkEdgeSection edgeSection, final double delta,
+            final LayoutContext context) {
+        for (ElkBendPoint bendPoint : edgeSection.getBendPoints()) {
+            bendPoint.setX(bendPoint.getX() + delta);
+            ensureGraphIsWideEnough(context, bendPoint.getX());            
         }
     }
-    
+
     /**
      * Adds the given delta to the X position of all labels in the given list.
      * 
@@ -770,14 +772,13 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      *            the layout context that contains all relevant information for the current layout
      *            run.
      */
-    private void offsetLabelsX(final List<KLabel> labels, final float delta,
+    private void offsetLabelsX(final List<ElkLabel> labels, final double delta,
             final LayoutContext context) {
         
-        for (KLabel label : labels) {
-            KShapeLayout shapeLayout = label.getData(KShapeLayout.class);
-            shapeLayout.setXpos(shapeLayout.getXpos() + delta);
+        for (ElkLabel label : labels) {
+            label.setX(label.getX() + delta);
             
-            ensureGraphIsWideEnough(context, shapeLayout.getXpos() + shapeLayout.getWidth());
+            ensureGraphIsWideEnough(context, label.getX() + label.getWidth());
         }
     }
     
@@ -793,9 +794,8 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
      */
     private void placeComments(final SGraph graph) {
         for (SComment comment : graph.getComments()) {
-            Object origin = comment.getProperty(InternalProperties.ORIGIN);
-            KShapeLayout commentLayout = ((KNode) origin).getData(KShapeLayout.class);
-            commentLayout.setPos((float) comment.getPosition().x, (float) comment.getPosition().y);
+            ElkNode commentNode = (ElkNode) comment.getProperty(InternalProperties.ORIGIN);
+            commentNode.setLocation(comment.getPosition().x, comment.getPosition().y);
             if (comment.getMessage() != null) {
                 // Connected comments
 
@@ -816,19 +816,19 @@ public final class KGraphExporter implements ISequenceLayoutProcessor {
                     // Connections to messages are drawn vertically
                     edgeSourceXPos = comment.getPosition().x + comment.getSize().x / 2;
                     edgeTargetXPos = edgeSourceXPos;
-                    KEdge edge = (KEdge) comment.getMessage().getProperty(InternalProperties.ORIGIN);
-                    KEdgeLayout edgeLayout = edge.getData(KEdgeLayout.class);
-                    KPoint targetPoint = edgeLayout.getTargetPoint();
-                    KPoint sourcePoint = edgeLayout.getSourcePoint();
+                    ElkEdge edge =
+                            (ElkEdge) comment.getMessage().getProperty(InternalProperties.ORIGIN);
+                    ElkEdgeSection edgeSection = ElkGraphUtil.firstEdgeSection(edge, false, false);
                     edgeSourceYPos = comment.getPosition().y + comment.getSize().y;
-                    edgeTargetYPos = (targetPoint.getY() + sourcePoint.getY()) / 2;
+                    edgeTargetYPos = (edgeSection.getEndY() + edgeSection.getStartY()) / 2;
                 }
 
                 // Apply connection coordinates to layout
-                KEdgeLayout edgelayout = comment.getProperty(
-                        InternalSequenceProperties.COMMENT_CONNECTION).getData(KEdgeLayout.class);
-                edgelayout.getSourcePoint().setPos((float) edgeSourceXPos, (float) edgeSourceYPos);
-                edgelayout.getTargetPoint().setPos((float) edgeTargetXPos, (float) edgeTargetYPos);
+                ElkEdgeSection edgeSection = ElkGraphUtil.firstEdgeSection(
+                        comment.getProperty(InternalSequenceProperties.COMMENT_CONNECTION), false,
+                        false);
+                edgeSection.setStartLocation(edgeSourceXPos, edgeSourceYPos);
+                edgeSection.setEndLocation(edgeTargetXPos, edgeTargetYPos);
             }
         }
     }

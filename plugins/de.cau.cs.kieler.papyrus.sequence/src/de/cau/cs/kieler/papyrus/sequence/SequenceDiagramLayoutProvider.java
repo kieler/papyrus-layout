@@ -18,11 +18,11 @@ import java.util.List;
 import org.eclipse.elk.core.AbstractLayoutProvider;
 import org.eclipse.elk.core.UnsupportedGraphException;
 import org.eclipse.elk.core.util.IElkProgressMonitor;
-import org.eclipse.elk.graph.KNode;
+import org.eclipse.elk.graph.ElkNode;
 
 import com.google.common.collect.Lists;
 
-import de.cau.cs.kieler.papyrus.sequence.p0import.KGraphImporter;
+import de.cau.cs.kieler.papyrus.sequence.p0import.ElkGraphImporter;
 import de.cau.cs.kieler.papyrus.sequence.p0import.PapyrusImporter;
 import de.cau.cs.kieler.papyrus.sequence.p1allocation.SpaceAllocator;
 import de.cau.cs.kieler.papyrus.sequence.p2cycles.SCycleBreaker;
@@ -32,7 +32,7 @@ import de.cau.cs.kieler.papyrus.sequence.p4sorting.LayerBasedLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.p4sorting.ShortMessageLifelineSorter;
 import de.cau.cs.kieler.papyrus.sequence.p5coordinates.KGraphCoordinateCalculator;
 import de.cau.cs.kieler.papyrus.sequence.p5coordinates.PapyrusCoordinateCalculator;
-import de.cau.cs.kieler.papyrus.sequence.p6export.KGraphExporter;
+import de.cau.cs.kieler.papyrus.sequence.p6export.ElkGraphExporter;
 import de.cau.cs.kieler.papyrus.sequence.p6export.PapyrusExporter;
 
 /**
@@ -49,7 +49,7 @@ public final class SequenceDiagramLayoutProvider extends AbstractLayoutProvider 
     
 
     @Override
-    public void layout(final KNode parentNode, final IElkProgressMonitor progressMonitor) {
+    public void layout(final ElkNode parentNode, final IElkProgressMonitor progressMonitor) {
         // Prevent the surrounding diagram from being laid out
         if (parentNode.getParent() == null) {
             throw new UnsupportedGraphException(
@@ -90,7 +90,7 @@ public final class SequenceDiagramLayoutProvider extends AbstractLayoutProvider 
             break;
             
         default:
-            processors.add(new KGraphImporter());
+            processors.add(new ElkGraphImporter());
             break;   
         }
         
@@ -122,7 +122,7 @@ public final class SequenceDiagramLayoutProvider extends AbstractLayoutProvider 
             
         default:
             processors.add(new KGraphCoordinateCalculator());
-            processors.add(new KGraphExporter());
+            processors.add(new ElkGraphExporter());
             break;   
         }
         

@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.elk.core.math.KVector;
-import org.eclipse.elk.graph.KNode;
+import org.eclipse.elk.graph.ElkNode;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -38,7 +38,7 @@ import com.google.common.collect.Sets;
  */
 public final class SequenceArea {
     /** The layout graph node that represents this sequence area. */
-    private KNode layoutNode;
+    private ElkNode layoutNode;
     /** The list of messages contained in the area. */
     private Set<Object> messages = Sets.newLinkedHashSet();
     /** The list of affected lifelines. */
@@ -60,7 +60,7 @@ public final class SequenceArea {
      * 
      * @param node the node in the layout graph.
      */
-    public SequenceArea(final KNode node) {
+    public SequenceArea(final ElkNode node) {
         layoutNode = node;
     }
     
@@ -88,7 +88,7 @@ public final class SequenceArea {
      * 
      * @return the layout node.
      */
-    public KNode getLayoutNode() {
+    public ElkNode getLayoutNode() {
         return layoutNode;
     }
 
@@ -97,7 +97,7 @@ public final class SequenceArea {
      * 
      * @param node the layout node.
      */
-    public void setLayoutNode(final KNode node) {
+    public void setLayoutNode(final ElkNode node) {
         layoutNode = node;
     }
     
